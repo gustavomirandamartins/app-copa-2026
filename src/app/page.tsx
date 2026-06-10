@@ -215,7 +215,7 @@ export default function HomePage() {
           color: '#fff',
           textShadow: '0 2px 24px rgba(0,0,0,0.22), 0 1px 4px rgba(0,0,0,0.18)',
         }}>
-          Copa do Mundo FIFA 2026
+          Bolão da Mindu na Copa 2026
         </h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', marginBottom: 'var(--space-xl)' }}>
           🇺🇸 🇨🇦 🇲🇽 Estados Unidos · Canadá · México

@@ -111,14 +111,24 @@ html {
 body {
   font-family: var(--font-body);
   background-color: var(--bg-light);
-  background-image: url('https://sdyilmgixyynnmczsnhc.supabase.co/storage/v1/object/public/backgrounds/bg02.avif');
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
   color: var(--text-primary);
   line-height: 1.7;
   min-height: 100vh;
   overflow-x: hidden;
+}
+
+/* Parallax background layer — preenche a largura e faz pan vertical no scroll */
+.parallax-bg {
+  position: fixed;
+  inset: 0;
+  background-image: url('https://sdyilmgixyynnmczsnhc.supabase.co/storage/v1/object/public/backgrounds/bg02.avif');
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-position-y: 0%;
+  pointer-events: none;
+  z-index: -1;
+  will-change: background-position;
 }
 
 /* Subtle film-grain texture */

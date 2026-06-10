@@ -3,6 +3,7 @@ import { Nunito_Sans, Outfit } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import { BottomNav } from "@/components/layout/BottomNav";
+import { ParallaxBackground } from "@/components/layout/ParallaxBackground";
 
 const nunitoSans = Nunito_Sans({
   subsets: ['latin'],
@@ -18,12 +19,12 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "Copa 2026 — Acompanhe a Copa do Mundo",
-  description: "Acompanhe todos os jogos, seleções, probabilidades e simulações da Copa do Mundo FIFA 2026 nos EUA, Canadá e México.",
-  keywords: "Copa do Mundo 2026, FIFA, futebol, seleções, jogos, probabilidades, bolão",
+  title: "Bolão da Mindu na Copa 2026",
+  description: "Dê seus palpites, dispute o ranking e concorra aos prêmios MinduBier na Copa do Mundo FIFA 2026 nos EUA, Canadá e México.",
+  keywords: "Copa do Mundo 2026, FIFA, futebol, seleções, jogos, probabilidades, bolão, MinduBier",
   openGraph: {
-    title: "Copa 2026 — Acompanhe a Copa do Mundo",
-    description: "Todos os jogos, seleções e probabilidades da Copa FIFA 2026",
+    title: "Bolão da Mindu na Copa 2026",
+    description: "Palpites, ranking e prêmios MinduBier na Copa FIFA 2026",
     type: "website",
   },
 };
@@ -36,6 +37,7 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className={`${nunitoSans.variable} ${outfit.variable}`}>
       <body>
+        <ParallaxBackground />
         <Header />
         <main className="page-content">
           {children}

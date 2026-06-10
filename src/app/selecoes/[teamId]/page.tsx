@@ -7,6 +7,7 @@ import { teams, getTeamById } from '@/data/teams';
 import { matches } from '@/data/matches';
 import { getStadiumById } from '@/data/stadiums';
 import { getTeamProbability } from '@/data/ufmg-probabilities';
+import { getKeyPlayer } from '@/data/key-players';
 import { formatKickoffTime } from '@/lib/datetime';
 
 function ClientTime({ dateUTC }: { dateUTC: string }) {
@@ -35,6 +36,7 @@ export default function SelecaoPage({ params }: { params: Promise<{ teamId: stri
 
   const teamMatches = matches.filter(m => m.homeTeamId === teamId || m.awayTeamId === teamId);
   const groupTeams = teams.filter(t => t.group === team.group);
+  const keyPlayer = getKeyPlayer(teamId);
 
   const probStages = prob ? [
     { label: 'Campeão', value: prob.champion },
@@ -104,6 +106,41 @@ export default function SelecaoPage({ params }: { params: Promise<{ teamId: stri
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 'var(--space-lg)' }}>
+        {/* Fique de olho! */}
+        {keyPlayer && (
+          <div className="glass-card-static animate-fade-in" style={{
+            padding: 'var(--space-lg)',
+            position: 'relative',
+            overflow: 'hidden',
+            borderLeft: `4px solid ${team.secondaryColor}`,
+          }}>
+            <div style={{
+              position: 'absolute', top: '-30px', right: '-10px',
+              fontSize: '7rem', opacity: 0.06, lineHeight: 1,
+            }}>
+              👀
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
+              <span style={{ fontSize: '2.5rem', lineHeight: 1 }}>👀</span>
+              <div>
+                <div style={{
+                  fontSize: '0.7rem', color: 'var(--copa-green)',
+                  textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 800,
+                  marginBottom: 2,
+                }}>
+                  Fique de olho!
+                </div>
+                <div style={{
+                  fontSize: '1.4rem', fontWeight: 800, fontFamily: 'var(--font-heading)',
+                  color: 'var(--text-primary)', lineHeight: 1.1,
+                }}>
+                  {keyPlayer}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Histórico */}
         <div className="glass-card-static animate-slide-up stagger-1" style={{ padding: 'var(--space-lg)' }}>
           <h3 style={{ marginBottom: 'var(--space-md)', fontSize: '1rem' }}>

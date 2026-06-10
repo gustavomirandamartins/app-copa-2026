@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { Menu, X, Trophy } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 
 const navLinks = [
   { href: '/', label: 'Início' },
@@ -47,36 +48,25 @@ export function Header() {
           gap: '10px',
           textDecoration: 'none',
         }}>
-          <div style={{
-            width: 36,
-            height: 36,
-            borderRadius: '10px',
-            background: 'var(--gradient-primary)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 2px 8px rgba(0,151,57,0.30)',
-          }}>
-            <Trophy size={20} color="#fff" strokeWidth={2.5} />
-          </div>
-          <div>
-            <span style={{
-              fontFamily: 'var(--font-heading)',
-              fontWeight: 800,
-              fontSize: '1.1rem',
-              color: 'var(--text-primary)',
-              letterSpacing: '-0.02em',
-            }}>Copa 2026</span>
-            <span style={{
-              fontSize: '0.6rem',
-              color: 'var(--copa-green)',
-              display: 'block',
-              marginTop: -2,
-              fontWeight: 700,
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-            }}>🇺🇸 🇨🇦 🇲🇽</span>
-          </div>
+          <Image
+            src="/logo-mindunacopa.avif"
+            alt="Bolão da Mindu na Copa 2026"
+            width={40}
+            height={40}
+            priority
+            style={{
+              borderRadius: '50%',
+              boxShadow: '0 2px 8px rgba(254,221,0,0.40)',
+            }}
+          />
+          <span style={{
+            fontFamily: 'var(--font-heading)',
+            fontWeight: 800,
+            fontSize: '1.05rem',
+            color: 'var(--text-primary)',
+            letterSpacing: '-0.02em',
+            lineHeight: 1.1,
+          }}>Bolão da Mindu<br />na Copa 2026</span>
         </Link>
 
         {/* Desktop Nav */}
