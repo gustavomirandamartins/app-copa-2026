@@ -228,7 +228,7 @@ export default function HomePage() {
         </p>
 
         <div style={{ marginTop: 'var(--space-lg)', display: 'flex', gap: 'var(--space-md)', justifyContent: 'center', flexWrap: 'wrap' }}>
-          <Link href="/jogos" className="btn btn-primary">
+          <Link href="/jogos" className="btn btn-secondary">
             <Calendar size={16} /> Ver Jogos
           </Link>
           <Link href="/bolao" className="btn btn-secondary">

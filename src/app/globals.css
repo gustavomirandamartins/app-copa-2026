@@ -36,7 +36,7 @@
 
   /* Semantic */
   --green:  var(--copa-green);
-  --gold:   var(--copa-yellow);
+  --gold:   #e07c00;
   --blue:   var(--copa-blue);
   --red:    #c0392b;
   --orange: #e67e22;
@@ -206,6 +206,14 @@ a:hover { color: var(--copa-green-deep); }
   box-shadow: var(--shadow-lg);
 }
 
+/* Restore dark text inside glass cards */
+.glass-card,
+.glass-card-static {
+  --text-primary:   #323231;
+  --text-secondary: rgba(50, 50, 49, 0.70);
+  --text-tertiary:  rgba(50, 50, 49, 0.45);
+}
+
 /* ---- Container ---- */
 .container {
   width: 100%;
@@ -225,6 +233,10 @@ a:hover { color: var(--copa-green-deep); }
   min-height: 100vh;
   position: relative;
   z-index: 1;
+  /* Text outside cards sits on dark background — use white */
+  --text-primary:   #ffffff;
+  --text-secondary: rgba(255,255,255,0.75);
+  --text-tertiary:  rgba(255,255,255,0.50);
 }
 
 @media (min-width: 768px) {
@@ -601,11 +613,17 @@ a:hover { color: var(--copa-green-deep); }
   display: flex;
   gap: 4px;
   padding: 4px;
-  background: rgba(50, 50, 49, 0.05);
+  background: rgba(255,255,255,0.10);
   border-radius: var(--radius-md);
-  border: 1px solid rgba(50, 50, 49, 0.08);
+  border: 1px solid rgba(255,255,255,0.15);
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+}
+
+.glass-card .tabs,
+.glass-card-static .tabs {
+  background: rgba(50, 50, 49, 0.05);
+  border-color: rgba(50, 50, 49, 0.08);
 }
 
 .tab {
@@ -624,6 +642,11 @@ a:hover { color: var(--copa-green-deep); }
 
 .tab:hover {
   color: var(--text-primary);
+  background: rgba(255,255,255,0.15);
+}
+
+.glass-card .tab:hover,
+.glass-card-static .tab:hover {
   background: rgba(255, 255, 244, 0.60);
 }
 
@@ -744,7 +767,7 @@ a:hover { color: var(--copa-green-deep); }
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: var(--copa-green);
+  color: var(--text-secondary);
 }
 
 /* ---- Bracket ---- */
