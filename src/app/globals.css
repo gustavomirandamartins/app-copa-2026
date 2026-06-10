@@ -188,6 +188,28 @@ a:hover { color: var(--copa-green-deep); }
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
   transition: all var(--transition-base);
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.18) 50%,
+    transparent 60%
+  );
+  transform: translateX(-140%) skewX(-20deg);
+  transition: transform 0.65s var(--ease);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.glass-card:hover::before {
+  transform: translateX(160%) skewX(-20deg);
 }
 
 .glass-card:hover {
@@ -774,6 +796,8 @@ a:hover { color: var(--copa-green-deep); }
   color: var(--text-primary);
   line-height: 1;
   letter-spacing: -0.03em;
+  animation: count-flip 0.28s var(--ease) both;
+  display: block;
 }
 
 .countdown-label {
@@ -868,6 +892,72 @@ a:hover { color: var(--copa-green-deep); }
 .stagger-4 { animation-delay: 0.24s; opacity: 0; }
 .stagger-5 { animation-delay: 0.30s; opacity: 0; }
 .stagger-6 { animation-delay: 0.36s; opacity: 0; }
+
+/* ---- Scroll Reveal ---- */
+.sr-up,
+.sr-left,
+.sr-right,
+.sr-scale {
+  opacity: 0;
+  transition: opacity 0.65s var(--ease), transform 0.65s var(--ease);
+}
+.sr-up    { transform: translateY(32px); }
+.sr-left  { transform: translateX(-32px); }
+.sr-right { transform: translateX(32px); }
+.sr-scale { transform: scale(0.94); }
+.sr-visible {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+/* ---- Hero title shimmer ---- */
+@keyframes title-shimmer {
+  0%   { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+.hero-title-shimmer {
+  background: linear-gradient(
+    90deg,
+    #ffffff 0%,
+    #ffffff 38%,
+    var(--gold) 48%,
+    var(--gold) 52%,
+    #ffffff 62%,
+    #ffffff 100%
+  );
+  background-size: 300% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: title-shimmer 2.5s ease-in-out 0.6s 1 both;
+}
+
+/* ---- Countdown flip ---- */
+@keyframes count-flip {
+  from {
+    opacity: 0;
+    transform: translateY(-28%) scaleY(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+  }
+}
+
+/* ---- Button press ---- */
+.btn:active {
+  transform: scale(0.97) !important;
+  transition: transform 80ms ease !important;
+}
+
+/* ---- Section link arrow nudge ---- */
+@keyframes arrow-nudge {
+  0%, 100% { transform: translateX(0); }
+  50%       { transform: translateX(4px); }
+}
+.section-link:hover svg {
+  animation: arrow-nudge 0.5s ease infinite;
+}
 
 /* ---- Skeleton Loading ---- */
 .skeleton {

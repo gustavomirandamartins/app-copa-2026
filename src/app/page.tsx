@@ -8,6 +8,7 @@ import { matches } from '@/data/matches';
 import { getStadiumById } from '@/data/stadiums';
 import { getProbabilitiesByStage, getTeamProbability } from '@/data/ufmg-probabilities';
 import { formatKickoffTime, formatKickoffDate } from '@/lib/datetime';
+import { ScrollReveal } from '@/components/ui/ScrollReveal';
 
 /* ─── Countdown Component ────────────────────────────────── */
 function Countdown({ targetDate }: { targetDate: Date }) {
@@ -64,7 +65,7 @@ function Countdown({ targetDate }: { targetDate: Date }) {
     <div className="countdown">
       {items.map((item, i) => (
         <div key={i} className="countdown-item">
-          <span className="countdown-value">{String(item.value).padStart(2, '0')}</span>
+          <span key={item.value} className="countdown-value">{String(item.value).padStart(2, '0')}</span>
           <span className="countdown-label">{item.label}</span>
         </div>
       ))}
@@ -207,14 +208,16 @@ export default function HomePage() {
           background: 'radial-gradient(circle, rgba(212,175,55,0.08) 0%, transparent 70%)',
           pointerEvents: 'none',
         }} />
-        <h1 style={{
-          fontFamily: 'var(--font-heading)',
-          fontSize: 'clamp(2rem, 5vw, 3.5rem)',
-          fontWeight: 900,
-          marginBottom: 'var(--space-sm)',
-          color: '#fff',
-          textShadow: '0 2px 24px rgba(0,0,0,0.22), 0 1px 4px rgba(0,0,0,0.18)',
-        }}>
+        <h1
+          className="hero-title-shimmer"
+          style={{
+            fontFamily: 'var(--font-heading)',
+            fontSize: 'clamp(2rem, 5vw, 3.5rem)',
+            fontWeight: 900,
+            marginBottom: 'var(--space-sm)',
+            textShadow: '0 2px 24px rgba(0,0,0,0.22), 0 1px 4px rgba(0,0,0,0.18)',
+          }}
+        >
           Bolão da Mindu na Copa 2026
         </h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', marginBottom: 'var(--space-xl)', maxWidth: 640, margin: '0 auto var(--space-xl)' }}>
@@ -241,21 +244,24 @@ export default function HomePage() {
       </section>
 
       {/* ── Jogos ────────────────────────────────── */}
-      <section className="animate-slide-up stagger-1" style={{ marginBottom: 'var(--space-2xl)' }}>
-        <div className="section-header">
-          <h2><Calendar size={22} style={{ color: 'var(--gold)' }} /> Próximos Jogos</h2>
-          <Link href="/jogos" className="section-link">Ver todos <ChevronRight size={14} /></Link>
-        </div>
-        <div className="grid-2">
-          {displayMatches.map(match => (
-            <MatchCard key={match.id} match={match} />
-          ))}
-        </div>
-      </section>
+      <ScrollReveal>
+        <section style={{ marginBottom: 'var(--space-2xl)' }}>
+          <div className="section-header">
+            <h2><Calendar size={22} style={{ color: 'var(--gold)' }} /> Próximos Jogos</h2>
+            <Link href="/jogos" className="section-link">Ver todos <ChevronRight size={14} /></Link>
+          </div>
+          <div className="grid-2">
+            {displayMatches.map(match => (
+              <MatchCard key={match.id} match={match} />
+            ))}
+          </div>
+        </section>
+      </ScrollReveal>
 
       {/* ── Brasil Tracker ───────────────────────── */}
       {brasilTeam && brasilProb && (
-        <section className="animate-slide-up stagger-2" style={{ marginBottom: 'var(--space-2xl)' }}>
+        <ScrollReveal delay={80}>
+        <section style={{ marginBottom: 'var(--space-2xl)' }}>
           <div className="glass-card-static" style={{
             padding: 'var(--space-lg)',
             borderImage: 'linear-gradient(135deg, var(--gold-dim), var(--gold), var(--gold-dim)) 1',
@@ -325,65 +331,70 @@ export default function HomePage() {
             </div>
           </div>
         </section>
+        </ScrollReveal>
       )}
 
       {/* ── Favoritos ────────────────────────────── */}
-      <section className="animate-slide-up stagger-3" style={{ marginBottom: 'var(--space-2xl)' }}>
-        <div className="section-header">
-          <h2><Trophy size={22} style={{ color: 'var(--gold)' }} /> Favoritos ao Título</h2>
-          <Link href="/probabilidades" className="section-link">Ver todas <ChevronRight size={14} /></Link>
-        </div>
-        <div className="glass-card-static" style={{ padding: 'var(--space-md) var(--space-lg)' }}>
-          {topFavorites.map((item, i) => {
-            const team = getTeamById(item.teamId);
-            if (!team) return null;
-            return (
-              <ProbBar
-                key={item.teamId}
-                flag={team.flag}
-                name={team.name}
-                value={item.probability}
-                maxValue={maxProb}
-                delay={i * 80}
-              />
-            );
-          })}
-          <div style={{ textAlign: 'right', marginTop: 'var(--space-sm)' }}>
-            <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>
-              Fonte: Dept. Matemática — UFMG
-            </span>
+      <ScrollReveal>
+        <section style={{ marginBottom: 'var(--space-2xl)' }}>
+          <div className="section-header">
+            <h2><Trophy size={22} style={{ color: 'var(--gold)' }} /> Favoritos ao Título</h2>
+            <Link href="/probabilidades" className="section-link">Ver todas <ChevronRight size={14} /></Link>
           </div>
-        </div>
-      </section>
+          <div className="glass-card-static" style={{ padding: 'var(--space-md) var(--space-lg)' }}>
+            {topFavorites.map((item, i) => {
+              const team = getTeamById(item.teamId);
+              if (!team) return null;
+              return (
+                <ProbBar
+                  key={item.teamId}
+                  flag={team.flag}
+                  name={team.name}
+                  value={item.probability}
+                  maxValue={maxProb}
+                  delay={i * 80}
+                />
+              );
+            })}
+            <div style={{ textAlign: 'right', marginTop: 'var(--space-sm)' }}>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>
+                Fonte: Dept. Matemática — UFMG
+              </span>
+            </div>
+          </div>
+        </section>
+      </ScrollReveal>
 
       {/* ── Quick Links ──────────────────────────── */}
-      <section className="animate-slide-up stagger-4" style={{ marginBottom: 'var(--space-2xl)' }}>
-        <div className="grid-4">
-          {quickLinks.map((link, i) => {
-            const Icon = link.icon;
-            return (
-              <Link key={i} href={link.href} style={{ textDecoration: 'none' }}>
-                <div className="glass-card" style={{ padding: 'var(--space-lg)', height: '100%' }}>
-                  <div style={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: 'var(--radius-md)',
-                    background: `${link.color}18`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginBottom: 'var(--space-md)',
-                  }}>
-                    <Icon size={22} color={link.color} />
+      <ScrollReveal>
+        <section style={{ marginBottom: 'var(--space-2xl)' }}>
+          <div className="grid-4">
+            {quickLinks.map((link, i) => {
+              const Icon = link.icon;
+              return (
+                <Link key={i} href={link.href} style={{ textDecoration: 'none' }}>
+                  <div className="glass-card" style={{ padding: 'var(--space-lg)', height: '100%' }}>
+                    <div style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: 'var(--radius-md)',
+                      background: `${link.color}18`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginBottom: 'var(--space-md)',
+                    }}>
+                      <Icon size={22} color={link.color} />
+                    </div>
+                    <h4 style={{ fontSize: '0.95rem', marginBottom: 4 }}>{link.title}</h4>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)', margin: 0 }}>{link.desc}</p>
                   </div>
-                  <h4 style={{ fontSize: '0.95rem', marginBottom: 4 }}>{link.title}</h4>
-                  <p style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)', margin: 0 }}>{link.desc}</p>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-      </section>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      </ScrollReveal>
     </div>
   );
 }
