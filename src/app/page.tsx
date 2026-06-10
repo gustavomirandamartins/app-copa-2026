@@ -217,8 +217,11 @@ export default function HomePage() {
         }}>
           Bolão da Mindu na Copa 2026
         </h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', marginBottom: 'var(--space-xl)' }}>
-          🇺🇸 🇨🇦 🇲🇽 Estados Unidos · Canadá · México
+        <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', marginBottom: 'var(--space-xl)', maxWidth: 640, margin: '0 auto var(--space-xl)' }}>
+          Seja bem-vindo ao Bolão da Mindu na Copa 2026! Aqui você dará seus palpites para os jogos da Copa!
+          Funciona assim: ganha pontos por partida quem acertar o placar, a diferença de gols e o vencedor.
+          Ao final do campeonato, os três primeiros receberão prêmios exclusivos da MinduBier — camisas, bonés,
+          kits de cerveja, copos e muito mais! Acompanhe o ranking em tempo real e venha brindar conosco! 🍺
         </p>
 
         <Countdown targetDate={openingDate} />
@@ -228,11 +231,11 @@ export default function HomePage() {
         </p>
 
         <div style={{ marginTop: 'var(--space-lg)', display: 'flex', gap: 'var(--space-md)', justifyContent: 'center', flexWrap: 'wrap' }}>
-          <Link href="/jogos" className="btn btn-secondary">
+          <Link href="/jogos" className="btn btn-gold">
             <Calendar size={16} /> Ver Jogos
           </Link>
-          <Link href="/bolao" className="btn btn-secondary">
-            <Trophy size={16} /> Bolão
+          <Link href="/bolao" className="btn btn-gold">
+            <Trophy size={16} /> Entrar no Bolão!
           </Link>
         </div>
       </section>

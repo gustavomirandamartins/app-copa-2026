@@ -127,8 +127,7 @@ export function BolaoClient({
         <Crown size={40} style={{ color: 'var(--gold)' }} />
         <h2>Bolão Premium</h2>
         <p style={{ color: 'var(--text-secondary)' }}>
-          Acesso vitalício aos palpites, ranking e prêmios MinduBier por um
-          pagamento único.
+          Participe do nosso Bolão e concorra a diversos produtos exclusivos da MinduBier!
         </p>
         <div className="bolao-price">R$ 39,90</div>
         <button className="btn btn-primary" onClick={handleCheckout}>
