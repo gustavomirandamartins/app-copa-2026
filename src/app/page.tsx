@@ -212,10 +212,8 @@ export default function HomePage() {
           fontSize: 'clamp(2rem, 5vw, 3.5rem)',
           fontWeight: 900,
           marginBottom: 'var(--space-sm)',
-          background: 'var(--gradient-gold)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text',
+          color: '#fff',
+          textShadow: '0 2px 24px rgba(0,0,0,0.22), 0 1px 4px rgba(0,0,0,0.18)',
         }}>
           Copa do Mundo FIFA 2026
         </h1>
