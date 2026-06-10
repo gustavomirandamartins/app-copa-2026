@@ -51,13 +51,9 @@ export function Header() {
           <Image
             src="/logo-mindunacopa.avif"
             alt="Bolão da Mindu na Copa 2026"
-            width={40}
+            width={18}
             height={40}
             priority
-            style={{
-              borderRadius: '50%',
-              boxShadow: '0 2px 8px rgba(254,221,0,0.40)',
-            }}
           />
           <span style={{
             fontFamily: 'var(--font-heading)',
