@@ -59,19 +59,6 @@ export interface Match {
   matchNumber: number;
 }
 
-export interface TeamStanding {
-  teamId: string;
-  played: number;
-  won: number;
-  drawn: number;
-  lost: number;
-  goalsFor: number;
-  goalsAgainst: number;
-  goalDifference: number;
-  points: number;
-  position: number;
-}
-
 export interface Broadcaster {
   id: string;
   name: string;

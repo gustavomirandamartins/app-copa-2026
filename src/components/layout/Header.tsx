@@ -11,7 +11,8 @@ const navLinks = [
   { href: '/grupos', label: 'Grupos' },
   { href: '/selecoes', label: 'Seleções' },
   { href: '/probabilidades', label: 'Probabilidades' },
-  { href: '/simulador', label: 'Simulador' },
+  { href: '/bolao', label: 'Bolão' },
+  { href: '/ranking', label: 'Ranking' },
 ];
 
 export function Header() {
@@ -25,10 +26,11 @@ export function Header() {
       left: 0,
       right: 0,
       height: 'var(--header-height)',
-      background: 'rgba(6, 10, 20, 0.75)',
-      backdropFilter: 'blur(24px)',
-      WebkitBackdropFilter: 'blur(24px)',
-      borderBottom: '1px solid var(--glass-border)',
+      background: 'rgba(255, 255, 244, 0.80)',
+      backdropFilter: 'blur(24px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+      borderBottom: '1px solid rgba(50, 50, 49, 0.08)',
+      boxShadow: '0 1px 0 rgba(255,255,255,0.60)',
       zIndex: 100,
       display: 'flex',
       alignItems: 'center',
@@ -49,12 +51,13 @@ export function Header() {
             width: 36,
             height: 36,
             borderRadius: '10px',
-            background: 'var(--gradient-gold)',
+            background: 'var(--gradient-primary)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            boxShadow: '0 2px 8px rgba(0,151,57,0.30)',
           }}>
-            <Trophy size={20} color="#1a1a1a" strokeWidth={2.5} />
+            <Trophy size={20} color="#fff" strokeWidth={2.5} />
           </div>
           <div>
             <span style={{
@@ -66,10 +69,10 @@ export function Header() {
             }}>Copa 2026</span>
             <span style={{
               fontSize: '0.6rem',
-              color: 'var(--gold)',
+              color: 'var(--copa-green)',
               display: 'block',
               marginTop: -2,
-              fontWeight: 600,
+              fontWeight: 700,
               letterSpacing: '0.08em',
               textTransform: 'uppercase',
             }}>🇺🇸 🇨🇦 🇲🇽</span>
@@ -91,8 +94,8 @@ export function Header() {
                 borderRadius: 'var(--radius-sm)',
                 fontSize: '0.85rem',
                 fontWeight: 600,
-                color: pathname === link.href ? 'var(--gold)' : 'var(--text-secondary)',
-                background: pathname === link.href ? 'rgba(212, 175, 55, 0.1)' : 'transparent',
+                color: pathname === link.href ? 'var(--copa-green)' : 'var(--text-secondary)',
+                background: pathname === link.href ? 'rgba(0, 151, 57, 0.08)' : 'transparent',
                 transition: 'all var(--transition-fast)',
                 textDecoration: 'none',
               }}
@@ -125,9 +128,9 @@ export function Header() {
           top: 'var(--header-height)',
           left: 0,
           right: 0,
-          background: 'rgba(6, 10, 20, 0.95)',
-          backdropFilter: 'blur(24px)',
-          borderBottom: '1px solid var(--glass-border)',
+          background: 'rgba(255, 255, 244, 0.96)',
+          backdropFilter: 'blur(24px) saturate(180%)',
+          borderBottom: '1px solid rgba(50, 50, 49, 0.08)',
           padding: 'var(--space-md)',
           display: 'flex',
           flexDirection: 'column',
@@ -144,8 +147,8 @@ export function Header() {
                 borderRadius: 'var(--radius-sm)',
                 fontSize: '0.95rem',
                 fontWeight: 600,
-                color: pathname === link.href ? 'var(--gold)' : 'var(--text-secondary)',
-                background: pathname === link.href ? 'rgba(212, 175, 55, 0.1)' : 'transparent',
+                color: pathname === link.href ? 'var(--copa-green)' : 'var(--text-secondary)',
+                background: pathname === link.href ? 'rgba(0, 151, 57, 0.08)' : 'transparent',
                 textDecoration: 'none',
               }}
             >

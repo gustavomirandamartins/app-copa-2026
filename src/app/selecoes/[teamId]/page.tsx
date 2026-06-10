@@ -7,11 +7,12 @@ import { teams, getTeamById } from '@/data/teams';
 import { matches } from '@/data/matches';
 import { getStadiumById } from '@/data/stadiums';
 import { getTeamProbability } from '@/data/ufmg-probabilities';
+import { formatKickoffTime } from '@/lib/datetime';
 
 function ClientTime({ dateUTC }: { dateUTC: string }) {
   const [time, setTime] = useState('--:--');
   useEffect(() => {
-    setTime(new Date(dateUTC).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
+    setTime(formatKickoffTime(dateUTC));
   }, [dateUTC]);
   return <>{time}</>;
 }

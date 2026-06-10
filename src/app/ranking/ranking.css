@@ -1,0 +1,107 @@
+/* ── Ranking & Prêmios ─────────────────────────────────────── */
+
+.prizes-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
+}
+
+.prize-card {
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.prize-card.first {
+  border: 1px solid var(--gold);
+  box-shadow: 0 0 0 1px var(--gold-dim), 0 8px 30px rgba(212, 175, 55, 0.18);
+}
+
+.prize-place {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-heading);
+  font-weight: 900;
+  font-size: 1.3rem;
+}
+
+.prize-items {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.prize-items li {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  padding-left: 16px;
+  position: relative;
+}
+
+.prize-items li::before {
+  content: '•';
+  position: absolute;
+  left: 4px;
+  color: var(--gold);
+}
+
+/* ── Lista de ranking ──────────────────────────────────────── */
+.ranking-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs, 8px);
+}
+
+.ranking-row {
+  display: grid;
+  grid-template-columns: 48px 1fr auto;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md);
+}
+
+.ranking-row.podium {
+  border: 1px solid var(--gold-dim);
+}
+
+.ranking-pos {
+  font-family: var(--font-heading);
+  font-weight: 900;
+  font-size: 1.2rem;
+  text-align: center;
+  color: var(--text-tertiary);
+}
+
+.ranking-row.podium .ranking-pos {
+  color: var(--gold);
+}
+
+.ranking-name {
+  font-weight: 600;
+}
+
+.ranking-score {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: var(--gold);
+}
+
+.ranking-score small {
+  font-size: 0.7rem;
+  color: var(--text-tertiary);
+  font-weight: 500;
+  margin-left: 4px;
+}
+
+@media (max-width: 720px) {
+  .prizes-grid {
+    grid-template-columns: 1fr;
+  }
+}

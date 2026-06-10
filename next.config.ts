@@ -1,7 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Fixa a raiz do workspace no projeto. Sem isso, o Turbopack detecta
+  // o package-lock.json perdido em ~/ e tenta varrer a home inteira,
+  // travando o primeiro request. (import.meta.dirname = pasta deste config)
+  turbopack: {
+    root: import.meta.dirname,
+  },
 };
 
 export default nextConfig;

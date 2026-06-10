@@ -7,6 +7,7 @@ import { matches } from '@/data/matches';
 import { getTeamById } from '@/data/teams';
 import { getStadiumById } from '@/data/stadiums';
 import type { MatchStage } from '@/lib/types';
+import { formatKickoffTime, formatKickoffDate } from '@/lib/datetime';
 
 const stageTabs: { key: MatchStage | 'all'; label: string }[] = [
   { key: 'group', label: 'Fase de Grupos' },
@@ -20,7 +21,7 @@ const stageTabs: { key: MatchStage | 'all'; label: string }[] = [
 function MatchTime({ dateUTC }: { dateUTC: string }) {
   const [time, setTime] = useState('--:--');
   useEffect(() => {
-    setTime(new Date(dateUTC).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
+    setTime(formatKickoffTime(dateUTC));
   }, [dateUTC]);
   return <div className="match-card-time">{time}</div>;
 }
@@ -38,8 +39,7 @@ export default function JogosPage() {
   useEffect(() => {
     const groups = new Map<string, typeof matches>();
     filteredMatches.forEach(m => {
-      const d = new Date(m.dateUTC);
-      const key = d.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+      const key = formatKickoffDate(m.dateUTC);
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key)!.push(m);
     });

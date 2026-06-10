@@ -2,11 +2,12 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { Trophy, Calendar, BarChart3, Cpu, Users, ChevronRight, MapPin, Clock } from 'lucide-react';
+import { Trophy, Calendar, BarChart3, Users, ChevronRight, MapPin, Clock } from 'lucide-react';
 import { teams, getTeamById } from '@/data/teams';
 import { matches } from '@/data/matches';
 import { getStadiumById } from '@/data/stadiums';
 import { getProbabilitiesByStage, getTeamProbability } from '@/data/ufmg-probabilities';
+import { formatKickoffTime, formatKickoffDate } from '@/lib/datetime';
 
 /* ─── Countdown Component ────────────────────────────────── */
 function Countdown({ targetDate }: { targetDate: Date }) {
@@ -75,10 +76,9 @@ function Countdown({ targetDate }: { targetDate: Date }) {
 function useFormattedDate(dateUTC: string) {
   const [formatted, setFormatted] = useState({ time: '', date: '' });
   useEffect(() => {
-    const d = new Date(dateUTC);
     setFormatted({
-      time: d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-      date: d.toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' }),
+      time: formatKickoffTime(dateUTC),
+      date: formatKickoffDate(dateUTC, { weekday: 'short', day: 'numeric', month: 'short' }),
     });
   }, [dateUTC]);
   return formatted;
@@ -184,7 +184,7 @@ export default function HomePage() {
 
   const quickLinks = [
     { icon: BarChart3, title: 'Grupos & Classificação', desc: '12 grupos, 48 seleções', href: '/grupos', color: 'var(--green)' },
-    { icon: Cpu, title: 'Simulador', desc: 'Simule cenários de classificação', href: '/simulador', color: 'var(--purple)' },
+    { icon: Trophy, title: 'Bolão Premium', desc: 'Dê seus palpites e dispute o ranking', href: '/bolao', color: 'var(--purple)' },
     { icon: Users, title: 'Seleções', desc: 'Todas as 48 seleções', href: '/selecoes', color: 'var(--blue)' },
     { icon: Trophy, title: 'Probabilidades', desc: 'Modelo UFMG', href: '/probabilidades', color: 'var(--gold)' },
   ];
@@ -233,8 +233,8 @@ export default function HomePage() {
           <Link href="/jogos" className="btn btn-primary">
             <Calendar size={16} /> Ver Jogos
           </Link>
-          <Link href="/simulador" className="btn btn-secondary">
-            <Cpu size={16} /> Simulador
+          <Link href="/bolao" className="btn btn-secondary">
+            <Trophy size={16} /> Bolão
           </Link>
         </div>
       </section>
