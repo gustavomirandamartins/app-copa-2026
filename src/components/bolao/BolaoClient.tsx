@@ -129,6 +129,25 @@ export function BolaoClient({
         <p style={{ color: 'var(--text-secondary)' }}>
           Participe do nosso Bolão e concorra a diversos produtos exclusivos da MinduBier!
         </p>
+        <ul style={{
+          textAlign: 'left',
+          color: 'var(--text-secondary)',
+          fontSize: '0.875rem',
+          lineHeight: 1.7,
+          margin: 'var(--space-md) 0',
+          paddingLeft: 'var(--space-lg)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2,
+        }}>
+          <li>Você faz o palpite antes do início de cada partida.</li>
+          <li>Se você acertar apenas o vencedor, ganhará <strong>1 ponto</strong>.</li>
+          <li>Se você acertar o vencedor e a diferença de placar, ganhará <strong>3 pontos</strong>.</li>
+          <li>Se você acertar o vencedor e o placar exato, ganhará <strong>5 pontos!</strong></li>
+          <li>Ao final do campeonato, quem fizer o maior número de pontos vence!</li>
+          <li>Haverá prêmios exclusivos da MinduBier para os três primeiros colocados.</li>
+          <li>Você pode acompanhar sua posição no ranking a qualquer momento!</li>
+        </ul>
         <div className="bolao-price">R$ 39,90</div>
         <button className="btn btn-gold" onClick={handleCheckout}>
           Quero participar
