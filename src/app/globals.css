@@ -110,7 +110,13 @@ html {
 
 body {
   font-family: var(--font-body);
-  background: var(--bg-light);
+  background-color: var(--bg-light);
+  background-image:
+    linear-gradient(rgba(255, 255, 244, 0.65), rgba(255, 255, 244, 0.65)),
+    url('https://sdyilmgixyynnmczsnhc.supabase.co/storage/v1/object/public/backgrounds/bg02.avif');
+  background-size: auto, cover;
+  background-position: 0 0, center;
+  background-attachment: fixed, fixed;
   color: var(--text-primary);
   line-height: 1.7;
   min-height: 100vh;
