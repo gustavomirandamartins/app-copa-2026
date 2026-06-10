@@ -61,15 +61,15 @@ export default async function BolaoPage() {
           Dê seus palpites, dispute o ranking e concorra aos prêmios MinduBier.
         </p>
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', marginTop: 'var(--space-sm)', flexWrap: 'wrap' }}>
-          <Link href="/ranking" className="btn btn-secondary btn-sm">
+          <Link href="/ranking" className="btn btn-gold btn-sm">
             <Medal size={16} /> Ver ranking e prêmios
           </Link>
           {authenticated && userEmail && (
             <form action={logout}>
               <button
                 type="submit"
-                className="btn btn-secondary btn-sm"
-                style={{ fontSize: '0.78rem', color: 'var(--text-tertiary)' }}
+                className="btn btn-gold btn-sm"
+                style={{ fontSize: '0.78rem' }}
               >
                 Sair ({userEmail})
               </button>

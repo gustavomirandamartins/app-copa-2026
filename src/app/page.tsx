@@ -219,7 +219,7 @@ export default function HomePage() {
         </h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', marginBottom: 'var(--space-xl)', maxWidth: 640, margin: '0 auto var(--space-xl)' }}>
           Seja bem-vindo ao Bolão da Mindu na Copa 2026! Aqui você dará seus palpites para os jogos da Copa!
-          Funciona assim: ganha pontos por partida quem acertar o placar, a diferença de gols e o vencedor.
+          Funciona assim: ganha pontos por partida quem acertar o placar, a diferença de gols ou o vencedor.
           Ao final do campeonato, os três primeiros receberão prêmios exclusivos da MinduBier — camisas, bonés,
           kits de cerveja, copos e muito mais! Acompanhe o ranking em tempo real e venha brindar conosco! 🍺
         </p>
@@ -227,7 +227,7 @@ export default function HomePage() {
         <Countdown targetDate={openingDate} />
 
         <p style={{ color: 'var(--text-tertiary)', fontSize: '0.85rem', marginTop: 'var(--space-lg)' }}>
-          11 de Junho — 19 de Julho · 48 Seleções · 104 Jogos · 16 Estádios
+          11 de Junho a 19 de Julho · 48 Seleções · 104 Jogos · 16 Estádios · Muita MinduBier!
         </p>
 
         <div style={{ marginTop: 'var(--space-lg)', display: 'flex', gap: 'var(--space-md)', justifyContent: 'center', flexWrap: 'wrap' }}>

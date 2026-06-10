@@ -24,13 +24,13 @@ const PRIZES = [
     place: '2º lugar',
     className: '',
     icon: Medal,
-    items: ['Kit 2 MinduIPA', 'Taça', 'Boné MinduBier 10 Anos'],
+    items: ['Kit 2 latas MinduIPA + Taça MinduBier', 'Boné MinduBier 10 Anos'],
   },
   {
     place: '3º lugar',
     className: '',
     icon: Award,
-    items: ['Kit MinduIPA', 'Taça'],
+    items: ['Kit lata MinduIPA + Taça MinduBier'],
   },
 ];
 

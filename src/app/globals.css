@@ -712,7 +712,7 @@ a:hover { color: var(--copa-green-deep); }
   background: rgba(255, 255, 244, 0.70);
   border: 1.5px solid rgba(50, 50, 49, 0.15);
   border-radius: var(--radius-md);
-  color: var(--text-primary);
+  color: #323231;
   font-family: var(--font-body);
   font-size: 0.9rem;
   outline: none;
@@ -721,7 +721,7 @@ a:hover { color: var(--copa-green-deep); }
 }
 
 .search-input::placeholder {
-  color: var(--text-tertiary);
+  color: rgba(50, 50, 49, 0.45);
 }
 
 .search-input:focus {

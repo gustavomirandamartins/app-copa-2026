@@ -145,10 +145,7 @@
   font-size: 2.4rem;
   font-weight: 900;
   font-family: var(--font-heading, inherit);
-  background: var(--gradient-gold);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--gold);
   margin: var(--space-sm) 0 var(--space-md);
 }
 

@@ -130,7 +130,7 @@ export function BolaoClient({
           Participe do nosso Bolão e concorra a diversos produtos exclusivos da MinduBier!
         </p>
         <div className="bolao-price">R$ 39,90</div>
-        <button className="btn btn-primary" onClick={handleCheckout}>
+        <button className="btn btn-gold" onClick={handleCheckout}>
           Quero participar
         </button>
       </div>
