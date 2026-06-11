@@ -45,24 +45,17 @@ export function Header() {
         <Link href="/" style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '10px',
           textDecoration: 'none',
         }}>
           <Image
-            src="/logo-mindunacopa.avif"
-            alt="Bolão da Mindu na Copa 2026"
-            width={18}
-            height={40}
+            src="/logo-mindubier-horizontal.avif"
+            alt="MinduBier — Bolão da Mindu na Copa 2026"
+            width={184}
+            height={36}
+            style={{ height: 36, width: 'auto' }}
             priority
+            unoptimized
           />
-          <span style={{
-            fontFamily: 'var(--font-heading)',
-            fontWeight: 800,
-            fontSize: '1.05rem',
-            color: 'var(--text-primary)',
-            letterSpacing: '-0.02em',
-            lineHeight: 1.1,
-          }}>Bolão da Mindu<br />na Copa 2026</span>
         </Link>
 
         {/* Desktop Nav */}
