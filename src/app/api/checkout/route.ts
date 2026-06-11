@@ -71,6 +71,9 @@ export async function POST(req: NextRequest) {
   const origin = req.nextUrl.origin;
   const session = await getStripe().checkout.sessions.create({
     mode: 'payment',
+    // Apenas Cartão (crédito/débito) + Pix. Exige o Pix ativado no painel do
+    // Stripe (Settings → Payment methods); sem isso a criação da sessão falha.
+    payment_method_types: ['card', 'pix'],
     customer: customerId,
     client_reference_id: user.id,
     metadata: { supabase_user_id: user.id },
