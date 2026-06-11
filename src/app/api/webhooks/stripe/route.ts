@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
         // upsert instead of update: safe even if the profile row was never
         // created by the on_auth_user_created trigger (e.g. race condition,
         // OAuth signup before migration ran, etc.)
-        await admin.from('profiles').upsert(
+        const { error } = await admin.from('profiles').upsert(
           {
             id: userId,
             is_premium: true,
@@ -54,6 +54,18 @@ export async function POST(req: NextRequest) {
           },
           { onConflict: 'id' },
         );
+
+        // Crucial: NÃO retornar 200 se a gravação falhou. Devolvendo 500, o
+        // Stripe re-tenta o webhook (com backoff, por até ~3 dias) e o upsert
+        // idempotente eventualmente concede o Premium. Sem isso, uma falha de
+        // banco no pico de assinaturas perderia o acesso pago silenciosamente.
+        if (error) {
+          console.error('[stripe webhook] falha ao conceder Premium:', error);
+          return NextResponse.json(
+            { error: 'Falha ao registrar o pagamento.' },
+            { status: 500 },
+          );
+        }
       }
     }
   }

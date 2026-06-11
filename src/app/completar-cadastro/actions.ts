@@ -1,6 +1,8 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { isProfileComplete } from '@/lib/bolao/profile';
+import type { Profile } from '@/lib/bolao/types';
 
 export interface SaveOnboardingResult {
   ok: boolean;
@@ -59,12 +61,37 @@ export async function saveOnboarding(
     return { ok: false, error: 'É necessário aceitar o consentimento (LGPD).' };
   }
 
-  const { error } = await supabase
+  // .select().single() devolve a linha gravada. Importante: o supabase-js
+  // NÃO retorna erro quando o UPDATE casa 0 linhas (perfil inexistente ou
+  // bloqueado por RLS) — sem o .single(), a gravação "falha em silêncio" e
+  // o checkout depois reclama de cadastro incompleto. Com .single(), 0
+  // linhas vira erro PGRST116, que tratamos explicitamente.
+  const { data, error } = await supabase
     .from('profiles')
     .update(fields)
-    .eq('id', user.id);
+    .eq('id', user.id)
+    .select('*')
+    .single();
 
-  if (error) return { ok: false, error: error.message };
+  if (error) {
+    if (error.code === 'PGRST116') {
+      return {
+        ok: false,
+        error: 'Não encontramos seu perfil. Saia e entre novamente para continuar.',
+      };
+    }
+    // Ex.: coluna inexistente (migração não aplicada) → mostra a causa real.
+    return { ok: false, error: error.message };
+  }
+
+  // Confirma que a gravação realmente deixou o cadastro completo antes de
+  // liberar o pagamento (mesma regra usada no guard do /api/checkout).
+  if (!isProfileComplete(data as Profile)) {
+    return {
+      ok: false,
+      error: 'Os dados não foram salvos corretamente. Tente novamente.',
+    };
+  }
 
   return { ok: true };
 }

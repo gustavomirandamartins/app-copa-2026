@@ -21,14 +21,26 @@ export async function POST(req: NextRequest) {
   }
 
   const admin = createAdminClient();
-  const { data } = await admin
+  const { data, error: profileError } = await admin
     .from('profiles')
     .select('*')
     .eq('id', user.id)
     .single();
-  const profile = (data as Profile) ?? null;
 
-  if (profile?.is_premium) {
+  // Não engolir erro de leitura: se o admin não conseguir ler o profile
+  // (ex.: privilégios faltando para o service_role), retornamos 500 com a
+  // causa real em vez de tratar como "cadastro incompleto" e confundir.
+  if (profileError) {
+    console.error('[checkout] erro ao ler profile:', profileError);
+    return NextResponse.json(
+      { error: 'Não foi possível verificar seu cadastro. Tente novamente.' },
+      { status: 500 },
+    );
+  }
+
+  const profile = data as Profile;
+
+  if (profile.is_premium) {
     return NextResponse.json({ error: 'Você já é Premium.' }, { status: 409 });
   }
 
