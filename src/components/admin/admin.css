@@ -115,3 +115,49 @@
 .admin-search input::placeholder {
   color: var(--text-tertiary);
 }
+
+.admin-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.12));
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 120ms ease;
+  flex-shrink: 0;
+}
+.admin-icon-btn:hover {
+  color: var(--copa-green);
+  border-color: rgba(0, 151, 57, 0.4);
+}
+.admin-icon-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-name-edit {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+.admin-name-input {
+  flex: 1;
+  min-width: 120px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.12));
+  color: var(--text-primary);
+  font-size: 0.92rem;
+  font-weight: 700;
+  outline: none;
+}
+.admin-name-input:focus {
+  border-color: var(--copa-green);
+}

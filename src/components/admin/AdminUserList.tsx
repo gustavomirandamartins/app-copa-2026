@@ -1,8 +1,17 @@
 'use client';
 
 import { useMemo, useState, useTransition } from 'react';
-import { AlertCircle, Crown, Mail, Search, User, X } from 'lucide-react';
-import { setPremium } from '@/app/admin/actions';
+import {
+  AlertCircle,
+  Check,
+  Crown,
+  Mail,
+  Pencil,
+  Search,
+  User,
+  X,
+} from 'lucide-react';
+import { setPremium, updateDisplayName } from '@/app/admin/actions';
 import './admin.css';
 
 export interface AdminUser {
@@ -27,6 +36,8 @@ function formatDate(iso: string | null): string {
 function UserRow({ u }: { u: AdminUser }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState(u.full_name ?? '');
 
   function toggle() {
     setError(null);
@@ -36,16 +47,76 @@ function UserRow({ u }: { u: AdminUser }) {
     });
   }
 
+  function saveName() {
+    setError(null);
+    startTransition(async () => {
+      const res = await updateDisplayName(u.id, name);
+      if (res.ok) {
+        setEditing(false);
+      } else {
+        setError(res.error ?? 'Erro ao salvar o nome.');
+      }
+    });
+  }
+
+  function cancelEdit() {
+    setName(u.full_name ?? '');
+    setEditing(false);
+    setError(null);
+  }
+
   return (
     <div className={`admin-row glass-card-static ${u.is_premium ? 'status-approved' : ''}`}>
       <div className="admin-row-main">
         <div className="admin-row-name">
           <User size={15} />
-          <strong>{u.full_name ?? 'Sem nome'}</strong>
-          {u.is_admin && <span className="admin-badge badge-pending">Admin</span>}
-          <span className={`admin-badge ${u.is_premium ? 'badge-approved' : 'badge-rejected'}`}>
-            {u.is_premium ? 'Premium' : 'Sem acesso'}
-          </span>
+          {editing ? (
+            <div className="admin-name-edit">
+              <input
+                className="admin-name-input"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                maxLength={80}
+                placeholder="Nome de exibição"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') saveName();
+                  if (e.key === 'Escape') cancelEdit();
+                }}
+              />
+              <button
+                className="admin-icon-btn"
+                title="Salvar"
+                disabled={pending}
+                onClick={saveName}
+              >
+                <Check size={15} />
+              </button>
+              <button
+                className="admin-icon-btn"
+                title="Cancelar"
+                disabled={pending}
+                onClick={cancelEdit}
+              >
+                <X size={15} />
+              </button>
+            </div>
+          ) : (
+            <>
+              <strong>{u.full_name ?? 'Sem nome'}</strong>
+              <button
+                className="admin-icon-btn"
+                title="Editar nome de exibição na classificação"
+                onClick={() => setEditing(true)}
+              >
+                <Pencil size={13} />
+              </button>
+              {u.is_admin && <span className="admin-badge badge-pending">Admin</span>}
+              <span className={`admin-badge ${u.is_premium ? 'badge-approved' : 'badge-rejected'}`}>
+                {u.is_premium ? 'Premium' : 'Sem acesso'}
+              </span>
+            </>
+          )}
         </div>
         <div className="admin-row-meta">
           {u.email && (

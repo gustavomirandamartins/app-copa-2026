@@ -109,6 +109,40 @@ export async function rejectPayment(requestId: string): Promise<AdminActionResul
 }
 
 /**
+ * Edita o nome de exibição do usuário (profiles.full_name) — é o nome que
+ * aparece na classificação pública. Admin-only.
+ */
+export async function updateDisplayName(
+  userId: string,
+  name: string,
+): Promise<AdminActionResult> {
+  const auth = await requireAdmin();
+  if ('error' in auth) return { ok: false, error: auth.error };
+
+  const trimmed = name.trim();
+  if (trimmed.length < 2) {
+    return { ok: false, error: 'O nome deve ter ao menos 2 caracteres.' };
+  }
+  if (trimmed.length > 80) {
+    return { ok: false, error: 'O nome deve ter no máximo 80 caracteres.' };
+  }
+
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from('profiles')
+    .update({ full_name: trimmed })
+    .eq('id', userId);
+
+  if (error) {
+    console.error('[admin] falha ao atualizar nome de exibição:', error);
+    return { ok: false, error: 'Não foi possível atualizar o nome.' };
+  }
+
+  revalidatePath('/admin');
+  return { ok: true };
+}
+
+/**
  * Habilita ou desabilita manualmente o acesso Premium de um usuário,
  * independentemente de pagamento. Usado para liberar quem o organizador
  * quiser (cortesias, convidados, etc.).
