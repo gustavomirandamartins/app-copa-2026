@@ -1,8 +1,9 @@
 'use client';
 
-import { useMemo, useState, useTransition } from 'react';
+import { useMemo, useState, useTransition, useEffect } from 'react';
 import Link from 'next/link';
-import { Crown, Info, Save } from 'lucide-react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { Crown, Info, Save, Loader2 } from 'lucide-react';
 import { matches as allMatches } from '@/data/matches';
 import { getTeamById } from '@/data/teams';
 import { simulateScore } from '@/lib/bolao/autofill';
@@ -37,6 +38,8 @@ export function BolaoClient({
   profile,
   existingPredictions,
 }: Props) {
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [values, setValues] = useState<Map<string, PredictionValue>>(() =>
     seedValues(existingPredictions),
   );
@@ -48,6 +51,25 @@ export function BolaoClient({
   const isDemo = !configured;
   const isPremium = isDemo || profile?.is_premium === true;
   const canEdit = isDemo || (isPremium && agreed);
+
+  // Stripe redirects to /bolao?checkout=success immediately — before the
+  // webhook fires. If the user isn't premium yet, wait 3 s and reload so
+  // the server re-reads the profile after the webhook has had time to run.
+  const checkoutSuccess = searchParams.get('checkout') === 'success';
+  const checkoutCancelled = searchParams.get('checkout') === 'cancel';
+  const [waitingWebhook, setWaitingWebhook] = useState(
+    checkoutSuccess && !isPremium,
+  );
+
+  useEffect(() => {
+    if (!waitingWebhook) return;
+    const t = setTimeout(() => {
+      // Hard reload forces the Server Component to re-fetch the profile.
+      router.replace('/bolao');
+      router.refresh();
+    }, 3500);
+    return () => clearTimeout(t);
+  }, [waitingWebhook, router]);
 
   function setScore(matchId: string, side: 'home' | 'away', value: number | null) {
     setValues((prev) => {
@@ -106,6 +128,20 @@ export function BolaoClient({
   }
 
   // ── Estados de acesso ──────────────────────────────────────────
+
+  if (waitingWebhook) {
+    return (
+      <div className="glass-card-static bolao-notice" style={{ flexDirection: 'column', alignItems: 'center', gap: 'var(--space-md)', padding: 'var(--space-2xl)', textAlign: 'center' }}>
+        <Loader2 size={32} style={{ color: 'var(--gold)', animation: 'spin 1s linear infinite' }} />
+        <p style={{ margin: 0, fontWeight: 600 }}>Pagamento confirmado! Ativando seu acesso Premium…</p>
+        <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-tertiary)' }}>Isso leva apenas alguns segundos.</p>
+      </div>
+    );
+  }
+
+  if (checkoutCancelled) {
+    // Just fall through — page renders normally so the user can try again.
+  }
 
   if (configured && !authenticated) {
     return (
