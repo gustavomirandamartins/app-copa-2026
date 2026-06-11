@@ -757,8 +757,9 @@ export function getTeamsByGroup(group: string): Team[] {
 const FLAGS_BASE =
   'https://sdyilmgixyynnmczsnhc.supabase.co/storage/v1/object/public/flags/';
 
+// Chave = slug normalizado (minúsculo, sem acento/espaço); valor = nome do arquivo.
 const FLAG_OVERRIDES: Record<string, string> = {
-  Tchequia: 'republicatcheca',
+  tchequia: 'republicatcheca',
 };
 
 export function getFlagUrl(teamName: string): string {

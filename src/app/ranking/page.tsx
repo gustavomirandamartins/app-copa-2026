@@ -46,6 +46,12 @@ const PRIZES = [
     icon: Award,
     items: ['1 copo MinduBier'],
   },
+  {
+    place: '6º lugar em diante',
+    className: '',
+    icon: Award,
+    items: ['Um abraço de Mindu!'],
+  },
 ];
 
 // Usado apenas no modo demonstração (sem Supabase configurado).
@@ -88,7 +94,9 @@ export default async function RankingPage() {
           className="animate-fade-in"
           style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}
         >
-          Premiação MinduBier 10 Anos para os três primeiros colocados.
+          Premiação para os cinco primeiros colocados. Após o final da Copa,
+          entraremos em contato para alinhar a entrega. Custos de frete não
+          inclusos.
         </p>
         <div className="animate-fade-in" style={{ marginTop: 'var(--space-md)' }}>
           <Link href="/bolao" className="btn btn-gold btn-sm">
