@@ -43,11 +43,17 @@ export async function POST(req: NextRequest) {
 
       if (userId) {
         const admin = createAdminClient();
-        // Idempotent: re-delivery just re-sets the same flag.
-        await admin
-          .from('profiles')
-          .update({ is_premium: true })
-          .eq('id', userId);
+        // upsert instead of update: safe even if the profile row was never
+        // created by the on_auth_user_created trigger (e.g. race condition,
+        // OAuth signup before migration ran, etc.)
+        await admin.from('profiles').upsert(
+          {
+            id: userId,
+            is_premium: true,
+            stripe_customer_id: (session.customer as string) ?? null,
+          },
+          { onConflict: 'id' },
+        );
       }
     }
   }
