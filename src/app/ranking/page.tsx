@@ -1,4 +1,5 @@
-import { Trophy, Medal, Award, Info } from 'lucide-react';
+import Link from 'next/link';
+import { Trophy, Medal, Award, Info, ArrowLeft } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
 import './ranking.css';
@@ -76,6 +77,11 @@ export default async function RankingPage() {
         >
           Premiação MinduBier 10 Anos para os três primeiros colocados.
         </p>
+        <div className="animate-fade-in" style={{ marginTop: 'var(--space-md)' }}>
+          <Link href="/bolao" className="btn btn-gold btn-sm">
+            <ArrowLeft size={15} /> Registrar palpites
+          </Link>
+        </div>
       </section>
 
       {/* Prêmios */}

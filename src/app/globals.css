@@ -102,8 +102,16 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  /* Fallback case for when the background image hasn't loaded yet */
+  /* Background lives on <html> so every backdrop-filter in the document
+     can composite against it — the only approach that works reliably in
+     Chrome. background-attachment: fixed keeps it viewport-pinned (parallax).
+     JS in ParallaxBackground.tsx pans backgroundPositionY on scroll. */
   background-color: var(--bg-light);
+  background-image: url('https://sdyilmgixyynnmczsnhc.supabase.co/storage/v1/object/public/backgrounds/bg02.avif');
+  background-size: cover;
+  background-attachment: fixed;
+  background-position: center top;
+  background-repeat: no-repeat;
 }
 
 ::selection {
@@ -112,8 +120,6 @@ html {
 
 body {
   font-family: var(--font-body);
-  /* Transparent so backdrop-filter on glass cards can see through body
-     to the .parallax-bg layer — required for Chrome (Safari is lenient). */
   background-color: transparent;
   color: var(--text-primary);
   line-height: 1.7;
@@ -121,22 +127,14 @@ body {
   overflow-x: hidden;
 }
 
-/* Parallax background layer — preenche a largura e faz pan vertical no scroll */
+/* .parallax-bg kept in DOM but invisible — JS still targets it to
+   drive document.documentElement.style.backgroundPositionY */
 .parallax-bg {
-  position: fixed;
-  inset: 0;
-  background-image: url('https://sdyilmgixyynnmczsnhc.supabase.co/storage/v1/object/public/backgrounds/bg02.avif');
-  background-size: cover;
-  background-position: center top;
-  background-repeat: no-repeat;
-  background-position-y: 0%;
-  pointer-events: none;
-  z-index: -1;
-  /* will-change: background-position causes Chrome to promote this to its own
-     compositor layer, which blocks backdrop-filter from reading across it. */
+  display: none;
 }
 
-/* Subtle film-grain texture */
+/* Subtle film-grain texture — kept below navs (z-index 50) so Chrome's
+   pointer-events:none edge-case doesn't block Header/BottomNav clicks */
 body::after {
   content: '';
   position: fixed;
@@ -144,7 +142,7 @@ body::after {
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
   background-size: 200px 200px;
   pointer-events: none;
-  z-index: 9999;
+  z-index: 50;
   opacity: 1;
 }
 

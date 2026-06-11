@@ -1,12 +1,14 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Lock, Dices } from 'lucide-react';
+import { Lock, Dices, Clock } from 'lucide-react';
 import { matches as allMatches } from '@/data/matches';
 import { getTeamById } from '@/data/teams';
+import { formatKickoffTime, formatKickoffDate } from '@/lib/datetime';
 import type { Match, MatchStage } from '@/lib/types';
 
 const BRAZIL_ID = 'bra';
+const UPCOMING_WINDOW_MS = 24 * 60 * 60 * 1000; // 24 h
 
 const stageTabs: { key: MatchStage; label: string }[] = [
   { key: 'group', label: 'Fase de Grupos' },
@@ -30,12 +32,19 @@ interface Props {
   onAutofill: () => void;
 }
 
-/** Um jogo está travado se não tem times definidos, já começou ou não está agendado. */
+/** Locked = teams not set, already started, or not scheduled. */
 function isLocked(match: Match, now: number | null): boolean {
   if (!match.homeTeamId || !match.awayTeamId) return true;
   if (match.status !== 'scheduled') return true;
   if (now !== null && new Date(match.dateUTC).getTime() <= now) return true;
   return false;
+}
+
+/** Match starts within the next 24 h and hasn't started yet. */
+function isUpcoming(match: Match, now: number | null): boolean {
+  if (!now || !match.homeTeamId || !match.awayTeamId) return false;
+  const t = new Date(match.dateUTC).getTime();
+  return t > now && t - now <= UPCOMING_WINDOW_MS;
 }
 
 function TeamCell({ teamId }: { teamId: string | null }) {
@@ -48,12 +57,31 @@ function TeamCell({ teamId }: { teamId: string | null }) {
   );
 }
 
+function MatchTime({ dateUTC, mounted }: { dateUTC: string; mounted: boolean }) {
+  if (!mounted) return <span className="bolao-match-time">--:--</span>;
+  return (
+    <span className="bolao-match-time">
+      <Clock size={11} style={{ opacity: 0.6 }} />
+      {formatKickoffDate(dateUTC, { weekday: 'short', day: 'numeric', month: 'short' })}
+      {' · '}
+      {formatKickoffTime(dateUTC)}
+    </span>
+  );
+}
+
 export function PredictionGrid({ values, canEdit, onScore, onAutofill }: Props) {
   const [activeStage, setActiveStage] = useState<MatchStage>('group');
-
-  // Date.now() só após montar, evitando divergência de hidratação.
   const [now, setNow] = useState<number | null>(null);
-  useEffect(() => setNow(Date.now()), []);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    const tick = () => setNow(Date.now());
+    tick();
+    setMounted(true);
+    // Re-evaluate locks every 30 s so a match auto-locks when it starts.
+    const id = setInterval(tick, 30_000);
+    return () => clearInterval(id);
+  }, []);
 
   const stageMatches = useMemo(
     () => allMatches.filter((m) => m.stage === activeStage),
@@ -87,6 +115,7 @@ export function PredictionGrid({ values, canEdit, onScore, onAutofill }: Props) 
       <div className="bolao-list">
         {stageMatches.map((match) => {
           const locked = isLocked(match, now) || !canEdit;
+          const upcoming = isUpcoming(match, now);
           const value = values.get(match.id);
           const isBrazil =
             match.homeTeamId === BRAZIL_ID || match.awayTeamId === BRAZIL_ID;
@@ -96,8 +125,12 @@ export function PredictionGrid({ values, canEdit, onScore, onAutofill }: Props) 
               key={match.id}
               className={`bolao-row glass-card-static ${isBrazil ? 'brazil' : ''} ${
                 locked ? 'locked' : ''
-              }`}
+              } ${upcoming ? 'upcoming' : ''}`}
             >
+              {upcoming && (
+                <span className="bolao-upcoming-badge">Em breve</span>
+              )}
+
               <TeamCell teamId={match.homeTeamId} />
 
               <div className="bolao-scores">
@@ -118,7 +151,10 @@ export function PredictionGrid({ values, canEdit, onScore, onAutofill }: Props) 
                     )
                   }
                 />
-                <span className="bolao-x">×</span>
+                <div className="bolao-scores-center">
+                  <span className="bolao-x">×</span>
+                  <MatchTime dateUTC={match.dateUTC} mounted={mounted} />
+                </div>
                 <input
                   type="number"
                   min={0}
