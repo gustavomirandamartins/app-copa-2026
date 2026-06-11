@@ -110,7 +110,7 @@ export function PaymentOptions({
         <header className="pay-card-head">
           <CreditCard size={20} style={{ color: 'var(--gold)' }} />
           <div>
-            <h2>Cartão de crédito ou débito</h2>
+            <h2>Cartão de crédito</h2>
             <p className="pay-muted">Liberação na hora, com pagamento seguro via Stripe.</p>
           </div>
         </header>

@@ -107,3 +107,35 @@ export async function rejectPayment(requestId: string): Promise<AdminActionResul
   revalidatePath('/admin');
   return { ok: true };
 }
+
+/**
+ * Habilita ou desabilita manualmente o acesso Premium de um usuário,
+ * independentemente de pagamento. Usado para liberar quem o organizador
+ * quiser (cortesias, convidados, etc.).
+ */
+export async function setPremium(
+  userId: string,
+  value: boolean,
+): Promise<AdminActionResult> {
+  const auth = await requireAdmin();
+  if ('error' in auth) return { ok: false, error: auth.error };
+
+  // Não deixa o admin remover o próprio Premium por engano.
+  if (!value && userId === auth.userId) {
+    return { ok: false, error: 'Você não pode remover o próprio acesso.' };
+  }
+
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from('profiles')
+    .update({ is_premium: value })
+    .eq('id', userId);
+
+  if (error) {
+    console.error('[admin] falha ao atualizar Premium:', error);
+    return { ok: false, error: 'Não foi possível atualizar o acesso.' };
+  }
+
+  revalidatePath('/admin');
+  return { ok: true };
+}

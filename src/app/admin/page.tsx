@@ -5,6 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
 import type { Profile, PaymentRequest } from '@/lib/bolao/types';
 import { AdminPaymentList } from '@/components/admin/AdminPaymentList';
+import { AdminUserList, type AdminUser } from '@/components/admin/AdminUserList';
 
 /**
  * Central de controle (somente admin). Lista as solicitações de pagamento
@@ -40,6 +41,37 @@ export default async function AdminPage() {
   const pending = all.filter((r) => r.status === 'pending');
   const reviewed = all.filter((r) => r.status !== 'pending').slice(0, 50);
 
+  // Todos os usuários cadastrados (profiles) + e-mails (auth.users).
+  const { data: profilesData } = await admin
+    .from('profiles')
+    .select('id, full_name, phone, is_premium, is_admin, created_at')
+    .order('created_at', { ascending: false });
+  const profiles = (profilesData as Array<
+    Pick<Profile, 'id' | 'full_name' | 'phone' | 'is_premium' | 'is_admin'> & {
+      created_at: string | null;
+    }
+  >) ?? [];
+
+  // Mapa id → e-mail vindo do Auth (profiles não guarda e-mail).
+  const emailById = new Map<string, string | null>();
+  const { data: authList } = await admin.auth.admin.listUsers({
+    page: 1,
+    perPage: 1000,
+  });
+  for (const u of authList?.users ?? []) {
+    emailById.set(u.id, u.email ?? null);
+  }
+
+  const users: AdminUser[] = profiles.map((p) => ({
+    id: p.id,
+    full_name: p.full_name,
+    email: emailById.get(p.id) ?? null,
+    phone: p.phone,
+    is_premium: p.is_premium,
+    is_admin: p.is_admin,
+    created_at: p.created_at,
+  }));
+
   return (
     <div className="container">
       <section style={{ marginBottom: 'var(--space-lg)' }}>
@@ -57,6 +89,10 @@ export default async function AdminPage() {
       </section>
 
       <AdminPaymentList pending={pending} reviewed={reviewed} />
+
+      <div style={{ marginTop: 'var(--space-2xl)' }}>
+        <AdminUserList users={users} />
+      </div>
     </div>
   );
 }
