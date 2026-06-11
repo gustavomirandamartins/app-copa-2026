@@ -102,6 +102,8 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  /* Fallback case for when the background image hasn't loaded yet */
+  background-color: var(--bg-light);
 }
 
 ::selection {
@@ -110,7 +112,9 @@ html {
 
 body {
   font-family: var(--font-body);
-  background-color: var(--bg-light);
+  /* Transparent so backdrop-filter on glass cards can see through body
+     to the .parallax-bg layer — required for Chrome (Safari is lenient). */
+  background-color: transparent;
   color: var(--text-primary);
   line-height: 1.7;
   min-height: 100vh;
@@ -128,7 +132,8 @@ body {
   background-position-y: 0%;
   pointer-events: none;
   z-index: -1;
-  will-change: background-position;
+  /* will-change: background-position causes Chrome to promote this to its own
+     compositor layer, which blocks backdrop-filter from reading across it. */
 }
 
 /* Subtle film-grain texture */
