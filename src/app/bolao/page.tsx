@@ -1,23 +1,33 @@
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { Trophy, Medal } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
 import type { Profile, PredictionInput } from '@/lib/bolao/types';
 import { BolaoClient } from '@/components/bolao/BolaoClient';
+import { AuthPanel } from '@/components/auth/AuthPanel';
 import { logout } from '@/app/login/actions';
 
 /**
  * Página do Bolão Premium (Server Component).
- * Lê o usuário/perfil quando o Supabase está configurado; caso contrário
- * entrega a UI em "modo demonstração" para visualização imediata.
+ * Estados:
+ *  - sem Supabase           → modo demonstração (UI editável só pra ver)
+ *  - configurado, deslogado → cards de Entrar/Criar conta + oferta
+ *  - logado, não premium    → redireciona ao onboarding (/completar-cadastro)
+ *                             (exceto no retorno do Stripe com ?checkout=success)
+ *  - logado, premium        → grade de palpites
  */
-export default async function BolaoPage() {
+export default async function BolaoPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ checkout?: string }>;
+}) {
   const configured = isSupabaseConfigured();
+  const { checkout } = await searchParams;
 
   let profile: Profile | null = null;
   let authenticated = false;
   let existingPredictions: PredictionInput[] = [];
-
   let userEmail: string | null = null;
 
   if (configured) {
@@ -44,6 +54,18 @@ export default async function BolaoPage() {
     }
   }
 
+  // Logado mas ainda não premium → completar cadastro antes de pagar.
+  // Exceção: retorno do Stripe (?checkout=success), em que o webhook ainda
+  // pode estar processando — deixamos o BolaoClient exibir o spinner.
+  if (
+    configured &&
+    authenticated &&
+    !profile?.is_premium &&
+    checkout !== 'success'
+  ) {
+    redirect('/completar-cadastro');
+  }
+
   return (
     <div className="container">
       <section style={{ marginBottom: 'var(--space-lg)' }}>
@@ -58,11 +80,11 @@ export default async function BolaoPage() {
           className="animate-fade-in"
           style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}
         >
-          Dê seus palpites, dispute o ranking e concorra aos prêmios MinduBier.
+          Dê seus palpites, dispute a classificação e concorra aos prêmios MinduBier.
         </p>
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', marginTop: 'var(--space-sm)', flexWrap: 'wrap' }}>
           <Link href="/ranking" className="btn btn-gold btn-sm">
-            <Medal size={16} /> Ver ranking e prêmios
+            <Medal size={16} /> Ver classificação e prêmios
           </Link>
           {authenticated && userEmail && (
             <form action={logout}>
@@ -78,12 +100,16 @@ export default async function BolaoPage() {
         </div>
       </section>
 
-      <BolaoClient
-        configured={configured}
-        authenticated={authenticated}
-        profile={profile}
-        existingPredictions={existingPredictions}
-      />
+      {configured && !authenticated ? (
+        <AuthPanel />
+      ) : (
+        <BolaoClient
+          configured={configured}
+          authenticated={authenticated}
+          profile={profile}
+          existingPredictions={existingPredictions}
+        />
+      )}
     </div>
   );
 }

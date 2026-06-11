@@ -1,0 +1,64 @@
+/* ── Onboarding (completar cadastro) ────────────────────────── */
+
+.onb-card {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: var(--space-xl);
+}
+
+.onb-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.onb-row {
+  display: grid;
+  gap: var(--space-md);
+}
+
+.onb-row.cols-2 {
+  grid-template-columns: 1fr 1fr;
+}
+
+.onb-row.cep-uf {
+  grid-template-columns: 1.4fr 2fr 1fr;
+}
+
+@media (max-width: 540px) {
+  .onb-row.cols-2,
+  .onb-row.cep-uf {
+    grid-template-columns: 1fr;
+  }
+}
+
+.onb-lgpd {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: var(--space-md);
+  border: 1px solid rgba(50, 50, 49, 0.12);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.onb-lgpd input {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  flex-shrink: 0;
+  accent-color: var(--copa-green);
+  cursor: pointer;
+}
+
+.onb-lgpd label {
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.onb-cep-hint {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+}

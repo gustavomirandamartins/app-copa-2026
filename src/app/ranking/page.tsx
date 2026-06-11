@@ -88,7 +88,7 @@ export default async function RankingPage() {
             size={28}
             style={{ color: 'var(--gold)', verticalAlign: 'middle', marginRight: 8 }}
           />
-          Ranking & Prêmios
+          Classificação & Prêmios
         </h1>
         <p
           className="animate-fade-in"
@@ -142,17 +142,17 @@ export default async function RankingPage() {
           <Info size={18} style={{ color: 'var(--gold)' }} />
           <p style={{ margin: 0, fontSize: '0.9rem' }}>
             <strong>Modo demonstração.</strong> Configure o Supabase para exibir
-            o ranking real dos participantes.
+            a classificação real dos participantes.
           </p>
         </div>
       )}
 
       {/* Classificação */}
-      <h3 style={{ marginBottom: 'var(--space-md)' }}>Classificação</h3>
+      <h3 style={{ marginBottom: 'var(--space-md)' }}>Classificação geral</h3>
       {ranking.length === 0 ? (
         <div className="glass-card-static" style={{ padding: 'var(--space-lg)' }}>
           <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
-            Ainda não há participantes no ranking.
+            Ainda não há participantes na classificação.
           </p>
         </div>
       ) : (

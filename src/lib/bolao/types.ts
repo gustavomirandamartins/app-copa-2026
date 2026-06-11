@@ -10,6 +10,18 @@ export interface Profile {
   agreed_to_ranking: boolean;
   stripe_customer_id: string | null;
   total_score: number;
+  // Onboarding (coletados após a confirmação do e-mail)
+  birth_date: string | null;
+  phone: string | null;
+  postal_code: string | null;
+  address_street: string | null;
+  address_number: string | null;
+  address_complement: string | null;
+  address_district: string | null;
+  address_city: string | null;
+  address_state: string | null;
+  agreed_to_lgpd: boolean;
+  lgpd_agreed_at: string | null;
 }
 
 export interface PredictionRow {

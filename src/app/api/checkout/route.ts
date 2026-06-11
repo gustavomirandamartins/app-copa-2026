@@ -2,6 +2,8 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { getStripe, BOLAO_PRICE_BRL_CENTS } from '@/lib/stripe';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { isProfileComplete } from '@/lib/bolao/profile';
+import type { Profile } from '@/lib/bolao/types';
 
 /**
  * POST /api/checkout
@@ -19,14 +21,24 @@ export async function POST(req: NextRequest) {
   }
 
   const admin = createAdminClient();
-  const { data: profile } = await admin
+  const { data } = await admin
     .from('profiles')
-    .select('stripe_customer_id, is_premium, full_name')
+    .select('*')
     .eq('id', user.id)
     .single();
+  const profile = (data as Profile) ?? null;
 
   if (profile?.is_premium) {
     return NextResponse.json({ error: 'Você já é Premium.' }, { status: 409 });
+  }
+
+  // Defesa em profundidade: só libera o pagamento com cadastro completo
+  // (dados pessoais + endereço + consentimento LGPD).
+  if (!isProfileComplete(profile)) {
+    return NextResponse.json(
+      { error: 'Complete seu cadastro antes de pagar.' },
+      { status: 400 },
+    );
   }
 
   // Reuse the Stripe customer if we already created one for this user.

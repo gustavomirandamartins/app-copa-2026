@@ -26,11 +26,11 @@ export function RankingConsentModal({ onAccepted }: { onAccepted: () => void }) 
       <div className="bolao-modal glass-card-static animate-slide-up">
         <ShieldCheck size={40} style={{ color: 'var(--gold)' }} />
         <h2 style={{ margin: 'var(--space-md) 0 var(--space-sm)' }}>
-          Participe do ranking público
+          Participe da classificação pública
         </h2>
         <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6 }}>
           Para participar do bolão e concorrer aos prêmios MinduBier, você
-          precisa aceitar que seu nome apareça no ranking público.
+          precisa aceitar que seu nome apareça na classificação pública.
         </p>
 
         {error && (

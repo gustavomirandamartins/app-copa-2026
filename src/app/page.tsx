@@ -194,7 +194,7 @@ export default function HomePage() {
 
   const quickLinks = [
     { icon: BarChart3, title: 'Grupos & Classificação', desc: '12 grupos, 48 seleções', href: '/grupos', color: 'var(--green)' },
-    { icon: Trophy, title: 'Bolão Premium', desc: 'Dê seus palpites e dispute o ranking', href: '/bolao', color: 'var(--purple)' },
+    { icon: Trophy, title: 'Bolão Premium', desc: 'Dê seus palpites e dispute a classificação', href: '/bolao', color: 'var(--purple)' },
     { icon: Users, title: 'Seleções', desc: 'Todas as 48 seleções', href: '/selecoes', color: 'var(--blue)' },
     { icon: Trophy, title: 'Probabilidades', desc: 'Modelo UFMG', href: '/probabilidades', color: 'var(--gold)' },
   ];
@@ -233,7 +233,7 @@ export default function HomePage() {
           Seja bem-vindo ao Bolão da Mindu na Copa 2026! Aqui você dará seus palpites para os jogos da Copa!
           Funciona assim: ganha pontos por partida quem acertar o placar, a diferença de gols ou o vencedor.
           Ao final do campeonato, os três primeiros receberão prêmios exclusivos da MinduBier — camisas, bonés,
-          kits de cerveja, copos e muito mais! Acompanhe o ranking em tempo real e venha brindar conosco! 🍺
+          kits de cerveja, copos e muito mais! Acompanhe a classificação em tempo real e venha brindar conosco! 🍺
         </p>
 
         <Countdown targetDate={openingDate} />

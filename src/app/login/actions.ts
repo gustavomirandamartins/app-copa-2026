@@ -29,7 +29,8 @@ export async function signup(formData: FormData) {
     password: formData.get('password') as string,
     options: {
       data: { full_name: formData.get('full_name') as string },
-      emailRedirectTo: `${siteUrl}/auth/callback`,
+      // Após confirmar o e-mail, cai na página de onboarding.
+      emailRedirectTo: `${siteUrl}/auth/callback?next=/completar-cadastro`,
     },
   });
 

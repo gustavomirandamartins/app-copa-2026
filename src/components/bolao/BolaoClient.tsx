@@ -121,12 +121,6 @@ export function BolaoClient({
     });
   }
 
-  async function handleCheckout() {
-    const res = await fetch('/api/checkout', { method: 'POST' });
-    const data = await res.json();
-    if (data.url) window.location.href = data.url;
-  }
-
   // ── Estados de acesso ──────────────────────────────────────────
 
   if (waitingWebhook) {
@@ -143,51 +137,18 @@ export function BolaoClient({
     // Just fall through — page renders normally so the user can try again.
   }
 
-  if (configured && !authenticated) {
+  // Fallback defensivo: a página /bolao já redireciona quem não é premium
+  // para o onboarding; se mesmo assim chegar aqui, manda completar o cadastro.
+  if (configured && !isPremium) {
     return (
       <div className="glass-card-static bolao-notice" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 'var(--space-md)' }}>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          <Info size={20} style={{ color: 'var(--blue)', flexShrink: 0 }} />
-          <p style={{ margin: 0 }}>Faça login para dar seus palpites no Bolão Premium.</p>
+          <Crown size={20} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+          <p style={{ margin: 0 }}>Complete seu cadastro para participar do Bolão Premium.</p>
         </div>
-        <Link href="/login" className="btn btn-primary btn-sm">
-          Entrar / Criar conta
+        <Link href="/completar-cadastro" className="btn btn-gold btn-sm">
+          Completar cadastro
         </Link>
-      </div>
-    );
-  }
-
-  if (!isPremium) {
-    return (
-      <div className="glass-card-static bolao-paywall">
-        <Crown size={40} style={{ color: 'var(--gold)' }} />
-        <h2>Bolão Premium</h2>
-        <p style={{ color: 'var(--text-secondary)' }}>
-          Participe do nosso Bolão e concorra a diversos produtos exclusivos da MinduBier!
-        </p>
-        <ul style={{
-          textAlign: 'left',
-          color: 'var(--text-secondary)',
-          fontSize: '0.875rem',
-          lineHeight: 1.7,
-          margin: 'var(--space-md) 0',
-          paddingLeft: 'var(--space-lg)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 2,
-        }}>
-          <li>Você faz o palpite antes do início de cada partida.</li>
-          <li>Se você acertar apenas o vencedor, ganhará <strong>1 ponto</strong>.</li>
-          <li>Se você acertar o vencedor e a diferença de placar, ganhará <strong>3 pontos</strong>.</li>
-          <li>Se você acertar o vencedor e o placar exato, ganhará <strong>5 pontos!</strong></li>
-          <li>Ao final do campeonato, quem fizer o maior número de pontos vence!</li>
-          <li>Haverá prêmios exclusivos da MinduBier para os três primeiros colocados.</li>
-          <li>Você pode acompanhar sua posição no ranking a qualquer momento!</li>
-        </ul>
-        <div className="bolao-price">R$ 39,90</div>
-        <button className="btn btn-gold" onClick={handleCheckout}>
-          Quero participar
-        </button>
       </div>
     );
   }
@@ -199,7 +160,7 @@ export function BolaoClient({
           <Info size={18} style={{ color: 'var(--gold)' }} />
           <p>
             <strong>Modo demonstração.</strong> Configure o Supabase para
-            autenticar, salvar palpites e habilitar o ranking.
+            autenticar, salvar palpites e habilitar a classificação.
           </p>
         </div>
       )}

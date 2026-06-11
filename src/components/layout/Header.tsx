@@ -13,7 +13,7 @@ const navLinks = [
   { href: '/selecoes', label: 'Seleções' },
   { href: '/probabilidades', label: 'Probabilidades' },
   { href: '/bolao', label: 'Bolão' },
-  { href: '/ranking', label: 'Ranking' },
+  { href: '/ranking', label: 'Classificação' },
 ];
 
 export function Header() {

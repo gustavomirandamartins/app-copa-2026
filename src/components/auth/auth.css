@@ -1,0 +1,122 @@
+/* ── Auth / Oferta do Bolão ─────────────────────────────────── */
+
+.auth-offer {
+  padding: var(--space-lg) var(--space-xl);
+  margin-bottom: var(--space-lg);
+}
+
+.auth-offer-price {
+  font-size: 2.2rem;
+  font-weight: 900;
+  font-family: var(--font-heading, inherit);
+  color: var(--gold);
+  line-height: 1;
+}
+
+.auth-offer ul {
+  list-style: none;
+  margin: var(--space-md) 0 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.auth-offer li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.auth-offer li svg {
+  color: var(--copa-green);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* Grid de dois cards (Entrar | Criar conta) */
+.auth-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-lg);
+  align-items: start;
+}
+
+@media (max-width: 720px) {
+  .auth-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.auth-card {
+  padding: var(--space-lg);
+}
+
+.auth-card h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.15rem;
+  margin-bottom: var(--space-md);
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.auth-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.auth-input {
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid rgba(50, 50, 49, 0.14);
+  background: rgba(255, 255, 255, 0.7);
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color var(--transition-fast);
+  width: 100%;
+}
+
+.auth-input:focus {
+  border-color: var(--copa-green);
+}
+
+.auth-msg {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+}
+
+.auth-msg.error {
+  background: rgba(220, 38, 38, 0.08);
+  color: #dc2626;
+}
+
+.auth-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  text-align: center;
+  padding: var(--space-md) 0;
+}
