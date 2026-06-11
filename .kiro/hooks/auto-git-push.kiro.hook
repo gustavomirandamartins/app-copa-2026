@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "name": "Auto git push ao finalizar",
+  "description": "Ao final de cada execução do agente, commita mudanças pendentes (se houver) e faz git push para o remoto.",
+  "version": "1",
+  "when": {
+    "type": "agentStop"
+  },
+  "then": {
+    "type": "runCommand",
+    "command": "if [ -n \"$(git status --porcelain)\" ]; then git add -A && git commit -m \"chore: auto-sync de alterações pendentes\"; fi; git push",
+    "timeout": 120
+  },
+  "workspaceFolderName": "app-copa-2026",
+  "shortName": "auto-git-push"
+}
