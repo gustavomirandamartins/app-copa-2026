@@ -1,0 +1,86 @@
+<!--
+  Supabase → Authentication → Email Templates → "Confirm signup"
+  Variável usada: {{ .ConfirmationURL }} (link de confirmação do Supabase).
+  O logo é servido em https://bolao.mindubier.com/logo-mindubier-horizontal.png
+  (precisa do app publicado nesse domínio; se a imagem não carregar, o texto
+  alternativo "MinduBier" aparece e o e-mail continua bonito).
+-->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0;padding:0;background-color:#fffdf4;">
+  <tr>
+    <td align="center" style="padding:32px 16px;">
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;background-color:#ffffff;border:1px solid #ede6d6;border-radius:20px;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+
+        <!-- Header / logo -->
+        <tr>
+          <td align="center" style="padding:32px 32px 8px;">
+            <img src="https://bolao.mindubier.com/logo-mindubier-horizontal.png"
+                 alt="MinduBier" width="220"
+                 style="display:block;width:220px;max-width:60%;height:auto;border:0;" />
+          </td>
+        </tr>
+
+        <!-- Faixa verde -->
+        <tr>
+          <td style="padding:8px 32px 0;">
+            <div style="height:4px;background:linear-gradient(90deg,#009739,#c5762a,#e0a23c);border-radius:999px;"></div>
+          </td>
+        </tr>
+
+        <!-- Conteúdo -->
+        <tr>
+          <td style="padding:28px 36px 8px;">
+            <h1 style="margin:0 0 8px;font-size:22px;line-height:1.25;font-weight:800;color:#323231;">
+              Confirme seu e-mail ⚽🍺
+            </h1>
+            <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#5b5b58;">
+              Falta só um passo para entrar no <strong>Bolão da Mindu na Copa 2026</strong>.
+              Clique no botão abaixo para confirmar seu e-mail e seguir para o cadastro.
+            </p>
+          </td>
+        </tr>
+
+        <!-- Botão (bulletproof) -->
+        <tr>
+          <td align="center" style="padding:8px 36px 8px;">
+            <table role="presentation" cellpadding="0" cellspacing="0">
+              <tr>
+                <td align="center" bgcolor="#c5762a" style="border-radius:12px;">
+                  <a href="{{ .ConfirmationURL }}" target="_blank"
+                     style="display:inline-block;padding:15px 34px;font-size:16px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:12px;background-color:#c5762a;">
+                    Confirmar meu e-mail
+                  </a>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Link alternativo -->
+        <tr>
+          <td style="padding:18px 36px 8px;">
+            <p style="margin:0 0 6px;font-size:12px;line-height:1.5;color:#9a978f;">
+              Se o botão não funcionar, copie e cole este link no navegador:
+            </p>
+            <p style="margin:0;font-size:12px;line-height:1.5;word-break:break-all;">
+              <a href="{{ .ConfirmationURL }}" style="color:#009739;text-decoration:underline;">{{ .ConfirmationURL }}</a>
+            </p>
+          </td>
+        </tr>
+
+        <!-- Rodapé -->
+        <tr>
+          <td style="padding:24px 36px 32px;">
+            <hr style="border:none;border-top:1px solid #efe9dc;margin:0 0 16px;" />
+            <p style="margin:0 0 4px;font-size:12px;line-height:1.5;color:#9a978f;">
+              Se você não criou uma conta no Bolão da Mindu, pode ignorar este e-mail com segurança.
+            </p>
+            <p style="margin:8px 0 0;font-size:12px;line-height:1.5;color:#b8b4a9;">
+              <strong style="color:#c5762a;">MinduBier</strong> · Salvador · Bahia · Brasil
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
