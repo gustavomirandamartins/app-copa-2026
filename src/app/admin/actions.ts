@@ -56,6 +56,8 @@ export async function triggerSync(): Promise<SyncActionResult> {
   try {
     const result = await runFootballSync();
     revalidatePath('/bolao');
+    revalidatePath('/jogos');
+    revalidatePath('/grupos');
     revalidatePath('/ranking');
     revalidatePath('/admin');
     return result;
