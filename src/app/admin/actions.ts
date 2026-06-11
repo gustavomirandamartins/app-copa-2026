@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { runFootballSync } from '@/lib/football-data/sync';
 import type { Profile } from '@/lib/bolao/types';
 
 export interface AdminActionResult {
@@ -31,6 +32,38 @@ async function requireAdmin(): Promise<{ userId: string } | { error: string }> {
     return { error: 'Acesso restrito a administradores.' };
   }
   return { userId: user.id };
+}
+
+export interface SyncActionResult {
+  ok: boolean;
+  matches?: number;
+  standings?: number;
+  scoredPredictions?: number;
+  syncedAt?: string;
+  skipped?: boolean;
+  reason?: string;
+  error?: string;
+}
+
+/**
+ * Dispara o sync de placares/classificação da Copa manualmente.
+ * Mesma lógica do cron GET /api/sync/football, sem passar pelo HTTP.
+ */
+export async function triggerSync(): Promise<SyncActionResult> {
+  const auth = await requireAdmin();
+  if ('error' in auth) return { ok: false, error: auth.error };
+
+  try {
+    const result = await runFootballSync();
+    revalidatePath('/bolao');
+    revalidatePath('/ranking');
+    revalidatePath('/admin');
+    return result;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'erro desconhecido';
+    console.error('[admin] triggerSync falhou:', message);
+    return { ok: false, error: message };
+  }
 }
 
 /** Aprova uma solicitação de Pix: libera o Premium e marca como aprovada. */
