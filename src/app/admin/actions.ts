@@ -126,9 +126,16 @@ export async function setPremium(
   }
 
   const admin = createAdminClient();
+  // Ao desabilitar o acesso, também removemos o consentimento de ranking
+  // para que o nome do usuário saia da classificação pública. (Ao reabilitar,
+  // não reativamos o consentimento — ele é dado pelo próprio usuário.)
+  const updates = value
+    ? { is_premium: true }
+    : { is_premium: false, agreed_to_ranking: false };
+
   const { error } = await admin
     .from('profiles')
-    .update({ is_premium: value })
+    .update(updates)
     .eq('id', userId);
 
   if (error) {
