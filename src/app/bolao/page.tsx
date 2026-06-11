@@ -1,8 +1,9 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { Trophy, Medal } from 'lucide-react';
+import { Trophy, Medal, ShieldCheck } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
+import { isProfileComplete } from '@/lib/bolao/profile';
 import type { Profile, PredictionInput } from '@/lib/bolao/types';
 import { BolaoClient } from '@/components/bolao/BolaoClient';
 import { AuthPanel } from '@/components/auth/AuthPanel';
@@ -54,7 +55,7 @@ export default async function BolaoPage({
     }
   }
 
-  // Logado mas ainda não premium → completar cadastro antes de pagar.
+  // Logado mas ainda não premium → completar cadastro / pagar.
   // Exceção: retorno do Stripe (?checkout=success), em que o webhook ainda
   // pode estar processando — deixamos o BolaoClient exibir o spinner.
   if (
@@ -63,7 +64,8 @@ export default async function BolaoPage({
     !profile?.is_premium &&
     checkout !== 'success'
   ) {
-    redirect('/completar-cadastro');
+    // Cadastro incompleto → onboarding; completo mas sem pagar → pagamento.
+    redirect(isProfileComplete(profile) ? '/pagamento' : '/completar-cadastro');
   }
 
   return (
@@ -86,6 +88,11 @@ export default async function BolaoPage({
           <Link href="/ranking" className="btn btn-gold btn-sm">
             <Medal size={16} /> Ver classificação e prêmios
           </Link>
+          {profile?.is_admin && (
+            <Link href="/admin" className="btn btn-gold btn-sm">
+              <ShieldCheck size={16} /> Central de controle
+            </Link>
+          )}
           {authenticated && userEmail && (
             <form action={logout}>
               <button

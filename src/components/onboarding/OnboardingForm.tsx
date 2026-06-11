@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import { AlertCircle, Loader2, CreditCard } from 'lucide-react';
 import { saveOnboarding } from '@/app/completar-cadastro/actions';
 import type { Profile } from '@/lib/bolao/types';
@@ -50,6 +51,7 @@ export function OnboardingForm({ profile }: Props) {
   const [cepError, setCepError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const router = useRouter();
 
   async function lookupCep(value: string) {
     const d = onlyDigits(value);
@@ -111,14 +113,8 @@ export function OnboardingForm({ profile }: Props) {
         setError(res.error ?? 'Erro ao salvar os dados.');
         return;
       }
-      // Dados salvos → cria a sessão de pagamento e redireciona ao Stripe.
-      const checkout = await fetch('/api/checkout', { method: 'POST' });
-      const data = await checkout.json();
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        setError(data.error ?? 'Não foi possível iniciar o pagamento.');
-      }
+      // Dados salvos → vai para a página de pagamento (Cartão ou Pix).
+      router.push('/pagamento');
     });
   }
 
@@ -248,7 +244,7 @@ export function OnboardingForm({ profile }: Props) {
           </>
         ) : (
           <>
-            <CreditCard size={16} /> Salvar e ir para o pagamento
+            <CreditCard size={16} /> Salvar e escolher forma de pagamento
           </>
         )}
       </button>

@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { UserCheck } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
+import { isProfileComplete } from '@/lib/bolao/profile';
 import type { Profile } from '@/lib/bolao/types';
 import { OnboardingForm } from '@/components/onboarding/OnboardingForm';
 
@@ -28,6 +29,9 @@ export default async function CompletarCadastroPage() {
 
   // Já é premium → não precisa completar; vai direto ao Bolão.
   if (profile?.is_premium) redirect('/bolao');
+
+  // Cadastro já completo, mas ainda não pagou → vai para o pagamento.
+  if (isProfileComplete(profile)) redirect('/pagamento');
 
   return (
     <div className="container">

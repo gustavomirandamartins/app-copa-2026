@@ -7,6 +7,7 @@ export interface Profile {
   id: string;
   full_name: string | null;
   is_premium: boolean;
+  is_admin: boolean;
   agreed_to_ranking: boolean;
   stripe_customer_id: string | null;
   total_score: number;
@@ -40,4 +41,22 @@ export interface PredictionInput {
   home_score_guess: number;
   away_score_guess: number;
   is_autofilled: boolean;
+}
+
+export type PaymentStatus = 'pending' | 'approved' | 'rejected';
+
+/** Solicitação de pagamento manual via Pix, revisada na central (/admin). */
+export interface PaymentRequest {
+  id: string;
+  user_id: string;
+  contact_email: string | null;
+  contact_name: string | null;
+  contact_phone: string | null;
+  amount_cents: number;
+  note: string | null;
+  status: PaymentStatus;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  created_at: string;
+  updated_at: string;
 }
