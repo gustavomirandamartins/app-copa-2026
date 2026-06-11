@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
-import { ShieldCheck } from 'lucide-react';
+import Link from 'next/link';
+import { ShieldCheck, Zap } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
@@ -44,10 +45,13 @@ export default async function AdminPage() {
   // Todos os usuários cadastrados (profiles) + e-mails (auth.users).
   const { data: profilesData } = await admin
     .from('profiles')
-    .select('id, full_name, phone, is_premium, is_admin, created_at')
+    .select('id, full_name, phone, is_premium, is_admin, total_score, created_at')
     .order('created_at', { ascending: false });
   const profiles = (profilesData as Array<
-    Pick<Profile, 'id' | 'full_name' | 'phone' | 'is_premium' | 'is_admin'> & {
+    Pick<
+      Profile,
+      'id' | 'full_name' | 'phone' | 'is_premium' | 'is_admin' | 'total_score'
+    > & {
       created_at: string | null;
     }
   >) ?? [];
@@ -69,6 +73,7 @@ export default async function AdminPage() {
     phone: p.phone,
     is_premium: p.is_premium,
     is_admin: p.is_admin,
+    total_score: p.total_score ?? 0,
     created_at: p.created_at,
   }));
 
@@ -86,6 +91,11 @@ export default async function AdminPage() {
           Confira o comprovante recebido por e-mail e aprove para liberar o
           acesso Premium do participante.
         </p>
+        <div style={{ marginTop: 'var(--space-sm)' }}>
+          <Link href="/admin/jogos" className="btn btn-gold btn-sm">
+            <Zap size={16} /> Jogos turbinados (multiplicadores)
+          </Link>
+        </div>
       </section>
 
       <AdminPaymentList pending={pending} reviewed={reviewed} />

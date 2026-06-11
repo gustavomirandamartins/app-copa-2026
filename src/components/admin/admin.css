@@ -161,3 +161,112 @@
 .admin-name-input:focus {
   border-color: var(--copa-green);
 }
+
+.admin-score {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+.admin-score-total {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 800;
+  color: var(--gold);
+  font-size: 0.92rem;
+}
+.admin-score-adjust {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.admin-score-label {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+.admin-delta-input {
+  width: 72px;
+  padding: 5px 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.12));
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-weight: 700;
+  outline: none;
+}
+.admin-delta-input:focus {
+  border-color: var(--copa-green);
+}
+
+.admin-match-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+.admin-match-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  flex-wrap: wrap;
+}
+.admin-match-row.boosted {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 1px rgba(224, 124, 0, 0.35);
+}
+.admin-match-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 200px;
+}
+.admin-match-teams {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+  flex-wrap: wrap;
+}
+.admin-match-x {
+  color: var(--text-tertiary);
+}
+.admin-match-date {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+.admin-match-error {
+  font-size: 0.78rem;
+  color: #f87171;
+}
+.admin-boost-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(224, 124, 0, 0.18);
+  color: var(--gold);
+  font-weight: 800;
+  font-size: 0.72rem;
+}
+.admin-mult-select {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+.admin-mult-select select {
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.12));
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}

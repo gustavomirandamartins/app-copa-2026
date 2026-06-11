@@ -8,10 +8,11 @@ import {
   Mail,
   Pencil,
   Search,
+  Trophy,
   User,
   X,
 } from 'lucide-react';
-import { setPremium, updateDisplayName } from '@/app/admin/actions';
+import { setPremium, updateDisplayName, adjustScore } from '@/app/admin/actions';
 import './admin.css';
 
 export interface AdminUser {
@@ -21,6 +22,7 @@ export interface AdminUser {
   phone: string | null;
   is_premium: boolean;
   is_admin: boolean;
+  total_score: number;
   created_at: string | null;
 }
 
@@ -38,6 +40,7 @@ function UserRow({ u }: { u: AdminUser }) {
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(u.full_name ?? '');
+  const [deltaStr, setDeltaStr] = useState('');
 
   function toggle() {
     setError(null);
@@ -63,6 +66,23 @@ function UserRow({ u }: { u: AdminUser }) {
     setName(u.full_name ?? '');
     setEditing(false);
     setError(null);
+  }
+
+  function applyAdjust() {
+    setError(null);
+    const delta = parseInt(deltaStr, 10);
+    if (!Number.isInteger(delta) || delta === 0) {
+      setError('Informe um número inteiro diferente de zero (ex.: 5 ou -3).');
+      return;
+    }
+    startTransition(async () => {
+      const res = await adjustScore(u.id, delta);
+      if (res.ok) {
+        setDeltaStr('');
+      } else {
+        setError(res.error ?? 'Erro ao corrigir a pontuação.');
+      }
+    });
   }
 
   return (
@@ -126,6 +146,33 @@ function UserRow({ u }: { u: AdminUser }) {
           )}
           <span>Cadastro: {formatDate(u.created_at)}</span>
         </div>
+
+        <div className="admin-score">
+          <span className="admin-score-total">
+            <Trophy size={13} /> {u.total_score} pts
+          </span>
+          <div className="admin-score-adjust">
+            <span className="admin-score-label">Corrigir pontuação:</span>
+            <input
+              type="number"
+              className="admin-delta-input"
+              placeholder="±0"
+              value={deltaStr}
+              onChange={(e) => setDeltaStr(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') applyAdjust();
+              }}
+            />
+            <button
+              className="btn btn-secondary btn-sm"
+              disabled={pending}
+              onClick={applyAdjust}
+            >
+              Aplicar
+            </button>
+          </div>
+        </div>
+
         {error && (
           <div className="auth-msg error" style={{ marginTop: 8 }}>
             <AlertCircle size={14} /> {error}

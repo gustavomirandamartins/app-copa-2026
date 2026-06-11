@@ -22,22 +22,33 @@ export async function applyScoring(admin: Admin): Promise<{ updatedPredictions: 
   if (error) throw new Error(`scoring: ler matches: ${error.message}`);
   if (!finished || finished.length === 0) return { updatedPredictions: 0 };
 
+  // Multiplicadores por jogo (jogos turbinados). Ausente → x1.
+  const { data: settings } = await admin
+    .from('match_settings')
+    .select('match_id, score_multiplier');
+  const multiplierByMatch = new Map<string, number>();
+  for (const s of settings ?? []) {
+    multiplierByMatch.set(s.match_id, s.score_multiplier ?? 1);
+  }
+
   const affectedUsers = new Set<string>();
   let updatedPredictions = 0;
 
   for (const match of finished) {
+    const multiplier = multiplierByMatch.get(match.id) ?? 1;
     const { data: preds } = await admin
       .from('predictions')
       .select('id, user_id, home_score_guess, away_score_guess')
       .eq('match_id', match.id);
 
     for (const p of preds ?? []) {
-      const points = calculateMatchPoints(
+      const base = calculateMatchPoints(
         p.home_score_guess,
         p.away_score_guess,
         match.home_score,
         match.away_score,
       );
+      const points = base * multiplier;
       await admin
         .from('predictions')
         .update({ points_earned: points })
@@ -47,17 +58,27 @@ export async function applyScoring(admin: Admin): Promise<{ updatedPredictions: 
     }
   }
 
-  // Recalcula o total de cada usuário afetado (soma dos points_earned).
+  // Recalcula o total de cada usuário afetado: soma dos points_earned +
+  // a correção manual (score_adjustment) aplicada pelo admin.
   for (const userId of affectedUsers) {
     const { data: rows } = await admin
       .from('predictions')
       .select('points_earned')
       .eq('user_id', userId);
-    const total = (rows ?? []).reduce(
+    const earned = (rows ?? []).reduce(
       (sum, r) => sum + (r.points_earned ?? 0),
       0,
     );
-    await admin.from('profiles').update({ total_score: total }).eq('id', userId);
+    const { data: prof } = await admin
+      .from('profiles')
+      .select('score_adjustment')
+      .eq('id', userId)
+      .single();
+    const adjustment = prof?.score_adjustment ?? 0;
+    await admin
+      .from('profiles')
+      .update({ total_score: earned + adjustment })
+      .eq('id', userId);
   }
 
   return { updatedPredictions };

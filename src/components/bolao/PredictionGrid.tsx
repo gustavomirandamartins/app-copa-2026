@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Lock, Dices, Clock } from 'lucide-react';
+import { Lock, Dices, Clock, Zap } from 'lucide-react';
 import { matches as allMatches } from '@/data/matches';
 import { getTeamById } from '@/data/teams';
 import { TeamFlag } from '@/components/ui/TeamFlag';
@@ -31,6 +31,7 @@ interface Props {
   canEdit: boolean;
   onScore: (matchId: string, side: 'home' | 'away', value: number | null) => void;
   onAutofill: () => void;
+  multipliers?: Record<string, number>;
 }
 
 /** Locked = teams not set, already started, or not scheduled. */
@@ -74,7 +75,7 @@ function MatchTime({ dateUTC, mounted }: { dateUTC: string; mounted: boolean }) 
   );
 }
 
-export function PredictionGrid({ values, canEdit, onScore, onAutofill }: Props) {
+export function PredictionGrid({ values, canEdit, onScore, onAutofill, multipliers = {} }: Props) {
   const [activeStage, setActiveStage] = useState<MatchStage>('group');
   const [now, setNow] = useState<number | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -122,6 +123,8 @@ export function PredictionGrid({ values, canEdit, onScore, onAutofill }: Props) 
           const locked = isLocked(match, now) || !canEdit;
           const upcoming = isUpcoming(match, now);
           const value = values.get(match.id);
+          const multiplier = multipliers[match.id] ?? 1;
+          const boosted = multiplier > 1;
           const isBrazil =
             match.homeTeamId === BRAZIL_ID || match.awayTeamId === BRAZIL_ID;
 
@@ -130,8 +133,13 @@ export function PredictionGrid({ values, canEdit, onScore, onAutofill }: Props) 
               key={match.id}
               className={`bolao-row glass-card-static ${isBrazil ? 'brazil' : ''} ${
                 locked ? 'locked' : ''
-              } ${upcoming ? 'upcoming' : ''}`}
+              } ${upcoming ? 'upcoming' : ''} ${boosted ? 'boosted' : ''}`}
             >
+              {boosted && (
+                <span className="bolao-boost-badge" title={`Pontos multiplicados por ${multiplier}`}>
+                  <Zap size={12} /> Vale x{multiplier}
+                </span>
+              )}
               {upcoming && (
                 <span className="bolao-upcoming-badge">Em breve</span>
               )}

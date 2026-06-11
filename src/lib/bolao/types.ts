@@ -11,6 +11,7 @@ export interface Profile {
   agreed_to_ranking: boolean;
   stripe_customer_id: string | null;
   total_score: number;
+  score_adjustment: number;
   // Onboarding (coletados após a confirmação do e-mail)
   birth_date: string | null;
   phone: string | null;
@@ -44,6 +45,13 @@ export interface PredictionInput {
 }
 
 export type PaymentStatus = 'pending' | 'approved' | 'rejected';
+
+/** Configuração por jogo mantida pelo admin (multiplicador de pontos). */
+export interface MatchSetting {
+  match_id: string;
+  score_multiplier: number;
+  updated_at: string;
+}
 
 /** Solicitação de pagamento manual via Pix, revisada na central (/admin). */
 export interface PaymentRequest {

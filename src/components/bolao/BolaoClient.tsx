@@ -18,6 +18,7 @@ interface Props {
   authenticated: boolean;
   profile: Profile | null;
   existingPredictions: PredictionInput[];
+  multipliers?: Record<string, number>;
 }
 
 function seedValues(existing: PredictionInput[]): Map<string, PredictionValue> {
@@ -37,6 +38,7 @@ export function BolaoClient({
   authenticated,
   profile,
   existingPredictions,
+  multipliers = {},
 }: Props) {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -174,6 +176,7 @@ export function BolaoClient({
         canEdit={canEdit}
         onScore={setScore}
         onAutofill={autofillAll}
+        multipliers={multipliers}
       />
 
       <div className="bolao-savebar">

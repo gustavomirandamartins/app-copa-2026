@@ -30,12 +30,22 @@ export default async function BolaoPage({
   let authenticated = false;
   let existingPredictions: PredictionInput[] = [];
   let userEmail: string | null = null;
+  const multipliers: Record<string, number> = {};
 
   if (configured) {
     const supabase = await createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
+
+    // Multiplicadores dos jogos turbinados (leitura pública).
+    const { data: settings } = await supabase
+      .from('match_settings')
+      .select('match_id, score_multiplier')
+      .gt('score_multiplier', 1);
+    for (const s of settings ?? []) {
+      multipliers[s.match_id] = s.score_multiplier as number;
+    }
 
     if (user) {
       authenticated = true;
@@ -115,6 +125,7 @@ export default async function BolaoPage({
           authenticated={authenticated}
           profile={profile}
           existingPredictions={existingPredictions}
+          multipliers={multipliers}
         />
       )}
     </div>

@@ -143,6 +143,81 @@ export async function updateDisplayName(
 }
 
 /**
+ * Corrige a pontuação de um usuário: adiciona (delta > 0) ou subtrai
+ * (delta < 0) pontos. Guarda a correção em score_adjustment (para sobreviver
+ * ao recálculo do sync) e ajusta o total_score na hora. Admin-only.
+ */
+export async function adjustScore(
+  userId: string,
+  delta: number,
+): Promise<AdminActionResult> {
+  const auth = await requireAdmin();
+  if ('error' in auth) return { ok: false, error: auth.error };
+
+  if (!Number.isInteger(delta) || delta === 0) {
+    return { ok: false, error: 'Informe um número inteiro diferente de zero.' };
+  }
+
+  const admin = createAdminClient();
+  const { data: prof, error: readErr } = await admin
+    .from('profiles')
+    .select('total_score, score_adjustment')
+    .eq('id', userId)
+    .single();
+
+  if (readErr || !prof) {
+    return { ok: false, error: 'Usuário não encontrado.' };
+  }
+
+  const { error } = await admin
+    .from('profiles')
+    .update({
+      score_adjustment: (prof.score_adjustment ?? 0) + delta,
+      total_score: (prof.total_score ?? 0) + delta,
+    })
+    .eq('id', userId);
+
+  if (error) {
+    console.error('[admin] falha ao corrigir pontuação:', error);
+    return { ok: false, error: 'Não foi possível corrigir a pontuação.' };
+  }
+
+  revalidatePath('/admin');
+  return { ok: true };
+}
+
+/**
+ * Define o multiplicador de pontos de um jogo ("jogo turbinado").
+ * multiplier = 1 → normal; 2, 3, 4... → pontos multiplicados. Admin-only.
+ */
+export async function setMatchMultiplier(
+  matchId: string,
+  multiplier: number,
+): Promise<AdminActionResult> {
+  const auth = await requireAdmin();
+  if ('error' in auth) return { ok: false, error: auth.error };
+
+  if (!Number.isInteger(multiplier) || multiplier < 1 || multiplier > 10) {
+    return { ok: false, error: 'Multiplicador inválido (use de 1 a 10).' };
+  }
+
+  const admin = createAdminClient();
+  const { error } = await admin.from('match_settings').upsert(
+    { match_id: matchId, score_multiplier: multiplier, updated_at: new Date().toISOString() },
+    { onConflict: 'match_id' },
+  );
+
+  if (error) {
+    console.error('[admin] falha ao definir multiplicador:', error);
+    return { ok: false, error: 'Não foi possível salvar o multiplicador.' };
+  }
+
+  revalidatePath('/admin/jogos');
+  revalidatePath('/bolao');
+  return { ok: true };
+}
+
+/**
  * Habilita ou desabilita manualmente o acesso Premium de um usuário,
  * independentemente de pagamento. Usado para liberar quem o organizador
  * quiser (cortesias, convidados, etc.).
