@@ -274,6 +274,21 @@ a:hover { color: var(--copa-green-deep); }
   }
 }
 
+/* ---- Header logo (cross-fade branco↔colorido, igual à landing) ---- */
+.app-header-logo {
+  position: relative;
+  display: block;
+  width: 128px;
+  height: 26px;
+  flex-shrink: 0;
+}
+@media (min-width: 768px) {
+  .app-header-logo {
+    width: 148px;
+    height: 30px;
+  }
+}
+
 /* ---- Section ---- */
 .section-header {
   display: flex;
