@@ -753,3 +753,22 @@ export function getTeamById(id: string): Team | undefined {
 export function getTeamsByGroup(group: string): Team[] {
   return teams.filter((t) => t.group === group);
 }
+
+const FLAGS_BASE =
+  'https://sdyilmgixyynnmczsnhc.supabase.co/storage/v1/object/public/flags/';
+
+const FLAG_OVERRIDES: Record<string, string> = {
+  Tchequia: 'republicatcheca',
+};
+
+export function getFlagUrl(teamName: string): string {
+  const slug = teamName
+    .replace(/ e /gi, ' ')
+    .normalize('NFD')
+    .split('')
+    .filter((c) => c.charCodeAt(0) < 0x0300 || c.charCodeAt(0) > 0x036f)
+    .join('')
+    .toLowerCase()
+    .replace(/\s+/g, '');
+  return `${FLAGS_BASE}${FLAG_OVERRIDES[slug] ?? slug}.png`;
+}

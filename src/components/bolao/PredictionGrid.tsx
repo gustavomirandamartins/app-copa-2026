@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Lock, Dices, Clock } from 'lucide-react';
 import { matches as allMatches } from '@/data/matches';
 import { getTeamById } from '@/data/teams';
+import { TeamFlag } from '@/components/ui/TeamFlag';
 import { formatKickoffTime, formatKickoffDate } from '@/lib/datetime';
 import type { Match, MatchStage } from '@/lib/types';
 
@@ -51,7 +52,11 @@ function TeamCell({ teamId }: { teamId: string | null }) {
   const team = teamId ? getTeamById(teamId) : undefined;
   return (
     <span className="bolao-team">
-      <span className="bolao-flag">{team?.flag ?? '⏳'}</span>
+      {team ? (
+        <TeamFlag name={team.name} flagEmoji={team.flag} size={28} style={{ borderRadius: 3 }} />
+      ) : (
+        <span className="bolao-flag">⏳</span>
+      )}
       <span>{team?.name ?? 'A definir'}</span>
     </span>
   );

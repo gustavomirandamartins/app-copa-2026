@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { BarChart3, Trophy, ExternalLink } from 'lucide-react';
 import { getTeamById } from '@/data/teams';
 import { ufmgProbabilities, getProbabilitiesByStage, getTeamProbability } from '@/data/ufmg-probabilities';
+import { TeamFlag } from '@/components/ui/TeamFlag';
 
 type Stage = 'champion' | 'final' | 'semifinal' | 'quarterFinal' | 'roundOf16' | 'roundOf32';
 
@@ -73,7 +74,7 @@ export default function ProbabilidadesPage() {
           borderLeft: '3px solid var(--gold)',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)', marginBottom: 'var(--space-md)' }}>
-            <span style={{ fontSize: '2.5rem' }}>{brasilTeam.flag}</span>
+            <TeamFlag name={brasilTeam.name} flagEmoji={brasilTeam.flag} size={40} style={{ borderRadius: 4 }} />
             <h3>{brasilTeam.name}</h3>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(90px, 1fr))', gap: 'var(--space-sm)' }}>
@@ -130,7 +131,7 @@ export default function ProbabilidadesPage() {
                 }}>
                   {i + 1}
                 </span>
-                <span className="flag">{team.flag}</span>
+                <TeamFlag name={team.name} flagEmoji={team.flag} size={24} />
                 <Link href={`/selecoes/${team.id}`} style={{ textDecoration: 'none' }}>
                   <span className="name" style={{ color: 'var(--text-primary)' }}>{team.name}</span>
                 </Link>

@@ -6,6 +6,7 @@ import { Calendar, MapPin, Filter } from 'lucide-react';
 import { matches } from '@/data/matches';
 import { getTeamById } from '@/data/teams';
 import { getStadiumById } from '@/data/stadiums';
+import { TeamFlag } from '@/components/ui/TeamFlag';
 import type { MatchStage } from '@/lib/types';
 import { formatKickoffTime, formatKickoffDate } from '@/lib/datetime';
 
@@ -101,7 +102,11 @@ export default function JogosPage() {
                   </div>
                   <div className="match-card-teams">
                     <div className="match-card-team">
-                      <span className="flag">{home?.flag || '🏳️'}</span>
+                      {home ? (
+                        <TeamFlag name={home.name} flagEmoji={home.flag} size={40} />
+                      ) : (
+                        <span className="flag">🏳️</span>
+                      )}
                       <span className="name">{home?.name || match.homeTeamPlaceholder || 'A definir'}</span>
                     </div>
                     {match.status === 'finished' ? (
@@ -114,7 +119,11 @@ export default function JogosPage() {
                       <MatchTime dateUTC={match.dateUTC} />
                     )}
                     <div className="match-card-team">
-                      <span className="flag">{away?.flag || '🏳️'}</span>
+                      {away ? (
+                        <TeamFlag name={away.name} flagEmoji={away.flag} size={40} />
+                      ) : (
+                        <span className="flag">🏳️</span>
+                      )}
                       <span className="name">{away?.name || match.awayTeamPlaceholder || 'A definir'}</span>
                     </div>
                   </div>

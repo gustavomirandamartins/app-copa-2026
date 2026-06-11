@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Users, Search, Trophy } from 'lucide-react';
 import { teams } from '@/data/teams';
 import { getTeamProbability } from '@/data/ufmg-probabilities';
+import { TeamFlag } from '@/components/ui/TeamFlag';
 import type { Confederation } from '@/lib/types';
 
 const confTabs: { key: Confederation | 'all'; label: string }[] = [
@@ -83,7 +84,7 @@ export default function SelecoesPage() {
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 'var(--space-sm)' }}>
-                  <span style={{ fontSize: '2.5rem', lineHeight: 1 }}>{team.flag}</span>
+                  <TeamFlag name={team.name} flagEmoji={team.flag} size={40} style={{ borderRadius: 4 }} />
                   <span className="badge badge-group">Grupo {team.group}</span>
                 </div>
                 <h4 style={{ fontSize: '1rem', marginBottom: 4 }}>{team.name}</h4>

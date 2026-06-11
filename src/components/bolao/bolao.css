@@ -205,6 +205,13 @@
   backdrop-filter: blur(8px);
 }
 
+/* Fallback de blur p/ WebKit legado — ver nota em globals.css */
+@supports (-webkit-backdrop-filter: blur(1px)) and (not (backdrop-filter: blur(1px))) {
+  .bolao-overlay {
+    -webkit-backdrop-filter: blur(8px);
+  }
+}
+
 .bolao-modal {
   max-width: 420px;
   width: 100%;

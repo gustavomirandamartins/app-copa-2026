@@ -185,8 +185,10 @@ a:hover { color: var(--copa-green-deep); }
 /* ---- Glass Card ---- */
 .glass-card {
   background: var(--glass-bg);
+  /* Só a propriedade padrão — o Lightning CSS adiciona o -webkit- para
+     o Safari. Escrever o prefixo à mão fazia o minificador descartar a
+     versão sem prefixo, quebrando o glass no Chrome. */
   backdrop-filter: blur(var(--glass-blur)) saturate(180%);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
@@ -224,8 +226,10 @@ a:hover { color: var(--copa-green-deep); }
 
 .glass-card-static {
   background: var(--glass-bg);
+  /* Só a propriedade padrão — o Lightning CSS adiciona o -webkit- para
+     o Safari. Escrever o prefixo à mão fazia o minificador descartar a
+     versão sem prefixo, quebrando o glass no Chrome. */
   backdrop-filter: blur(var(--glass-blur)) saturate(180%);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
@@ -780,8 +784,10 @@ a:hover { color: var(--copa-green-deep); }
   align-items: center;
   gap: 4px;
   background: var(--glass-bg);
+  /* Só a propriedade padrão — o Lightning CSS adiciona o -webkit- para
+     o Safari. Escrever o prefixo à mão fazia o minificador descartar a
+     versão sem prefixo, quebrando o glass no Chrome. */
   backdrop-filter: blur(var(--glass-blur)) saturate(180%);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
   padding: var(--space-sm) var(--space-md);
@@ -1017,4 +1023,21 @@ a:hover { color: var(--copa-green-deep); }
 
 @media (min-width: 768px) {
   .hide-desktop { display: none !important; }
+}
+
+/* ---- Glass fallback p/ WebKit legado (Safari ≤17 / iOS antigo) ----
+   O Safari moderno (18+) e o Chrome usam o backdrop-filter sem prefixo
+   das regras acima. Este @supports só dispara onde existe
+   -webkit-backdrop-filter mas NÃO o padrão — exatamente o Safari antigo —
+   então não interfere nem reintroduz o bug de dedupe do Lightning CSS. */
+@supports (-webkit-backdrop-filter: blur(1px)) and (not (backdrop-filter: blur(1px))) {
+  .glass-card,
+  .glass-card-static,
+  .countdown-item {
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+  }
+  .btn-secondary,
+  .search-input {
+    -webkit-backdrop-filter: blur(12px);
+  }
 }

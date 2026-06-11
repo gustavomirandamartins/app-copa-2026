@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { BarChart3 } from 'lucide-react';
 import { teams } from '@/data/teams';
 import { getTeamProbability } from '@/data/ufmg-probabilities';
+import { TeamFlag } from '@/components/ui/TeamFlag';
 import type { GroupId } from '@/lib/types';
 
 const allGroups: GroupId[] = ['A','B','C','D','E','F','G','H','I','J','K','L'];
@@ -55,7 +56,7 @@ export default function GruposPage() {
                 </span>
                 <div style={{ display: 'flex', gap: '4px' }}>
                   {groupTeams.map(t => (
-                    <span key={t.id} style={{ fontSize: '1.2rem' }} title={t.name}>{t.flag}</span>
+                    <TeamFlag key={t.id} name={t.name} flagEmoji={t.flag} size={20} style={{ borderRadius: 2 }} />
                   ))}
                 </div>
               </div>
@@ -84,7 +85,7 @@ export default function GruposPage() {
                           <td>
                             <div className="team-cell">
                               <span className="pos">{pos + 1}</span>
-                              <span className="flag">{team.flag}</span>
+                              <TeamFlag name={team.name} flagEmoji={team.flag} size={20} />
                               <Link href={`/selecoes/${team.id}`} style={{ textDecoration: 'none', color: 'var(--text-primary)', fontWeight: 600 }}>
                                 {team.name}
                               </Link>
@@ -118,7 +119,7 @@ export default function GruposPage() {
                   const p = getTeamProbability(t.id);
                   return (
                     <span key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                      {t.flag}
+                      <TeamFlag name={t.name} flagEmoji={t.flag} size={16} style={{ borderRadius: 2 }} />
                       <span style={{ color: 'var(--gold)', fontWeight: 700 }}>
                         {p?.roundOf32.toFixed(0)}%
                       </span>

@@ -16,6 +16,7 @@ const PRIZES = [
     icon: Trophy,
     items: [
       '6 latas MinduIPA',
+      '6 copos MinduBier',
       'Camisa MinduBier 10 Anos',
       'Boné MinduBier 10 Anos',
       'Copo Térmico MinduBier 10 Anos',
@@ -25,13 +26,25 @@ const PRIZES = [
     place: '2º lugar',
     className: '',
     icon: Medal,
-    items: ['Kit 2 latas MinduIPA + Taça MinduBier', 'Boné MinduBier 10 Anos'],
+    items: ['3 latas MinduIPA', '3 copos MinduBier', 'Camisa MinduBier 10 Anos'],
   },
   {
     place: '3º lugar',
     className: '',
     icon: Award,
-    items: ['Kit lata MinduIPA + Taça MinduBier'],
+    items: ['2 latas MinduIPA', '2 copos MinduBier', 'Boné MinduBier 10 Anos'],
+  },
+  {
+    place: '4º lugar',
+    className: '',
+    icon: Award,
+    items: ['1 lata MinduIPA', '1 copo MinduBier'],
+  },
+  {
+    place: '5º lugar',
+    className: '',
+    icon: Award,
+    items: ['1 copo MinduBier'],
   },
 ];
 

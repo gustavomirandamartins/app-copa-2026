@@ -9,6 +9,7 @@ import { getStadiumById } from '@/data/stadiums';
 import { getProbabilitiesByStage, getTeamProbability } from '@/data/ufmg-probabilities';
 import { formatKickoffTime, formatKickoffDate } from '@/lib/datetime';
 import { ScrollReveal } from '@/components/ui/ScrollReveal';
+import { TeamFlag } from '@/components/ui/TeamFlag';
 
 /* ─── Countdown Component ────────────────────────────────── */
 function Countdown({ targetDate }: { targetDate: Date }) {
@@ -103,7 +104,11 @@ function MatchCard({ match }: { match: typeof matches[0] }) {
         </div>
         <div className="match-card-teams">
           <div className="match-card-team">
-            <span className="flag">{home?.flag || '🏳️'}</span>
+            {home ? (
+              <TeamFlag name={home.name} flagEmoji={home.flag} size={40} />
+            ) : (
+              <span className="flag">🏳️</span>
+            )}
             <span className="name">{home?.name || match.homeTeamPlaceholder || 'TBD'}</span>
           </div>
           {match.status === 'finished' || match.status === 'live' ? (
@@ -116,7 +121,11 @@ function MatchCard({ match }: { match: typeof matches[0] }) {
             <div className="match-card-time">{timeStr || '--:--'}</div>
           )}
           <div className="match-card-team">
-            <span className="flag">{away?.flag || '🏳️'}</span>
+            {away ? (
+              <TeamFlag name={away.name} flagEmoji={away.flag} size={40} />
+            ) : (
+              <span className="flag">🏳️</span>
+            )}
             <span className="name">{away?.name || match.awayTeamPlaceholder || 'TBD'}</span>
           </div>
         </div>
@@ -132,8 +141,8 @@ function MatchCard({ match }: { match: typeof matches[0] }) {
 }
 
 /* ─── Probability Bar ────────────────────────────────────── */
-function ProbBar({ flag, name, value, maxValue, delay = 0 }: {
-  flag: string; name: string; value: number; maxValue: number; delay?: number;
+function ProbBar({ teamName, flagEmoji, name, value, maxValue, delay = 0 }: {
+  teamName: string; flagEmoji: string; name: string; value: number; maxValue: number; delay?: number;
 }) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
@@ -146,7 +155,7 @@ function ProbBar({ flag, name, value, maxValue, delay = 0 }: {
   return (
     <div className="probability-bar-container">
       <div className="probability-bar-info">
-        <span className="flag">{flag}</span>
+        <TeamFlag name={teamName} flagEmoji={flagEmoji} size={24} />
         <span className="name">{name}</span>
       </div>
       <div className="probability-bar-track">
@@ -280,7 +289,7 @@ export default function HomePage() {
               pointerEvents: 'none',
             }} />
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)', marginBottom: 'var(--space-md)' }}>
-              <span style={{ fontSize: '3rem' }}>{brasilTeam.flag}</span>
+              <TeamFlag name={brasilTeam.name} flagEmoji={brasilTeam.flag} size={48} style={{ borderRadius: 4 }} />
               <div>
                 <h3 style={{ fontFamily: 'var(--font-heading)', fontWeight: 800 }}>{brasilTeam.name}</h3>
                 <span className="badge badge-group">Grupo {brasilTeam.group}</span>
@@ -304,7 +313,7 @@ export default function HomePage() {
                   color: 'var(--text-secondary)',
                   fontWeight: t.id === 'bra' ? 700 : 400,
                 }}>
-                  {t.flag} {t.name}
+                  <TeamFlag name={t.name} flagEmoji={t.flag} size={18} style={{ borderRadius: 2 }} /> {t.name}
                 </span>
               ))}
             </div>
@@ -348,7 +357,8 @@ export default function HomePage() {
               return (
                 <ProbBar
                   key={item.teamId}
-                  flag={team.flag}
+                  teamName={team.name}
+                  flagEmoji={team.flag}
                   name={team.name}
                   value={item.probability}
                   maxValue={maxProb}

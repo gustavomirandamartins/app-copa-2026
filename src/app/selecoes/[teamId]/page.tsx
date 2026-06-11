@@ -8,6 +8,7 @@ import { matches } from '@/data/matches';
 import { getStadiumById } from '@/data/stadiums';
 import { getTeamProbability } from '@/data/ufmg-probabilities';
 import { getKeyPlayer } from '@/data/key-players';
+import { TeamFlag } from '@/components/ui/TeamFlag';
 import { formatKickoffTime } from '@/lib/datetime';
 
 function ClientTime({ dateUTC }: { dateUTC: string }) {
@@ -68,12 +69,12 @@ export default function SelecaoPage({ params }: { params: Promise<{ teamId: stri
       }}>
         <div style={{
           position: 'absolute', top: '-40px', right: '-40px',
-          fontSize: '10rem', opacity: 0.06, lineHeight: 1,
+          opacity: 0.06, lineHeight: 1,
         }}>
-          {team.flag}
+          <TeamFlag name={team.name} flagEmoji={team.flag} size={160} style={{ borderRadius: 8 }} />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-lg)', flexWrap: 'wrap' }}>
-          <span style={{ fontSize: '4.5rem', lineHeight: 1 }}>{team.flag}</span>
+          <TeamFlag name={team.name} flagEmoji={team.flag} size={72} style={{ borderRadius: 6 }} />
           <div style={{ flex: 1 }}>
             <h1 style={{ marginBottom: 4 }}>{team.name}</h1>
             <div style={{ display: 'flex', gap: 'var(--space-md)', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -207,7 +208,7 @@ export default function SelecaoPage({ params }: { params: Promise<{ teamId: stri
                 fontWeight: t.id === team.id ? 700 : 400,
                 fontSize: '0.9rem',
               }}>
-                <span style={{ fontSize: '1.5rem' }}>{t.flag}</span> {t.name}
+                <TeamFlag name={t.name} flagEmoji={t.flag} size={24} style={{ borderRadius: 3 }} /> {t.name}
               </Link>
             ))}
           </div>
@@ -237,7 +238,7 @@ export default function SelecaoPage({ params }: { params: Promise<{ teamId: stri
                     gap: 'var(--space-md)',
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
-                      <span>{home?.flag}</span>
+                      {home && <TeamFlag name={home.name} flagEmoji={home.flag} size={20} style={{ borderRadius: 2 }} />}
                       <span style={{ fontWeight: match.homeTeamId === teamId ? 700 : 400, fontSize: '0.85rem' }}>
                         {home?.name || 'TBD'}
                       </span>
@@ -249,7 +250,7 @@ export default function SelecaoPage({ params }: { params: Promise<{ teamId: stri
                       <span style={{ fontWeight: match.awayTeamId === teamId ? 700 : 400, fontSize: '0.85rem' }}>
                         {away?.name || 'TBD'}
                       </span>
-                      <span>{away?.flag}</span>
+                      {away && <TeamFlag name={away.name} flagEmoji={away.flag} size={20} style={{ borderRadius: 2 }} />}
                     </div>
                   </div>
                 );
