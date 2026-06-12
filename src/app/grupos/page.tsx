@@ -90,7 +90,8 @@ export default async function GruposPage() {
     if (dbStandings && dbStandings.length > 0) {
       // Tabela standings tem dados → usa diretamente
       for (const row of dbStandings) {
-        const g = row.group_letter as GroupId;
+        // Normaliza "Group A" → "A" e "GROUP_A" → "A"
+        const g = row.group_letter.replace(/^group[_ ]?/i, '').trim() as GroupId;
         if (!standingsByGroup.has(g)) standingsByGroup.set(g, []);
         standingsByGroup.get(g)!.push(row as StandingRow);
       }

@@ -73,7 +73,7 @@ export async function runFootballSync(): Promise<SyncResult> {
           const teamId = resolveTeamId(row.team);
           if (!teamId) return null;
           return {
-            group_letter: (s.group ?? '').replace('GROUP_', ''),
+            group_letter: (s.group ?? '').replace(/^group[_ ]?/i, '').trim(),
             team_id: teamId,
             position: row.position,
             played: row.playedGames,
