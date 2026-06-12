@@ -1,10 +1,50 @@
 /* ── Ranking & Prêmios ─────────────────────────────────────── */
 
+/* ── Dropdown de prêmios ───────────────────────────────────── */
+.prizes-dropdown {
+  margin-bottom: var(--space-xl);
+}
+
+.prizes-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  cursor: pointer;
+  list-style: none;
+  font-weight: 700;
+  transition: border-color 0.2s ease;
+}
+
+/* Remove o marcador nativo do <summary>. */
+.prizes-summary::-webkit-details-marker {
+  display: none;
+}
+
+.prizes-summary-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.prizes-chevron {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+  transition: transform 0.25s ease;
+}
+
+.prizes-dropdown[open] .prizes-chevron {
+  transform: rotate(180deg);
+}
+
 .prizes-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: var(--space-md);
-  margin-bottom: var(--space-xl);
+  margin-top: var(--space-md);
 }
 
 .prize-card {
@@ -64,10 +104,16 @@
   align-items: center;
   gap: var(--space-md);
   padding: var(--space-md);
+  transition: box-shadow 0.2s ease;
 }
 
-.ranking-row.podium {
-  border: 1px solid var(--gold-dim);
+/* Top 5 (premiados) — destaque com glow e número em laranja. */
+.ranking-row.top5 {
+  border: 1px solid var(--gold);
+  box-shadow:
+    0 0 0 1px rgba(224, 124, 0, 0.30),
+    0 0 22px rgba(224, 124, 0, 0.22),
+    0 6px 24px rgba(224, 124, 0, 0.12);
 }
 
 .ranking-pos {
@@ -78,12 +124,40 @@
   color: var(--text-tertiary);
 }
 
-.ranking-row.podium .ranking-pos {
+.ranking-row.top5 .ranking-pos {
   color: var(--gold);
+  font-size: 1.4rem;
+  text-shadow: 0 0 14px rgba(224, 124, 0, 0.45);
+}
+
+/* Admin (fora de competição) — sem destaque, levemente esmaecido. */
+.ranking-row.admin {
+  opacity: 0.78;
+}
+
+.ranking-row.admin .ranking-pos {
+  color: var(--text-tertiary);
+  font-size: 1.1rem;
 }
 
 .ranking-name {
   font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ranking-tag {
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  background: rgba(50, 50, 49, 0.08);
+  border-radius: var(--radius-full);
+  padding: 2px 8px;
+  white-space: nowrap;
 }
 
 .ranking-score {

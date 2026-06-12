@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Trophy, Medal, Award, Info, ArrowLeft } from 'lucide-react';
+import { Trophy, Medal, Award, Info, ArrowLeft, ChevronDown } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
 import './ranking.css';
@@ -8,6 +8,12 @@ interface RankedUser {
   full_name: string | null;
   total_score: number;
 }
+
+// O admin aparece na classificação pela ordem dos pontos, mas fora de
+// competição: não ocupa colocação (a posição segue para o próximo) e não
+// recebe o destaque dos 5 primeiros.
+const ADMIN_NAME = 'Gustavo Martins';
+const normalizeName = (s: string | null) => (s ?? '').trim().toLowerCase();
 
 const PRIZES = [
   {
@@ -105,28 +111,37 @@ export default async function RankingPage() {
         </div>
       </section>
 
-      {/* Prêmios */}
-      <div className="prizes-grid animate-slide-up">
-        {PRIZES.map((prize) => {
-          const Icon = prize.icon;
-          return (
-            <div
-              key={prize.place}
-              className={`glass-card-static prize-card ${prize.className}`}
-            >
-              <div className="prize-place">
-                <Icon size={22} style={{ color: 'var(--gold)' }} />
-                {prize.place}
+      {/* Prêmios (dropdown) */}
+      <details className="prizes-dropdown animate-slide-up">
+        <summary className="prizes-summary glass-card-static">
+          <span className="prizes-summary-title">
+            <Trophy size={18} style={{ color: 'var(--gold)' }} />
+            Ver premiações — 1º ao 5º lugar
+          </span>
+          <ChevronDown size={18} className="prizes-chevron" />
+        </summary>
+        <div className="prizes-grid">
+          {PRIZES.map((prize) => {
+            const Icon = prize.icon;
+            return (
+              <div
+                key={prize.place}
+                className={`glass-card-static prize-card ${prize.className}`}
+              >
+                <div className="prize-place">
+                  <Icon size={22} style={{ color: 'var(--gold)' }} />
+                  {prize.place}
+                </div>
+                <ul className="prize-items">
+                  {prize.items.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
               </div>
-              <ul className="prize-items">
-                {prize.items.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      </details>
 
       {!configured && (
         <div
@@ -157,21 +172,41 @@ export default async function RankingPage() {
         </div>
       ) : (
         <div className="ranking-list">
-          {ranking.map((user, i) => (
-            <div
-              key={`${user.full_name}-${i}`}
-              className={`glass-card-static ranking-row ${i < 3 ? 'podium' : ''}`}
-            >
-              <div className="ranking-pos">{i + 1}º</div>
-              <div className="ranking-name">
-                {user.full_name ?? 'Participante'}
-              </div>
-              <div className="ranking-score">
-                {user.total_score}
-                <small>pts</small>
-              </div>
-            </div>
-          ))}
+          {(() => {
+            let place = 0; // contador de colocação (ignora o admin)
+            return ranking.map((user, i) => {
+              const isAdmin =
+                normalizeName(user.full_name) === normalizeName(ADMIN_NAME);
+              let displayPlace: number | null = null;
+              if (!isAdmin) {
+                place += 1;
+                displayPlace = place;
+              }
+              const top5 = displayPlace !== null && displayPlace <= 5;
+              return (
+                <div
+                  key={`${user.full_name}-${i}`}
+                  className={`glass-card-static ranking-row ${top5 ? 'top5' : ''} ${
+                    isAdmin ? 'admin' : ''
+                  }`}
+                >
+                  <div className="ranking-pos">
+                    {displayPlace !== null ? `${displayPlace}º` : '—'}
+                  </div>
+                  <div className="ranking-name">
+                    {user.full_name ?? 'Participante'}
+                    {isAdmin && (
+                      <span className="ranking-tag">fora de competição</span>
+                    )}
+                  </div>
+                  <div className="ranking-score">
+                    {user.total_score}
+                    <small>pts</small>
+                  </div>
+                </div>
+              );
+            });
+          })()}
         </div>
       )}
     </div>
