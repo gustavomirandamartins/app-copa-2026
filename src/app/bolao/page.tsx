@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
 import { isProfileComplete } from '@/lib/bolao/profile';
 import type { Profile, PredictionInput } from '@/lib/bolao/types';
-import { BolaoClient } from '@/components/bolao/BolaoClient';
+import { BolaoClient, type MatchResult } from '@/components/bolao/BolaoClient';
 import { AuthPanel } from '@/components/auth/AuthPanel';
 import { logout } from '@/app/login/actions';
 
@@ -31,6 +31,8 @@ export default async function BolaoPage({
   let existingPredictions: PredictionInput[] = [];
   let userEmail: string | null = null;
   const multipliers: Record<string, number> = {};
+  const results: Record<string, MatchResult> = {};
+  const pointsByMatch: Record<string, number> = {};
 
   if (configured) {
     const supabase = await createClient();
@@ -59,9 +61,26 @@ export default async function BolaoPage({
 
       const { data: preds } = await supabase
         .from('predictions')
-        .select('match_id, home_score_guess, away_score_guess, is_autofilled')
+        .select('match_id, home_score_guess, away_score_guess, is_autofilled, points_earned')
         .eq('user_id', user.id);
       existingPredictions = (preds as PredictionInput[]) ?? [];
+
+      // Pontos conquistados por jogo (preenchido pelo sync após cada partida).
+      for (const p of (preds as Array<PredictionInput & { points_earned: number | null }>) ?? []) {
+        if (p.points_earned != null) pointsByMatch[p.match_id] = p.points_earned;
+      }
+    }
+
+    // Resultados reais (status + placar) — fonte da verdade para travar/exibir.
+    const { data: live } = await supabase
+      .from('matches')
+      .select('id, status, home_score, away_score');
+    for (const m of live ?? []) {
+      results[m.id] = {
+        status: m.status as MatchResult['status'],
+        homeScore: m.home_score as number | null,
+        awayScore: m.away_score as number | null,
+      };
     }
   }
 
@@ -126,6 +145,8 @@ export default async function BolaoPage({
           profile={profile}
           existingPredictions={existingPredictions}
           multipliers={multipliers}
+          results={results}
+          pointsByMatch={pointsByMatch}
         />
       )}
     </div>

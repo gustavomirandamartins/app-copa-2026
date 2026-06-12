@@ -8,10 +8,18 @@ import { matches as allMatches } from '@/data/matches';
 import { getTeamById } from '@/data/teams';
 import { simulateScore } from '@/lib/bolao/autofill';
 import { savePredictions } from '@/app/bolao/actions';
+import type { MatchStatus } from '@/lib/types';
 import type { Profile, PredictionInput } from '@/lib/bolao/types';
 import { PredictionGrid, type PredictionValue } from './PredictionGrid';
 import { RankingConsentModal } from './RankingConsentModal';
 import './bolao.css';
+
+/** Resultado real de um jogo (do Supabase), usado para travar e exibir placar. */
+export interface MatchResult {
+  status: MatchStatus;
+  homeScore: number | null;
+  awayScore: number | null;
+}
 
 interface Props {
   configured: boolean;
@@ -19,6 +27,8 @@ interface Props {
   profile: Profile | null;
   existingPredictions: PredictionInput[];
   multipliers?: Record<string, number>;
+  results?: Record<string, MatchResult>;
+  pointsByMatch?: Record<string, number>;
 }
 
 function seedValues(existing: PredictionInput[]): Map<string, PredictionValue> {
@@ -39,6 +49,8 @@ export function BolaoClient({
   profile,
   existingPredictions,
   multipliers = {},
+  results = {},
+  pointsByMatch = {},
 }: Props) {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -87,7 +99,9 @@ export function BolaoClient({
       const next = new Map(prev);
       for (const match of allMatches) {
         if (!match.homeTeamId || !match.awayTeamId) continue;
-        if (match.status !== 'scheduled') continue;
+        // Status real do banco tem prioridade sobre o estático ('scheduled').
+        const liveStatus = results[match.id]?.status ?? match.status;
+        if (liveStatus !== 'scheduled') continue;
         if (new Date(match.dateUTC).getTime() <= Date.now()) continue;
         const home = getTeamById(match.homeTeamId);
         const away = getTeamById(match.awayTeamId);
@@ -177,17 +191,29 @@ export function BolaoClient({
         onScore={setScore}
         onAutofill={autofillAll}
         multipliers={multipliers}
+        results={results}
+        pointsByMatch={pointsByMatch}
       />
 
       <div className="bolao-savebar">
         {message && <span className="bolao-message">{message}</span>}
         <button
-          className="btn btn-primary"
+          className="btn btn-primary bolao-save-btn"
           onClick={handleSave}
           disabled={pending || isDemo || payload.length === 0}
           title={isDemo ? 'Indisponível no modo demonstração' : undefined}
         >
-          <Save size={16} /> {pending ? 'Salvando…' : `Salvar palpites (${payload.length})`}
+          {pending ? (
+            <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />
+          ) : (
+            <Save size={16} />
+          )}
+          <span className="bolao-save-label">
+            {pending ? 'Salvando…' : 'Salvar palpites'}
+          </span>
+          {payload.length > 0 && (
+            <span className="bolao-save-count">{payload.length}</span>
+          )}
         </button>
       </div>
     </>
