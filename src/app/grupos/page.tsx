@@ -24,22 +24,92 @@ type StandingRow = {
   points: number;
 };
 
+/** Calcula a classificação de cada grupo a partir dos jogos finalizados. */
+function computeStandings(
+  finishedMatches: { home_team_id: string; away_team_id: string; home_score: number; away_score: number }[],
+): Map<GroupId, StandingRow[]> {
+  // Acumula estatísticas por time
+  const stats = new Map<string, { played: number; won: number; draw: number; lost: number; gf: number; ga: number; pts: number }>();
+
+  const ensure = (id: string) => {
+    if (!stats.has(id)) stats.set(id, { played: 0, won: 0, draw: 0, lost: 0, gf: 0, ga: 0, pts: 0 });
+    return stats.get(id)!;
+  };
+
+  for (const m of finishedMatches) {
+    const h = ensure(m.home_team_id);
+    const a = ensure(m.away_team_id);
+    h.played++; a.played++;
+    h.gf += m.home_score; h.ga += m.away_score;
+    a.gf += m.away_score; a.ga += m.home_score;
+    if (m.home_score > m.away_score) { h.won++; h.pts += 3; a.lost++; }
+    else if (m.home_score < m.away_score) { a.won++; a.pts += 3; h.lost++; }
+    else { h.draw++; h.pts++; a.draw++; a.pts++; }
+  }
+
+  // Agrupa por grupo e ordena: pts desc → sg desc → gf desc → nome asc
+  const byGroup = new Map<GroupId, StandingRow[]>();
+  for (const group of allGroups) {
+    const groupTeams = teams.filter((t) => t.group === group);
+    const rows: StandingRow[] = groupTeams.map((t, i) => {
+      const s = stats.get(t.id) ?? { played: 0, won: 0, draw: 0, lost: 0, gf: 0, ga: 0, pts: 0 };
+      return {
+        team_id: t.id,
+        position: i + 1,
+        played: s.played, won: s.won, draw: s.draw, lost: s.lost,
+        goals_for: s.gf, goals_against: s.ga, goal_difference: s.gf - s.ga, points: s.pts,
+      };
+    });
+
+    rows.sort((a, b) =>
+      b.points - a.points ||
+      b.goal_difference - a.goal_difference ||
+      b.goals_for - a.goals_for ||
+      a.team_id.localeCompare(b.team_id),
+    );
+    rows.forEach((r, i) => { r.position = i + 1; });
+    byGroup.set(group, rows);
+  }
+
+  return byGroup;
+}
+
 export default async function GruposPage() {
-  // Standings por grupo vindas do Supabase (preenchidas após cada sync).
-  const standingsByGroup = new Map<GroupId, StandingRow[]>();
+  let standingsByGroup = new Map<GroupId, StandingRow[]>();
 
   if (isSupabaseConfigured()) {
     const admin = createAdminClient();
-    const { data } = await admin
+
+    // Tenta ler da tabela standings (populada pelo sync via football-data API).
+    const { data: dbStandings } = await admin
       .from('standings')
       .select('group_letter, team_id, position, played, won, draw, lost, goals_for, goals_against, goal_difference, points')
       .order('group_letter')
       .order('position');
 
-    for (const row of data ?? []) {
-      const g = row.group_letter as GroupId;
-      if (!standingsByGroup.has(g)) standingsByGroup.set(g, []);
-      standingsByGroup.get(g)!.push(row as StandingRow);
+    if (dbStandings && dbStandings.length > 0) {
+      // Tabela standings tem dados → usa diretamente
+      for (const row of dbStandings) {
+        const g = row.group_letter as GroupId;
+        if (!standingsByGroup.has(g)) standingsByGroup.set(g, []);
+        standingsByGroup.get(g)!.push(row as StandingRow);
+      }
+    } else {
+      // Fallback: calcula a partir dos jogos finalizados da fase de grupos
+      const { data: finishedMatches } = await admin
+        .from('matches')
+        .select('home_team_id, away_team_id, home_score, away_score')
+        .eq('status', 'finished')
+        .not('home_score', 'is', null)
+        .not('away_score', 'is', null);
+
+      // Filtra apenas jogos de fase de grupos (home_team_id pertence a um grupo)
+      const groupTeamIds = new Set(teams.map((t) => t.id));
+      const groupMatches = (finishedMatches ?? []).filter(
+        (m) => groupTeamIds.has(m.home_team_id) && groupTeamIds.has(m.away_team_id),
+      );
+
+      standingsByGroup = computeStandings(groupMatches);
     }
   }
 
@@ -60,8 +130,6 @@ export default async function GruposPage() {
           const groupTeams = teams.filter((t) => t.group === groupId);
           const liveStandings = standingsByGroup.get(groupId);
 
-          // Ordena os times pela posição real do Supabase; caso não haja dados
-          // ainda, usa a ordem original do arquivo de times.
           const orderedTeams = liveStandings
             ? liveStandings
                 .map((s) => ({ standing: s, team: groupTeams.find((t) => t.id === s.team_id) }))
@@ -108,11 +176,11 @@ export default async function GruposPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {orderedTeams.map(({ standing, team }, pos) => (
+                    {orderedTeams.map(({ standing, team }) => (
                       <tr key={team.id}>
                         <td>
                           <div className="team-cell">
-                            <span className="pos">{standing.position || pos + 1}</span>
+                            <span className="pos">{standing.position}</span>
                             <TeamFlag name={team.name} flagEmoji={team.flag} size={20} />
                             <Link href={`/selecoes/${team.id}`} style={{ textDecoration: 'none', color: 'var(--text-primary)', fontWeight: 600 }}>
                               {team.name}
