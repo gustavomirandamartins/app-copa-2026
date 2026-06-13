@@ -392,7 +392,21 @@
 }
 .pm-admin-row td { opacity: 0.72; }
 
-.pm-bonus { color: var(--gold); font-weight: 800; }
+.pm-col-bonus { vertical-align: middle; }
+.pm-bonus {
+  display: block;
+  color: var(--gold);
+  font-weight: 800;
+  white-space: nowrap;
+}
+.pm-adjustment {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #6aa84f;
+  white-space: nowrap;
+  margin-top: 2px;
+}
 .pm-total { color: var(--text-primary); font-weight: 800; }
 
 .pm-col-match { min-width: 90px; }

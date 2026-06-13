@@ -77,12 +77,12 @@ export default async function AdminPage() {
   // Todos os usuários cadastrados (profiles) + e-mails (auth.users).
   const { data: profilesData } = await admin
     .from('profiles')
-    .select('id, full_name, phone, is_premium, is_admin, total_score, round_bonus, created_at')
+    .select('id, full_name, phone, is_premium, is_admin, total_score, round_bonus, score_adjustment, created_at')
     .order('created_at', { ascending: false });
   const profiles = (profilesData as Array<
     Pick<
       Profile,
-      'id' | 'full_name' | 'phone' | 'is_premium' | 'is_admin' | 'total_score' | 'round_bonus'
+      'id' | 'full_name' | 'phone' | 'is_premium' | 'is_admin' | 'total_score' | 'round_bonus' | 'score_adjustment'
     > & {
       created_at: string | null;
     }
@@ -158,6 +158,7 @@ export default async function AdminPage() {
       id: p.id,
       name: p.full_name ?? 'Sem nome',
       bonus: p.round_bonus ?? 0,
+      adjustment: p.score_adjustment ?? 0,
       total: p.total_score ?? 0,
       isAdmin: p.is_admin,
     }))

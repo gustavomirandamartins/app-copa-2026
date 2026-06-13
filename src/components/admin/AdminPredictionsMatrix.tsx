@@ -7,6 +7,7 @@ export interface MatrixUser {
   id: string;
   name: string;
   bonus: number;
+  adjustment: number;
   total: number;
   isAdmin: boolean;
 }
@@ -149,8 +150,18 @@ export function AdminPredictionsMatrix({ users, columns, cells }: Props) {
                       <span className="pm-user-name">{u.name}</span>
                       {u.isAdmin && <span className="pm-admin-tag">admin</span>}
                     </td>
-                    <td className="pm-col-bonus pm-bonus">
-                      {u.bonus > 0 ? `+${u.bonus}` : '—'}
+                    <td className="pm-col-bonus">
+                      {u.bonus > 0 && (
+                        <span className="pm-bonus">{`+${u.bonus}`}</span>
+                      )}
+                      {u.adjustment !== 0 && (
+                        <span className="pm-adjustment">
+                          {u.adjustment > 0 ? `+${u.adjustment}` : u.adjustment} adj
+                        </span>
+                      )}
+                      {u.bonus === 0 && u.adjustment === 0 && (
+                        <span style={{ color: 'var(--text-tertiary)' }}>—</span>
+                      )}
                     </td>
                     <td className="pm-col-total pm-total">{u.total}</td>
                   </tr>
