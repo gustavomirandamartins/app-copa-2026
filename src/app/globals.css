@@ -1040,6 +1040,71 @@ a:hover { color: var(--copa-green-deep); }
   .hide-desktop { display: none !important; }
 }
 
+/* ---- Controles de admin no header ---- */
+.header-admin-desktop {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 8px;
+  padding-left: 10px;
+  border-left: 1px solid rgba(224, 124, 0, 0.35);
+}
+
+.header-admin-link,
+.header-admin-sync {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-full, 999px);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.header-admin-link {
+  color: var(--gold);
+  background: rgba(224, 124, 0, 0.10);
+  border: 1px solid rgba(224, 124, 0, 0.45);
+  text-decoration: none;
+}
+.header-admin-link:hover {
+  background: rgba(224, 124, 0, 0.18);
+  color: var(--gold);
+}
+
+.header-admin-sync {
+  color: #fff;
+  background: var(--gold);
+  border: 1px solid var(--gold);
+}
+.header-admin-sync:hover:not(:disabled) {
+  background: #c46d00;
+}
+.header-admin-sync:disabled {
+  opacity: 0.7;
+  cursor: progress;
+}
+
+/* Cluster de admin no drawer mobile */
+.header-admin-mobile {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(224, 124, 0, 0.30);
+}
+.header-admin-label {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
 /* ---- Glass fallback p/ WebKit legado (Safari ≤17 / iOS antigo) ----
    O Safari moderno (18+) e o Chrome usam o backdrop-filter sem prefixo
    das regras acima. Este @supports só dispara onde existe

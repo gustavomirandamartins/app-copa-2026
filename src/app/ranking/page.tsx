@@ -1,12 +1,23 @@
 import Link from 'next/link';
-import { Trophy, Medal, Award, Info, ArrowLeft, ChevronDown } from 'lucide-react';
+import { Trophy, Medal, Award, Info, ArrowLeft, ChevronDown, Crown, Zap } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
+import { ROUND_ORDER, ROUND_LABELS, ROUND_BONUS_POINTS, type RoundKey } from '@/lib/bolao/rounds';
 import './ranking.css';
+
+export const revalidate = 0;
 
 interface RankedUser {
   full_name: string | null;
   total_score: number;
+}
+
+interface RoundScoreRow {
+  round_key: string;
+  full_name: string | null;
+  points: number;
+  complete: boolean;
+  is_winner: boolean;
 }
 
 // O admin aparece na classificação pela ordem dos pontos, mas fora de
@@ -14,6 +25,7 @@ interface RankedUser {
 // recebe o destaque dos 5 primeiros.
 const ADMIN_NAME = 'Gustavo Martins';
 const normalizeName = (s: string | null) => (s ?? '').trim().toLowerCase();
+const isAdminName = (s: string | null) => normalizeName(s) === normalizeName(ADMIN_NAME);
 
 const PRIZES = [
   {
@@ -53,10 +65,14 @@ const PRIZES = [
     items: ['1 copo MinduBier'],
   },
   {
-    place: '6º lugar em diante',
-    className: '',
-    icon: Award,
-    items: ['Um abraço de Mindu!'],
+    place: 'Bônus por rodada',
+    className: 'round',
+    icon: Zap,
+    items: [
+      `+${ROUND_BONUS_POINTS} pontos ao 1º de cada rodada`,
+      'Grupos: 3 rodadas',
+      'Mata-mata: 16-avos, oitavas, quartas e semis',
+    ],
   },
 ];
 
@@ -73,18 +89,54 @@ const DEMO_RANKING: RankedUser[] = [
 export default async function RankingPage() {
   const configured = isSupabaseConfigured();
   let ranking: RankedUser[] = [];
+  let roundScores: RoundScoreRow[] = [];
 
   if (configured) {
     const supabase = await createClient();
-    // View pública: já filtra agreed_to_ranking e não expõe colunas sensíveis.
-    const { data } = await supabase
-      .from('public_ranking')
-      .select('full_name, total_score')
-      .order('total_score', { ascending: false });
-    ranking = (data as RankedUser[]) ?? [];
+    // Views públicas: já filtram agreed_to_ranking e não expõem dados sensíveis.
+    const [{ data: rankData }, { data: roundData }] = await Promise.all([
+      supabase
+        .from('public_ranking')
+        .select('full_name, total_score')
+        .order('total_score', { ascending: false }),
+      supabase
+        .from('public_round_scores')
+        .select('round_key, full_name, points, complete, is_winner'),
+    ]);
+    ranking = (rankData as RankedUser[]) ?? [];
+    roundScores = (roundData as RoundScoreRow[]) ?? [];
   } else {
     ranking = DEMO_RANKING;
   }
+
+  // ── Agrupa pontos por rodada ────────────────────────────────────────
+  const byRound = new Map<RoundKey, RoundScoreRow[]>();
+  for (const r of roundScores) {
+    const key = r.round_key as RoundKey;
+    if (!ROUND_ORDER.includes(key)) continue;
+    const list = byRound.get(key) ?? [];
+    list.push(r);
+    byRound.set(key, list);
+  }
+
+  // Campeões: rodadas encerradas com vencedor(es).
+  const champions = ROUND_ORDER.flatMap((key) => {
+    const rows = byRound.get(key);
+    if (!rows || !rows[0]?.complete) return [];
+    const winners = rows.filter((r) => r.is_winner);
+    if (winners.length === 0) return [];
+    return [{ key, winners, points: winners[0].points }];
+  });
+
+  // Rodada atual = última rodada (na ordem) que já tem pontuação registrada.
+  let currentRoundKey: RoundKey | null = null;
+  for (const key of ROUND_ORDER) {
+    if (byRound.has(key)) currentRoundKey = key;
+  }
+  const currentRoundRows = currentRoundKey
+    ? [...(byRound.get(currentRoundKey) ?? [])].sort((a, b) => b.points - a.points)
+    : [];
+  const currentRoundComplete = currentRoundRows[0]?.complete ?? false;
 
   return (
     <div className="container">
@@ -100,9 +152,9 @@ export default async function RankingPage() {
           className="animate-fade-in"
           style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}
         >
-          Premiação para os cinco primeiros colocados. Após o final da Copa,
-          entraremos em contato para alinhar a entrega. Custos de frete não
-          inclusos.
+          Premiação para os cinco primeiros colocados ao final da Copa. Além
+          disso, o vencedor de cada rodada ganha <strong>+{ROUND_BONUS_POINTS} pontos
+          de bônus</strong>. Custos de frete não inclusos.
         </p>
         <div className="animate-fade-in" style={{ marginTop: 'var(--space-md)' }}>
           <Link href="/bolao" className="btn btn-gold btn-sm">
@@ -116,7 +168,7 @@ export default async function RankingPage() {
         <summary className="prizes-summary glass-card-static">
           <span className="prizes-summary-title">
             <Trophy size={18} style={{ color: 'var(--gold)' }} />
-            Ver premiações — 1º ao 5º lugar
+            Ver premiações — geral + bônus por rodada
           </span>
           <ChevronDown size={18} className="prizes-chevron" />
         </summary>
@@ -162,7 +214,34 @@ export default async function RankingPage() {
         </div>
       )}
 
-      {/* Classificação */}
+      {/* Campeões de rodada (acima da classificação geral) */}
+      {champions.length > 0 && (
+        <section style={{ marginBottom: 'var(--space-xl)' }}>
+          <h3 style={{ marginBottom: 'var(--space-md)' }}>
+            <Crown size={18} style={{ color: 'var(--gold)', verticalAlign: 'middle', marginRight: 6 }} />
+            Campeões de rodada
+          </h3>
+          <div className="champions-grid">
+            {champions.map(({ key, winners, points }) => (
+              <div key={key} className="glass-card-static champion-card">
+                <div className="champion-round">{ROUND_LABELS[key]}</div>
+                <div className="champion-names">
+                  {winners.map((w) => (
+                    <span key={w.full_name} className="champion-name">
+                      <Crown size={14} /> {w.full_name ?? 'Participante'}
+                    </span>
+                  ))}
+                </div>
+                <div className="champion-meta">
+                  {points} pts na rodada · <strong>+{ROUND_BONUS_POINTS} bônus</strong>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Classificação geral */}
       <h3 style={{ marginBottom: 'var(--space-md)' }}>Classificação geral</h3>
       {ranking.length === 0 ? (
         <div className="glass-card-static" style={{ padding: 'var(--space-lg)' }}>
@@ -175,8 +254,7 @@ export default async function RankingPage() {
           {(() => {
             let place = 0; // contador de colocação (ignora o admin)
             return ranking.map((user, i) => {
-              const isAdmin =
-                normalizeName(user.full_name) === normalizeName(ADMIN_NAME);
+              const isAdmin = isAdminName(user.full_name);
               let displayPlace: number | null = null;
               if (!isAdmin) {
                 place += 1;
@@ -208,6 +286,61 @@ export default async function RankingPage() {
             });
           })()}
         </div>
+      )}
+
+      {/* Classificação da rodada (abaixo da geral) */}
+      {currentRoundKey && currentRoundRows.length > 0 && (
+        <section style={{ marginTop: 'var(--space-2xl)' }}>
+          <h3 style={{ marginBottom: 'var(--space-xs)' }}>
+            <Zap size={18} style={{ color: 'var(--gold)', verticalAlign: 'middle', marginRight: 6 }} />
+            Classificação · {ROUND_LABELS[currentRoundKey]}
+          </h3>
+          <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: 'var(--space-md)' }}>
+            {currentRoundComplete
+              ? `Rodada encerrada — o 1º levou +${ROUND_BONUS_POINTS} pontos de bônus.`
+              : `Rodada em andamento — o 1º ao fim leva +${ROUND_BONUS_POINTS} pontos de bônus.`}
+          </p>
+          <div className="ranking-list">
+            {(() => {
+              let place = 0;
+              return currentRoundRows.map((row, i) => {
+                const isAdmin = isAdminName(row.full_name);
+                let displayPlace: number | null = null;
+                if (!isAdmin) {
+                  place += 1;
+                  displayPlace = place;
+                }
+                return (
+                  <div
+                    key={`${row.full_name}-${i}`}
+                    className={`glass-card-static ranking-row round-row ${
+                      row.is_winner ? 'top5' : ''
+                    } ${isAdmin ? 'admin' : ''}`}
+                  >
+                    <div className="ranking-pos">
+                      {row.is_winner ? (
+                        <Crown size={18} style={{ color: 'var(--gold)' }} />
+                      ) : displayPlace !== null ? (
+                        `${displayPlace}º`
+                      ) : (
+                        '—'
+                      )}
+                    </div>
+                    <div className="ranking-name">
+                      {row.full_name ?? 'Participante'}
+                      {isAdmin && <span className="ranking-tag">fora de competição</span>}
+                      {row.is_winner && <span className="ranking-tag tag-bonus">+{ROUND_BONUS_POINTS} bônus</span>}
+                    </div>
+                    <div className="ranking-score">
+                      {row.points}
+                      <small>pts</small>
+                    </div>
+                  </div>
+                );
+              });
+            })()}
+          </div>
+        </section>
       )}
     </div>
   );

@@ -174,8 +174,83 @@
   margin-left: 4px;
 }
 
+/* Card de bônus por rodada (destaca-se dos prêmios físicos). */
+.prize-card.round {
+  border: 1px solid rgba(0, 151, 57, 0.45);
+  box-shadow: 0 0 0 1px rgba(0, 151, 57, 0.18), 0 8px 30px rgba(0, 151, 57, 0.12);
+}
+.prize-card.round .prize-place {
+  color: var(--copa-green);
+}
+.prize-card.round .prize-items li::before {
+  color: var(--copa-green);
+}
+
+/* ── Campeões de rodada ────────────────────────────────────────── */
+.champions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-md);
+}
+
+.champion-card {
+  padding: var(--space-md) var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px solid var(--gold);
+  box-shadow:
+    0 0 0 1px rgba(224, 124, 0, 0.25),
+    0 0 22px rgba(224, 124, 0, 0.18);
+}
+
+.champion-round {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.champion-names {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.champion-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-heading);
+  font-weight: 900;
+  font-size: 1.05rem;
+  color: var(--text-primary);
+}
+.champion-name svg {
+  color: var(--gold);
+  flex-shrink: 0;
+}
+
+.champion-meta {
+  font-size: 0.78rem;
+  color: var(--text-tertiary);
+}
+.champion-meta strong {
+  color: var(--gold);
+}
+
+/* ── Linha da classificação por rodada ─────────────────────────── */
+.ranking-tag.tag-bonus {
+  color: var(--gold);
+  background: rgba(224, 124, 0, 0.14);
+}
+
 @media (max-width: 720px) {
   .prizes-grid {
+    grid-template-columns: 1fr;
+  }
+  .champions-grid {
     grid-template-columns: 1fr;
   }
 }

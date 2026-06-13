@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
+import { HeaderAdmin } from './HeaderAdmin';
 
 const navLinks = [
   { href: '/', label: 'Início' },
@@ -160,6 +161,7 @@ export function Header() {
               </Link>
             );
           })}
+          <HeaderAdmin variant="desktop" />
         </nav>
 
         {/* Mobile Menu Toggle */}
@@ -249,6 +251,7 @@ export function Header() {
             </Link>
           );
         })}
+        <HeaderAdmin variant="mobile" onNavigate={() => setIsOpen(false)} />
       </nav>
     </>
   );
