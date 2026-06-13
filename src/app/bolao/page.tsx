@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { Trophy, Medal, ShieldCheck } from 'lucide-react';
+import { Trophy, Medal, ChevronDown, Target, Zap, Crown } from 'lucide-react';
+import '@/components/bolao/bolao.css';
 import { createClient } from '@/lib/supabase/server';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
 import { isProfileComplete } from '@/lib/bolao/profile';
@@ -117,11 +118,6 @@ export default async function BolaoPage({
           <Link href="/ranking" className="btn btn-gold btn-sm">
             <Medal size={16} /> Ver classificação e prêmios
           </Link>
-          {profile?.is_admin && (
-            <Link href="/admin" className="btn btn-gold btn-sm">
-              <ShieldCheck size={16} /> Central de controle
-            </Link>
-          )}
           {authenticated && userEmail && (
             <form action={logout}>
               <button
@@ -135,6 +131,85 @@ export default async function BolaoPage({
           )}
         </div>
       </section>
+
+      {/* Guia: como funciona, regras e pontuação */}
+      <details className="bolao-guide animate-slide-up">
+        <summary className="bolao-guide-summary glass-card-static">
+          <span className="bolao-guide-title">
+            <Target size={17} style={{ color: 'var(--gold)' }} />
+            Como funciona · Regras · Pontuação
+          </span>
+          <ChevronDown size={17} className="bolao-guide-chevron" />
+        </summary>
+
+        <div className="bolao-guide-body">
+          {/* Passo a passo */}
+          <div className="bolao-guide-section">
+            <h4 className="bolao-guide-heading">Passo a passo</h4>
+            <ol className="bolao-steps">
+              <li>
+                <span className="bolao-step-num">1</span>
+                <span>Crie sua conta, complete o cadastro e ative o Bolão Premium (R$ 39,90 — pagamento único).</span>
+              </li>
+              <li>
+                <span className="bolao-step-num">2</span>
+                <span>Antes de cada partida, registre seu palpite informando o placar que você espera.</span>
+              </li>
+              <li>
+                <span className="bolao-step-num">3</span>
+                <span>Após o apito final, os pontos são calculados e somados ao seu total automaticamente.</span>
+              </li>
+              <li>
+                <span className="bolao-step-num">4</span>
+                <span>Acompanhe sua posição na <Link href="/ranking" style={{ color: 'var(--gold)' }}>Classificação</Link> e torça!</span>
+              </li>
+            </ol>
+          </div>
+
+          {/* Pontuação */}
+          <div className="bolao-guide-section">
+            <h4 className="bolao-guide-heading">
+              <Target size={14} /> Pontuação por partida
+            </h4>
+            <div className="bolao-score-table">
+              <div className="bolao-score-row">
+                <span className="bolao-score-pts">1 pt</span>
+                <span>Acertou só o vencedor (ou empate)</span>
+              </div>
+              <div className="bolao-score-row">
+                <span className="bolao-score-pts bolao-score-pts-3">3 pts</span>
+                <span>Acertou vencedor + diferença de gols</span>
+              </div>
+              <div className="bolao-score-row bolao-score-row-gold">
+                <span className="bolao-score-pts bolao-score-pts-5">5 pts</span>
+                <span>Acertou o placar exato</span>
+              </div>
+              <div className="bolao-score-row">
+                <span className="bolao-score-pts bolao-score-pts-boost">
+                  <Zap size={11} /> ×2…5
+                </span>
+                <span>Jogos turbinados — pontos multiplicados</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Bônus por rodada */}
+          <div className="bolao-guide-section">
+            <h4 className="bolao-guide-heading">
+              <Crown size={14} /> Bônus de rodada (+50 pts)
+            </h4>
+            <p className="bolao-guide-text">
+              Quem terminar a rodada com <strong>mais pontos</strong> ganha
+              automaticamente <strong>+50 pontos de bônus</strong>. Em caso de
+              empate todos os líderes recebem o bônus.
+            </p>
+            <p className="bolao-guide-text">
+              <strong>Rodadas com bônus:</strong> Fase de Grupos (Rodada 1, 2 e 3) +
+              16-avos, Oitavas, Quartas de final e Semifinais.
+            </p>
+          </div>
+        </div>
+      </details>
 
       {configured && !authenticated ? (
         <AuthPanel />

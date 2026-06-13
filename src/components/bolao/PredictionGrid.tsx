@@ -163,12 +163,12 @@ export function PredictionGrid({
           ))}
         </div>
         <button
-          className="btn btn-secondary btn-sm"
+          className="btn btn-gold btn-sm"
           onClick={onAutofill}
           disabled={!canEdit}
           title="Preenche todos os jogos editáveis com placares simulados"
         >
-          <Dices size={16} /> Gerar resultado (estatística)
+          <Dices size={16} /> Gerar resultados aleatórios
         </button>
       </div>
 

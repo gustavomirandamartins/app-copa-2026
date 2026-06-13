@@ -301,6 +301,11 @@
   border-radius: var(--radius-md);
   background: rgba(255, 255, 255, 0.45);
   overflow: hidden;
+  /* Força texto escuro — o wrapper tem fundo claro mas o contexto global
+     pode ter --text-primary branco (fora de glass-card). */
+  --text-primary:   #323231;
+  --text-secondary: rgba(50, 50, 49, 0.70);
+  --text-tertiary:  rgba(50, 50, 49, 0.45);
 }
 
 /* Painel esquerdo — fixo, sem scroll horizontal */
@@ -350,15 +355,14 @@
   vertical-align: bottom;
 }
 
-.pm-left .pm-table thead th {
-  background: rgba(255, 255, 244, 0.97);
-}
+.pm-left .pm-table thead th,
 .pm-right .pm-table thead th {
-  background: rgba(255, 255, 244, 0.97);
+  background: #fffff5;
 }
 
-.pm-left .pm-table td {
-  background: rgba(255, 255, 244, 0.95);
+.pm-left .pm-table td,
+.pm-right .pm-table td {
+  background: #fffffb;
 }
 
 .pm-col-user  { width: 160px; min-width: 160px; text-align: left; }

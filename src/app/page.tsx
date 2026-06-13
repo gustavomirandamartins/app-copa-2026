@@ -41,13 +41,7 @@ function Countdown({ targetDate }: { targetDate: Date }) {
   const isPast = diff <= 0;
 
   if (isPast) {
-    return (
-      <div style={{ textAlign: 'center' }}>
-        <span className="countdown-value" style={{ fontSize: 'clamp(1.5rem, 4vw, 2.5rem)' }}>
-          🏆 A Copa começou!
-        </span>
-      </div>
-    );
+    return null;
   }
 
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
