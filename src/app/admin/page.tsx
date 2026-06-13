@@ -7,7 +7,6 @@ import { isSupabaseConfigured } from '@/lib/supabase/config';
 import type { Profile, PaymentRequest } from '@/lib/bolao/types';
 import { AdminPaymentList } from '@/components/admin/AdminPaymentList';
 import { AdminUserList, type AdminUser } from '@/components/admin/AdminUserList';
-import { AdminSyncButton } from '@/components/admin/AdminSyncButton';
 import {
   AdminPredictionsMatrix,
   type MatrixUser,
@@ -166,11 +165,10 @@ export default async function AdminPage() {
           Confira o comprovante recebido por e-mail e aprove para liberar o
           acesso Premium do participante.
         </p>
-        <div style={{ marginTop: 'var(--space-sm)', display: 'flex', flexWrap: 'wrap', gap: 'var(--space-sm)', alignItems: 'flex-start' }}>
+        <div style={{ marginTop: 'var(--space-sm)' }}>
           <Link href="/admin/jogos" className="btn btn-gold btn-sm">
             <Zap size={16} /> Jogos turbinados (multiplicadores)
           </Link>
-          <AdminSyncButton />
         </div>
       </section>
 

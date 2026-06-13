@@ -293,12 +293,34 @@
   cursor: pointer;
 }
 
-.pm-scroll {
-  overflow: auto;
+/* Wrapper: dois painéis lado a lado */
+.pm-wrapper {
+  display: flex;
   max-height: 70vh;
   border: 1px solid var(--glass-border, rgba(50, 50, 49, 0.12));
   border-radius: var(--radius-md);
   background: rgba(255, 255, 255, 0.45);
+  overflow: hidden;
+}
+
+/* Painel esquerdo — fixo, sem scroll horizontal */
+.pm-left {
+  flex-shrink: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  box-shadow: 3px 0 8px rgba(0, 0, 0, 0.08);
+  /* garante que fique acima do painel direito ao scrollar */
+  position: relative;
+  z-index: 1;
+}
+.pm-left::-webkit-scrollbar { display: none; }
+
+/* Painel direito — scroll horizontal + vertical */
+.pm-right {
+  flex: 1;
+  overflow: auto;
+  min-width: 0;
 }
 
 .pm-table {
@@ -314,6 +336,8 @@
   border-bottom: 1px solid rgba(50, 50, 49, 0.08);
   border-right: 1px solid rgba(50, 50, 49, 0.06);
   white-space: nowrap;
+  height: 40px;
+  box-sizing: border-box;
 }
 
 .pm-table thead th {
@@ -321,30 +345,34 @@
   top: 0;
   z-index: 2;
   background: rgba(255, 255, 244, 0.97);
-  backdrop-filter: blur(8px);
   font-weight: 700;
   color: var(--text-secondary);
   vertical-align: bottom;
 }
 
-/* Colunas fixas à esquerda */
-.pm-sticky {
-  position: sticky;
+.pm-left .pm-table thead th {
   background: rgba(255, 255, 244, 0.97);
-  backdrop-filter: blur(8px);
-  z-index: 1;
 }
-.pm-table thead .pm-sticky {
-  z-index: 3; /* canto: acima do header e das colunas fixas */
+.pm-right .pm-table thead th {
+  background: rgba(255, 255, 244, 0.97);
 }
-.pm-col-user   { left: 0;     width: 150px; min-width: 150px; text-align: left; }
-.pm-col-bonus  { left: 150px; width: 62px;  min-width: 62px; }
-.pm-col-total  { left: 212px; width: 64px;  min-width: 64px;
-  box-shadow: 2px 0 6px rgba(0, 0, 0, 0.06); }
+
+.pm-left .pm-table td {
+  background: rgba(255, 255, 244, 0.95);
+}
+
+.pm-col-user  { width: 160px; min-width: 160px; text-align: left; }
+.pm-col-bonus { width: 62px;  min-width: 62px; }
+.pm-col-total { width: 64px;  min-width: 64px; }
 
 .pm-user-name {
   font-weight: 700;
   color: var(--text-primary);
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+  vertical-align: middle;
 }
 .pm-admin-tag {
   display: inline-block;
@@ -357,13 +385,14 @@
   background: rgba(50, 50, 49, 0.08);
   border-radius: 999px;
   padding: 1px 6px;
+  vertical-align: middle;
 }
 .pm-admin-row td { opacity: 0.72; }
 
 .pm-bonus { color: var(--gold); font-weight: 800; }
 .pm-total { color: var(--text-primary); font-weight: 800; }
 
-.pm-col-match { min-width: 78px; }
+.pm-col-match { min-width: 80px; }
 .pm-match-num {
   display: block;
   font-size: 0.62rem;

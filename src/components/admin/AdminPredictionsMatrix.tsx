@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Search, Table2 } from 'lucide-react';
 
 export interface MatrixUser {
@@ -45,6 +45,9 @@ export function AdminPredictionsMatrix({ users, columns, cells }: Props) {
   const [query, setQuery] = useState('');
   const [onlyPlayed, setOnlyPlayed] = useState(true);
 
+  const leftRef = useRef<HTMLDivElement>(null);
+  const rightRef = useRef<HTMLDivElement>(null);
+
   const visibleColumns = useMemo(
     () => (onlyPlayed ? columns.filter((c) => c.finished) : columns),
     [columns, onlyPlayed],
@@ -55,6 +58,17 @@ export function AdminPredictionsMatrix({ users, columns, cells }: Props) {
     if (!q) return users;
     return users.filter((u) => u.name.toLowerCase().includes(q));
   }, [users, query]);
+
+  const syncLeft = () => {
+    if (leftRef.current && rightRef.current) {
+      leftRef.current.scrollTop = rightRef.current.scrollTop;
+    }
+  };
+  const syncRight = () => {
+    if (leftRef.current && rightRef.current) {
+      rightRef.current.scrollTop = leftRef.current.scrollTop;
+    }
+  };
 
   return (
     <section style={{ marginTop: 'var(--space-2xl)' }}>
@@ -94,56 +108,79 @@ export function AdminPredictionsMatrix({ users, columns, cells }: Props) {
       {visibleColumns.length === 0 ? (
         <p className="admin-empty">Nenhum jogo finalizado ainda.</p>
       ) : (
-        <div className="pm-scroll">
-          <table className="pm-table">
-            <thead>
-              <tr>
-                <th className="pm-sticky pm-col-user">Usuário</th>
-                <th className="pm-sticky pm-col-bonus">Bônus</th>
-                <th className="pm-sticky pm-col-total">Total</th>
-                {visibleColumns.map((c) => (
-                  <th key={c.matchId} className="pm-col-match" title={`${c.round} · jogo ${c.number}`}>
-                    <span className="pm-match-num">#{c.number}</span>
-                    <span className="pm-match-label">{c.label}</span>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {visibleUsers.map((u) => {
-                const row = cells[u.id] ?? {};
-                return (
+        <div className="pm-wrapper">
+          {/* Colunas fixas: usuário, bônus, total */}
+          <div className="pm-left" ref={leftRef} onScroll={syncRight}>
+            <table className="pm-table">
+              <thead>
+                <tr>
+                  <th className="pm-col-user">Usuário</th>
+                  <th className="pm-col-bonus">Bônus</th>
+                  <th className="pm-col-total">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {visibleUsers.map((u) => (
                   <tr key={u.id} className={u.isAdmin ? 'pm-admin-row' : undefined}>
-                    <td className="pm-sticky pm-col-user">
+                    <td className="pm-col-user">
                       <span className="pm-user-name">{u.name}</span>
                       {u.isAdmin && <span className="pm-admin-tag">admin</span>}
                     </td>
-                    <td className="pm-sticky pm-col-bonus pm-bonus">
+                    <td className="pm-col-bonus pm-bonus">
                       {u.bonus > 0 ? `+${u.bonus}` : '—'}
                     </td>
-                    <td className="pm-sticky pm-col-total pm-total">{u.total}</td>
-                    {visibleColumns.map((c) => {
-                      const cell = row[c.matchId];
-                      return (
-                        <td key={c.matchId} className="pm-col-match">
-                          {cell ? (
-                            <span className="pm-cell">
-                              <span className="pm-guess">{cell.guess}</span>
-                              {c.finished && (
-                                <span className={pointsClass(cell.points)}>{cell.points}</span>
-                              )}
-                            </span>
-                          ) : (
-                            <span className="pm-empty">·</span>
-                          )}
-                        </td>
-                      );
-                    })}
+                    <td className="pm-col-total pm-total">{u.total}</td>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Colunas de palpites: scroll horizontal */}
+          <div className="pm-right" ref={rightRef} onScroll={syncLeft}>
+            <table className="pm-table">
+              <thead>
+                <tr>
+                  {visibleColumns.map((c) => (
+                    <th
+                      key={c.matchId}
+                      className="pm-col-match"
+                      title={`${c.round} · jogo ${c.number}`}
+                    >
+                      <span className="pm-match-num">#{c.number}</span>
+                      <span className="pm-match-label">{c.label}</span>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {visibleUsers.map((u) => {
+                  const row = cells[u.id] ?? {};
+                  return (
+                    <tr key={u.id} className={u.isAdmin ? 'pm-admin-row' : undefined}>
+                      {visibleColumns.map((c) => {
+                        const cell = row[c.matchId];
+                        return (
+                          <td key={c.matchId} className="pm-col-match">
+                            {cell ? (
+                              <span className="pm-cell">
+                                <span className="pm-guess">{cell.guess}</span>
+                                {c.finished && (
+                                  <span className={pointsClass(cell.points)}>{cell.points}</span>
+                                )}
+                              </span>
+                            ) : (
+                              <span className="pm-empty">·</span>
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </section>
