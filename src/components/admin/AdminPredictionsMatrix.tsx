@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Search, Table2 } from 'lucide-react';
 
 export interface MatrixUser {
@@ -14,15 +14,16 @@ export interface MatrixUser {
 export interface MatrixColumn {
   matchId: string;
   number: number;
-  /** Ex.: "BRA × MAR" */
   label: string;
-  /** Ex.: "R1 Grupos" ou "Oitavas" */
   round: string;
   finished: boolean;
+  homeCode?: string;
+  awayCode?: string;
+  homeScore?: number | null;
+  awayScore?: number | null;
 }
 
 export interface MatrixCell {
-  /** Palpite formatado, ex.: "2×1". */
   guess: string;
   points: number;
 }
@@ -30,7 +31,6 @@ export interface MatrixCell {
 interface Props {
   users: MatrixUser[];
   columns: MatrixColumn[];
-  /** cells[userId][matchId] = palpite + pontos. */
   cells: Record<string, Record<string, MatrixCell>>;
 }
 
@@ -58,6 +58,29 @@ export function AdminPredictionsMatrix({ users, columns, cells }: Props) {
     if (!q) return users;
     return users.filter((u) => u.name.toLowerCase().includes(q));
   }, [users, query]);
+
+  // Sincroniza a altura de cada linha entre os dois painéis.
+  useLayoutEffect(() => {
+    const left = leftRef.current;
+    const right = rightRef.current;
+    if (!left || !right) return;
+
+    const leftRows = Array.from(left.querySelectorAll<HTMLTableRowElement>('tr'));
+    const rightRows = Array.from(right.querySelectorAll<HTMLTableRowElement>('tr'));
+
+    // Reseta antes de medir para não acumular alturas de renders anteriores.
+    [...leftRows, ...rightRows].forEach((r) => (r.style.height = ''));
+
+    const len = Math.max(leftRows.length, rightRows.length);
+    for (let i = 0; i < len; i++) {
+      const l = leftRows[i];
+      const r = rightRows[i];
+      if (!l || !r) continue;
+      const max = Math.max(l.getBoundingClientRect().height, r.getBoundingClientRect().height);
+      l.style.height = `${max}px`;
+      r.style.height = `${max}px`;
+    }
+  }, [visibleUsers, visibleColumns]);
 
   const syncLeft = () => {
     if (leftRef.current && rightRef.current) {
@@ -141,16 +164,26 @@ export function AdminPredictionsMatrix({ users, columns, cells }: Props) {
             <table className="pm-table">
               <thead>
                 <tr>
-                  {visibleColumns.map((c) => (
-                    <th
-                      key={c.matchId}
-                      className="pm-col-match"
-                      title={`${c.round} · jogo ${c.number}`}
-                    >
-                      <span className="pm-match-num">#{c.number}</span>
-                      <span className="pm-match-label">{c.label}</span>
-                    </th>
-                  ))}
+                  {visibleColumns.map((c) => {
+                    const hasScore =
+                      c.finished && c.homeScore != null && c.awayScore != null;
+                    return (
+                      <th
+                        key={c.matchId}
+                        className="pm-col-match"
+                        title={`${c.round} · jogo ${c.number}`}
+                      >
+                        <span className="pm-match-num">#{c.number} · {c.round}</span>
+                        {hasScore ? (
+                          <span className="pm-match-result">
+                            {c.homeCode} {c.homeScore}×{c.awayScore} {c.awayCode}
+                          </span>
+                        ) : (
+                          <span className="pm-match-label">{c.label}</span>
+                        )}
+                      </th>
+                    );
+                  })}
                 </tr>
               </thead>
               <tbody>

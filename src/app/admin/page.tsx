@@ -110,10 +110,15 @@ export default async function AdminPage() {
   }));
 
   // ── Matriz de palpites × partidas ──────────────────────────────────
-  // Status de cada jogo (do banco) + todos os palpites.
-  const { data: matchRows } = await admin.from('matches').select('id, status');
+  // Status + placar de cada jogo + todos os palpites.
+  const { data: matchRows } = await admin
+    .from('matches')
+    .select('id, status, home_score, away_score');
   const finishedSet = new Set(
     (matchRows ?? []).filter((m) => m.status === 'finished').map((m) => m.id),
+  );
+  const scoreById = new Map(
+    (matchRows ?? []).map((m) => [m.id, { home: m.home_score as number | null, away: m.away_score as number | null }]),
   );
 
   const { data: predRows } = await admin
@@ -122,15 +127,22 @@ export default async function AdminPage() {
 
   const matrixColumns: MatrixColumn[] = [...matches]
     .sort((a, b) => a.matchNumber - b.matchNumber)
-    .map((m) => ({
-      matchId: m.id,
-      number: m.matchNumber,
-      label: `${m.homeTeamId ? teamCode.get(m.homeTeamId) ?? '?' : '?'} × ${
-        m.awayTeamId ? teamCode.get(m.awayTeamId) ?? '?' : '?'
-      }`,
-      round: roundShort(m.stage, m.matchday),
-      finished: finishedSet.has(m.id),
-    }));
+    .map((m) => {
+      const homeCode = m.homeTeamId ? teamCode.get(m.homeTeamId) ?? '?' : '?';
+      const awayCode = m.awayTeamId ? teamCode.get(m.awayTeamId) ?? '?' : '?';
+      const sc = scoreById.get(m.id);
+      return {
+        matchId: m.id,
+        number: m.matchNumber,
+        label: `${homeCode} × ${awayCode}`,
+        round: roundShort(m.stage, m.matchday),
+        finished: finishedSet.has(m.id),
+        homeCode,
+        awayCode,
+        homeScore: sc?.home ?? null,
+        awayScore: sc?.away ?? null,
+      };
+    });
 
   const cells: Record<string, Record<string, MatrixCell>> = {};
   for (const p of predRows ?? []) {

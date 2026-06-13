@@ -341,7 +341,6 @@
   border-bottom: 1px solid rgba(50, 50, 49, 0.08);
   border-right: 1px solid rgba(50, 50, 49, 0.06);
   white-space: nowrap;
-  height: 40px;
   box-sizing: border-box;
 }
 
@@ -396,17 +395,27 @@
 .pm-bonus { color: var(--gold); font-weight: 800; }
 .pm-total { color: var(--text-primary); font-weight: 800; }
 
-.pm-col-match { min-width: 80px; }
+.pm-col-match { min-width: 90px; }
 .pm-match-num {
   display: block;
-  font-size: 0.62rem;
+  font-size: 0.60rem;
   color: var(--text-tertiary);
+  white-space: nowrap;
 }
 .pm-match-label {
   display: block;
   font-size: 0.72rem;
   font-weight: 700;
   color: var(--text-secondary);
+}
+/* Placar real no cabeçalho quando o jogo está encerrado */
+.pm-match-result {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
 }
 
 .pm-cell {
