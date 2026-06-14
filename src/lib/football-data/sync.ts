@@ -41,12 +41,19 @@ export async function runFootballSync(): Promise<SyncResult> {
   for (const m of matches) {
     const homeId = resolveTeamId(m.homeTeam);
     const awayId = resolveTeamId(m.awayTeam);
+    // Só inclui home_score/away_score quando a API retorna valores válidos.
+    // Se a partida acabou de ser marcada como FINISHED mas o placar ainda
+    // não chegou (fullTime null), não sobrescrevemos o que já está no banco.
+    const scoreFields =
+      m.score.fullTime.home != null && m.score.fullTime.away != null
+        ? { home_score: m.score.fullTime.home, away_score: m.score.fullTime.away }
+        : {};
+
     const fields = {
       external_id: m.id,
       match_time_utc: m.utcDate,
       status: mapStatus(m.status),
-      home_score: m.score.fullTime.home,
-      away_score: m.score.fullTime.away,
+      ...scoreFields,
     };
 
     let q = admin.from('matches').update(fields);
