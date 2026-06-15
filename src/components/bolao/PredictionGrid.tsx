@@ -12,14 +12,34 @@ import type { Match, MatchStage, MatchStatus } from '@/lib/types';
 const BRAZIL_ID = 'bra';
 const UPCOMING_WINDOW_MS = 24 * 60 * 60 * 1000; // 24 h
 
-const stageTabs: { key: MatchStage; label: string }[] = [
-  { key: 'group', label: 'Fase de Grupos' },
+// Tipo interno de aba — grupos divididos por rodada (matchday).
+type TabKey =
+  | 'group-1'
+  | 'group-2'
+  | 'group-3'
+  | 'round-of-32'
+  | 'round-of-16'
+  | 'quarter-final'
+  | 'semi-final'
+  | 'final';
+
+const stageTabs: { key: TabKey; label: string }[] = [
+  { key: 'group-1', label: 'Fase de Grupos - 1ª Rodada' },
+  { key: 'group-2', label: 'Fase de Grupos - 2ª Rodada' },
+  { key: 'group-3', label: 'Fase de Grupos - 3ª Rodada' },
   { key: 'round-of-32', label: '16 Avos' },
   { key: 'round-of-16', label: 'Oitavas' },
   { key: 'quarter-final', label: 'Quartas' },
   { key: 'semi-final', label: 'Semifinais' },
   { key: 'final', label: 'Final' },
 ];
+
+function matchesForTab(tab: TabKey): Match[] {
+  if (tab === 'group-1') return allMatches.filter((m) => m.stage === 'group' && m.matchday === 1);
+  if (tab === 'group-2') return allMatches.filter((m) => m.stage === 'group' && m.matchday === 2);
+  if (tab === 'group-3') return allMatches.filter((m) => m.stage === 'group' && m.matchday === 3);
+  return allMatches.filter((m) => m.stage === (tab as MatchStage));
+}
 
 export interface PredictionValue {
   home: number | null;
@@ -119,7 +139,7 @@ export function PredictionGrid({
   results = {},
   pointsByMatch = {},
 }: Props) {
-  const [activeStage, setActiveStage] = useState<MatchStage>('group');
+  const [activeTab, setActiveTab] = useState<TabKey>('group-1');
   const [now, setNow] = useState<number | null>(null);
   const [mounted, setMounted] = useState(false);
 
@@ -132,10 +152,7 @@ export function PredictionGrid({
     return () => clearInterval(id);
   }, []);
 
-  const stageMatches = useMemo(
-    () => allMatches.filter((m) => m.stage === activeStage),
-    [activeStage],
-  );
+  const stageMatches = useMemo(() => matchesForTab(activeTab), [activeTab]);
 
   // Agrupa por dia (BRT, determinístico — sem mismatch de hidratação).
   const dayGroups = useMemo(() => {
@@ -155,8 +172,8 @@ export function PredictionGrid({
           {stageTabs.map((tab) => (
             <button
               key={tab.key}
-              className={`tab ${activeStage === tab.key ? 'active' : ''}`}
-              onClick={() => setActiveStage(tab.key)}
+              className={`tab ${activeTab === tab.key ? 'active' : ''}`}
+              onClick={() => setActiveTab(tab.key)}
             >
               {tab.label}
             </button>
