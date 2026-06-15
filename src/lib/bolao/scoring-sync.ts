@@ -19,7 +19,7 @@ type Admin = ReturnType<typeof createAdminClient>;
  *   2. Calcula os pontos de cada usuário por rodada (round_scores) e, quando a
  *      rodada encerra, o(s) vencedor(es) — que ganham +50 de bônus. O admin
  *      fica fora de competição (não recebe bônus).
- *   3. total_score = pontos dos palpites + correção manual + bônus de rodada.
+ *   3. total_score = palpites + correção manual + bônus de rodada + indicação.
  */
 export async function applyScoring(admin: Admin): Promise<{ updatedPredictions: number }> {
   // Todas as partidas (precisamos do status de todas para saber se a rodada
@@ -95,17 +95,21 @@ export async function applyScoring(admin: Admin): Promise<{ updatedPredictions: 
     }
   }
 
-  // Perfis dos usuários afetados: is_admin (fora de competição) + correção manual.
+  // Perfis dos usuários afetados: is_admin (fora de competição), correção
+  // manual e bônus de indicação (precisa entrar no total_score, senão o
+  // recálculo do sync apagaria os pontos ganhos por indicar amigos).
   const isAdminByUser = new Map<string, boolean>();
   const adjustmentByUser = new Map<string, number>();
+  const referralByUser = new Map<string, number>();
   if (affectedUsers.size > 0) {
     const { data: profs } = await admin
       .from('profiles')
-      .select('id, is_admin, score_adjustment')
+      .select('id, is_admin, score_adjustment, referral_bonus')
       .in('id', Array.from(affectedUsers));
     for (const pr of profs ?? []) {
       isAdminByUser.set(pr.id, !!pr.is_admin);
       adjustmentByUser.set(pr.id, pr.score_adjustment ?? 0);
+      referralByUser.set(pr.id, pr.referral_bonus ?? 0);
     }
   }
 
@@ -176,13 +180,18 @@ export async function applyScoring(admin: Admin): Promise<{ updatedPredictions: 
   }
 
   // Atualiza total_score + round_bonus de cada usuário afetado.
+  // total_score = palpites + correção manual + bônus de rodada + bônus de indicação.
   for (const userId of affectedUsers) {
     const earned = earnedByUser.get(userId) ?? 0;
     const adjustment = adjustmentByUser.get(userId) ?? 0;
     const bonus = roundBonusByUser.get(userId) ?? 0;
+    const referral = referralByUser.get(userId) ?? 0;
     await admin
       .from('profiles')
-      .update({ round_bonus: bonus, total_score: earned + adjustment + bonus })
+      .update({
+        round_bonus: bonus,
+        total_score: earned + adjustment + bonus + referral,
+      })
       .eq('id', userId);
   }
 

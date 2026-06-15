@@ -13,6 +13,10 @@ export interface Profile {
   total_score: number;
   score_adjustment: number;
   round_bonus: number;
+  // Indicação (cupons)
+  referral_code: string | null;
+  referred_by: string | null;
+  referral_bonus: number;
   // Onboarding (coletados após a confirmação do e-mail)
   birth_date: string | null;
   phone: string | null;

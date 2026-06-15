@@ -1,6 +1,7 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { isProfileComplete } from '@/lib/bolao/profile';
 import type { Profile } from '@/lib/bolao/types';
 
@@ -29,7 +30,11 @@ export async function saveOnboarding(
     return typeof v === 'string' && v.trim() !== '' ? v.trim() : null;
   };
 
-  const fields = {
+  // Cupom de indicação (opcional). Normaliza para MAIÚSCULAS.
+  const referralRaw = get('referred_by');
+  const referralCode = referralRaw ? referralRaw.toUpperCase() : null;
+
+  const fields: Record<string, string | boolean | null> = {
     full_name: get('full_name'),
     birth_date: get('birth_date'),
     phone: get('phone'),
@@ -42,6 +47,24 @@ export async function saveOnboarding(
     address_state: get('address_state'),
     agreed_to_lgpd: formData.get('agreed_to_lgpd') === 'on',
   };
+
+  // Valida o cupom com o service_role (RLS impede ler o code de outros).
+  // Aceita só códigos existentes e que não sejam o do próprio usuário.
+  if (referralCode) {
+    const admin = createAdminClient();
+    const { data: owner } = await admin
+      .from('profiles')
+      .select('id')
+      .ilike('referral_code', referralCode)
+      .maybeSingle();
+    if (!owner) {
+      return { ok: false, error: 'Cupom de indicação inválido.' };
+    }
+    if (owner.id === user.id) {
+      return { ok: false, error: 'Você não pode usar o seu próprio cupom.' };
+    }
+    fields.referred_by = referralCode;
+  }
 
   // Validação server-side (espelha o isProfileComplete).
   const required: (keyof typeof fields)[] = [

@@ -8,6 +8,7 @@ export interface MatrixUser {
   name: string;
   bonus: number;
   adjustment: number;
+  referral: number;
   total: number;
   isAdmin: boolean;
 }
@@ -159,7 +160,10 @@ export function AdminPredictionsMatrix({ users, columns, cells }: Props) {
                           {u.adjustment > 0 ? `+${u.adjustment}` : u.adjustment} adj
                         </span>
                       )}
-                      {u.bonus === 0 && u.adjustment === 0 && (
+                      {u.referral > 0 && (
+                        <span className="pm-referral">+{u.referral} ind</span>
+                      )}
+                      {u.bonus === 0 && u.adjustment === 0 && u.referral === 0 && (
                         <span style={{ color: 'var(--text-tertiary)' }}>—</span>
                       )}
                     </td>

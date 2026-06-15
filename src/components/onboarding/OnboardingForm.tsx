@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { AlertCircle, Loader2, CreditCard } from 'lucide-react';
+import { AlertCircle, Loader2, CreditCard, Gift } from 'lucide-react';
 import { saveOnboarding } from '@/app/completar-cadastro/actions';
 import type { Profile } from '@/lib/bolao/types';
 import '../auth/auth.css';
@@ -45,6 +45,7 @@ export function OnboardingForm({ profile }: Props) {
   const [district, setDistrict] = useState(profile?.address_district ?? '');
   const [city, setCity] = useState(profile?.address_city ?? '');
   const [uf, setUf] = useState(profile?.address_state ?? '');
+  const [referral, setReferral] = useState(profile?.referred_by ?? '');
   const [lgpd, setLgpd] = useState(profile?.agreed_to_lgpd ?? false);
 
   const [cepLoading, setCepLoading] = useState(false);
@@ -105,6 +106,7 @@ export function OnboardingForm({ profile }: Props) {
     fd.set('address_district', district);
     fd.set('address_city', city);
     fd.set('address_state', uf);
+    fd.set('referred_by', referral.trim());
     fd.set('agreed_to_lgpd', lgpd ? 'on' : 'off');
 
     startTransition(async () => {
@@ -218,6 +220,25 @@ export function OnboardingForm({ profile }: Props) {
       <div className="auth-field">
         <span className="auth-label">Bairro</span>
         <input className="auth-input" value={district} onChange={(e) => setDistrict(e.target.value)} />
+      </div>
+
+      <div className="auth-field">
+        <span className="auth-label">
+          <Gift size={13} style={{ verticalAlign: 'middle', marginRight: 4 }} />
+          Cupom de indicação (opcional)
+        </span>
+        <input
+          className="auth-input"
+          value={referral}
+          onChange={(e) => setReferral(e.target.value.toUpperCase().replace(/\s/g, '').slice(0, 12))}
+          placeholder="Ex.: ABC123"
+          autoCapitalize="characters"
+          autoCorrect="off"
+          spellCheck={false}
+        />
+        <span className="onb-cep-hint">
+          Recebeu o cupom de quem já participa? O indicador ganha 5 pontos quando você paga.
+        </span>
       </div>
 
       <div className="onb-lgpd">

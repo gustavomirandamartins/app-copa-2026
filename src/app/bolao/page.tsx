@@ -7,6 +7,7 @@ import { isSupabaseConfigured } from '@/lib/supabase/config';
 import { isProfileComplete } from '@/lib/bolao/profile';
 import type { Profile, PredictionInput } from '@/lib/bolao/types';
 import { BolaoClient, type MatchResult } from '@/components/bolao/BolaoClient';
+import { ReferralCard } from '@/components/bolao/ReferralCard';
 import { AuthPanel } from '@/components/auth/AuthPanel';
 import { logout } from '@/app/login/actions';
 
@@ -210,6 +211,11 @@ export default async function BolaoPage({
           </div>
         </div>
       </details>
+
+      {/* Cupom de indicação — só para quem já é premium. */}
+      {profile?.is_premium && profile.referral_code && (
+        <ReferralCard code={profile.referral_code} bonus={profile.referral_bonus ?? 0} />
+      )}
 
       {configured && !authenticated ? (
         <AuthPanel />

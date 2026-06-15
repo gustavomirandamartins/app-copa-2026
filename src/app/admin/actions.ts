@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { runFootballSync } from '@/lib/football-data/sync';
+import { creditReferralOnPremium } from '@/lib/bolao/referral';
 import type { Profile } from '@/lib/bolao/types';
 
 export interface AdminActionResult {
@@ -98,6 +99,9 @@ export async function approvePayment(requestId: string): Promise<AdminActionResu
     console.error('[admin] falha ao conceder Premium:', grantErr);
     return { ok: false, error: 'Falha ao liberar o acesso. Tente novamente.' };
   }
+
+  // Premium concedido → credita quem indicou (idempotente).
+  await creditReferralOnPremium(admin, reqRow.user_id);
 
   // 2) Marca a solicitação como aprovada.
   const { error: updErr } = await admin

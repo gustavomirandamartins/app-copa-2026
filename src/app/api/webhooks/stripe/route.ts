@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import type Stripe from 'stripe';
 import { getStripe } from '@/lib/stripe';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { creditReferralOnPremium } from '@/lib/bolao/referral';
 
 /**
  * POST /api/webhooks/stripe
@@ -66,6 +67,9 @@ export async function POST(req: NextRequest) {
             { status: 500 },
           );
         }
+
+        // Premium concedido → credita quem indicou (idempotente).
+        await creditReferralOnPremium(admin, userId);
       }
     }
   }

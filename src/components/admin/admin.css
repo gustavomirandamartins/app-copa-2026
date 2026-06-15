@@ -407,6 +407,14 @@
   white-space: nowrap;
   margin-top: 2px;
 }
+.pm-referral {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #c77d00;
+  white-space: nowrap;
+  margin-top: 2px;
+}
 .pm-total { color: var(--text-primary); font-weight: 800; }
 
 .pm-col-match { min-width: 90px; }
