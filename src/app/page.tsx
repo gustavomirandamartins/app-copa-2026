@@ -8,46 +8,36 @@ import {
   Zap,
   Sparkles,
   ArrowRight,
-  CheckCircle2,
   PartyPopper,
   Calendar,
   BarChart3,
   Flag,
+  CheckCircle2,
+  ListChecks,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
+import { isProfileComplete } from '@/lib/bolao/profile';
 import { computeThermometer, verdictFor } from '@/lib/bolao/thermometer';
 import { ROUND_BONUS_POINTS } from '@/lib/bolao/rounds';
 import { REFERRAL_BONUS_POINTS } from '@/lib/bolao/referral';
+import type { Profile, PredictionInput } from '@/lib/bolao/types';
 import { ScrollReveal } from '@/components/ui/ScrollReveal';
 import { JoinThermometer } from '@/components/home/JoinThermometer';
+import { RankingSnapshot } from '@/components/home/RankingSnapshot';
+import { AuthPanel } from '@/components/auth/AuthPanel';
+import { ReferralCard } from '@/components/bolao/ReferralCard';
+import { BolaoClient, type MatchResult } from '@/components/bolao/BolaoClient';
 import './home.css';
 
 export const revalidate = 0;
 
 const PRICE = 'R$ 39,90';
 
-const STEPS = [
-  {
-    icon: CheckCircle2,
-    title: 'Crie sua conta e ative',
-    text: `Cadastro rápido e Bolão Premium por ${PRICE} — pagamento único via Pix ou cartão.`,
-  },
-  {
-    icon: Target,
-    title: 'Palpite antes do apito',
-    text: 'Para cada jogo, diga o placar que você espera. Vale palpitar até o início da partida.',
-  },
-  {
-    icon: Zap,
-    title: 'Some pontos automaticamente',
-    text: 'Terminou o jogo, os pontos caem no seu total. Acertou o placar exato? 5 pontos.',
-  },
-  {
-    icon: Trophy,
-    title: 'Dispute os prêmios MinduBier',
-    text: 'Acompanhe a classificação em tempo real e brigue pelo topo até a final.',
-  },
+const MINI_STEPS = [
+  { icon: Target, text: 'Palpite o placar antes do apito' },
+  { icon: Zap, text: 'Acertou? Pontos no seu total' },
+  { icon: Trophy, text: 'Dispute os prêmios MinduBier' },
 ];
 
 const PERKS = [
@@ -77,38 +67,137 @@ const PERKS = [
   },
 ];
 
+interface RankRow {
+  full_name: string | null;
+  total_score: number;
+}
+
 export default async function HomePage() {
   const configured = isSupabaseConfigured();
 
   let leaderPoints = 0;
-  let isPremium = false;
+  let authenticated = false;
+  let profile: Profile | null = null;
+  let rankRows: RankRow[] = [];
+  let existingPredictions: PredictionInput[] = [];
+  const multipliers: Record<string, number> = {};
+  const results: Record<string, MatchResult> = {};
+  const pointsByMatch: Record<string, number> = {};
 
   if (configured) {
     const supabase = await createClient();
 
-    const [{ data: top }, { data: auth }] = await Promise.all([
-      supabase
-        .from('public_ranking')
-        .select('total_score')
-        .order('total_score', { ascending: false })
-        .limit(1),
-      supabase.auth.getUser(),
-    ]);
+    const [{ data: user }, { data: top }, { data: settings }, { data: live }] =
+      await Promise.all([
+        supabase.auth.getUser().then((r) => ({ data: r.data.user })),
+        supabase
+          .from('public_ranking')
+          .select('full_name, total_score')
+          .order('total_score', { ascending: false }),
+        supabase.from('match_settings').select('match_id, score_multiplier').gt('score_multiplier', 1),
+        supabase.from('matches').select('id, status, home_score, away_score'),
+      ]);
 
-    leaderPoints = (top?.[0]?.total_score as number | undefined) ?? 0;
+    rankRows = (top as RankRow[]) ?? [];
+    leaderPoints = rankRows[0]?.total_score ?? 0;
 
-    if (auth?.user) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('is_premium')
-        .eq('id', auth.user.id)
-        .single();
-      isPremium = !!(profile as { is_premium?: boolean } | null)?.is_premium;
+    for (const s of settings ?? []) multipliers[s.match_id] = s.score_multiplier as number;
+    for (const m of live ?? []) {
+      results[m.id] = {
+        status: m.status as MatchResult['status'],
+        homeScore: m.home_score as number | null,
+        awayScore: m.away_score as number | null,
+      };
+    }
+
+    if (user) {
+      authenticated = true;
+      const [{ data: prof }, { data: preds }] = await Promise.all([
+        supabase.from('profiles').select('*').eq('id', user.id).single(),
+        supabase
+          .from('predictions')
+          .select('match_id, home_score_guess, away_score_guess, is_autofilled, points_earned')
+          .eq('user_id', user.id),
+      ]);
+      profile = (prof as Profile) ?? null;
+      existingPredictions = (preds as PredictionInput[]) ?? [];
+      for (const p of (preds as Array<PredictionInput & { points_earned: number | null }>) ?? []) {
+        if (p.points_earned != null) pointsByMatch[p.match_id] = p.points_earned;
+      }
     }
   }
 
+  const isPremium = !!profile?.is_premium;
+
+  // ════════════════════════════════════════════════════════════════
+  // PARTICIPANTE (premium) — dashboard com classificação + palpites
+  // ════════════════════════════════════════════════════════════════
+  if (isPremium && profile) {
+    const firstName = (profile.full_name ?? '').trim().split(/\s+/)[0] || 'craque';
+    return (
+      <div className="container home">
+        <section className="dash-hero">
+          <span className="home-eyebrow">
+            <Sparkles size={14} /> Bolão da Mindu · Copa 2026
+          </span>
+          <h1 className="dash-hello">
+            Salve, <span className="home-title-accent">{firstName}</span>!
+          </h1>
+          <p className="dash-hello-sub">
+            Seus palpites e a classificação, tudo aqui. Bora subir no ranking?
+          </p>
+        </section>
+
+        <div className="dash-grid">
+          <RankingSnapshot
+            rows={rankRows}
+            meName={profile.full_name}
+            mePoints={profile.total_score ?? 0}
+          />
+
+          <div className="dash-side">
+            {profile.referral_code && (
+              <ReferralCard code={profile.referral_code} bonus={profile.referral_bonus ?? 0} />
+            )}
+            <div className="dash-links glass-card-static">
+              <span className="dash-card-title">
+                <Sparkles size={16} /> Explore
+              </span>
+              <div className="dash-links-row">
+                <Link href="/jogos" className="home-explore-link"><Calendar size={15} /> Jogos</Link>
+                <Link href="/grupos" className="home-explore-link"><BarChart3 size={15} /> Grupos</Link>
+                <Link href="/selecoes" className="home-explore-link"><Flag size={15} /> Seleções</Link>
+                <Link href="/probabilidades" className="home-explore-link"><Trophy size={15} /> Probabilidades</Link>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <section className="dash-predictions">
+          <div className="dash-pred-head">
+            <h2 className="home-h2"><ListChecks size={20} /> Seus palpites</h2>
+            <p className="home-sub">Registre os placares antes de cada partida começar.</p>
+          </div>
+          <BolaoClient
+            configured={configured}
+            authenticated={authenticated}
+            profile={profile}
+            existingPredictions={existingPredictions}
+            multipliers={multipliers}
+            results={results}
+            pointsByMatch={pointsByMatch}
+          />
+        </section>
+      </div>
+    );
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  // NOVO USUÁRIO (ou logado sem Premium) — funil de conversão
+  // ════════════════════════════════════════════════════════════════
   const thermo = computeThermometer();
   const verdict = verdictFor(thermo.stillAchievable, leaderPoints);
+  const continueHref = isProfileComplete(profile) ? '/pagamento' : '/completar-cadastro';
 
   return (
     <div className="container home">
@@ -120,78 +209,55 @@ export default async function HomePage() {
           <Sparkles size={14} /> Bolão da Mindu · Copa do Mundo 2026
         </span>
 
-        {isPremium ? (
-          <>
-            <h1 className="home-title animate-fade-in">
-              Você já está <span className="home-title-accent">no jogo</span>.
-            </h1>
-            <p className="home-lede animate-fade-in">
-              Bora palpitar e subir na classificação? Não esqueça de chamar a
-              galera com o seu cupom — cada amigo que entra te dá{' '}
-              <strong>+{REFERRAL_BONUS_POINTS} pontos</strong>.
-            </p>
-            <div className="home-hero-cta animate-fade-in">
-              <Link href="/bolao" className="btn btn-gold home-btn-lg">
-                <Target size={18} /> Fazer meus palpites
-              </Link>
-              <Link href="/ranking" className="btn btn-secondary home-btn-lg">
-                <Trophy size={18} /> Ver classificação
-              </Link>
-            </div>
-          </>
-        ) : (
-          <>
-            <h1 className="home-title animate-fade-in">
-              Palpite, pontue e{' '}
-              <span className="home-title-accent">leve prêmios</span> na Copa
-              2026.
-            </h1>
-            <p className="home-lede animate-fade-in">
-              O Bolão da Mindu é a sua disputa nos 104 jogos da Copa do Mundo.
-              Acerte placares, vença rodadas, indique amigos — e concorra aos
-              prêmios exclusivos da MinduBier.
-            </p>
-            <div className="home-hero-cta animate-fade-in">
-              <Link href="/bolao" className="btn btn-gold home-btn-lg">
-                <PartyPopper size={18} /> Entrar no Bolão · {PRICE}
-              </Link>
-              <Link href="/ranking" className="btn btn-secondary home-btn-lg">
-                <Trophy size={18} /> Ver prêmios
-              </Link>
-            </div>
-            <p className="home-hero-note animate-fade-in">
-              Pagamento único · Pix ou cartão · 48 seleções · 104 jogos
-            </p>
-          </>
-        )}
+        <h1 className="home-title home-title-xl animate-fade-in">
+          Dá tempo de <span className="home-title-accent">virar o jogo</span>.
+        </h1>
+        <p className="home-lede animate-fade-in">
+          Palpite nos jogos da Copa, vença rodadas, indique amigos — e concorra
+          aos prêmios exclusivos da MinduBier. Entrada única de {PRICE}.
+        </p>
+
+        <div className="home-hero-cta animate-fade-in">
+          <Link href="/bolao" className="btn btn-gold home-btn-lg">
+            <PartyPopper size={18} /> Entrar no Bolão · {PRICE}
+          </Link>
+          <a href="#entrar" className="btn btn-secondary home-btn-lg">
+            <Trophy size={18} /> Já tenho conta
+          </a>
+        </div>
+
+        {/* Como funciona — mini-strip condensada */}
+        <ul className="home-mini-steps animate-fade-in">
+          {MINI_STEPS.map((s, i) => {
+            const Icon = s.icon;
+            return (
+              <li key={s.text} className="home-mini-step">
+                <span className="home-mini-num">{i + 1}</span>
+                <Icon size={16} />
+                <span>{s.text}</span>
+              </li>
+            );
+          })}
+        </ul>
       </section>
 
-      {/* ── COMO FUNCIONA ──────────────────────────────────── */}
-      <ScrollReveal>
-        <section className="home-section">
-          <div className="home-section-head">
-            <h2 className="home-h2">
-              <Zap size={20} /> Como funciona
-            </h2>
-            <p className="home-sub">Quatro passos até o seu primeiro ponto.</p>
+      {/* Logado sem Premium → falta concluir cadastro/pagamento */}
+      {authenticated && !isPremium && (
+        <ScrollReveal>
+          <div className="home-resume glass-card-static">
+            <CheckCircle2 size={22} />
+            <div className="home-resume-text">
+              <strong>Falta pouco para você entrar!</strong>
+              <span>Conclua seu cadastro e a ativação do Bolão Premium.</span>
+            </div>
+            <Link href={continueHref} className="btn btn-gold btn-sm">
+              Continuar <ArrowRight size={15} />
+            </Link>
           </div>
-          <ol className="home-steps">
-            {STEPS.map((s, i) => {
-              const Icon = s.icon;
-              return (
-                <li key={s.title} className="home-step glass-card-static">
-                  <span className="home-step-num">{i + 1}</span>
-                  <Icon className="home-step-icon" size={22} />
-                  <h3 className="home-step-title">{s.title}</h3>
-                  <p className="home-step-text">{s.text}</p>
-                </li>
-              );
-            })}
-          </ol>
-        </section>
-      </ScrollReveal>
+        </ScrollReveal>
+      )}
 
-      {/* ── VANTAGENS ──────────────────────────────────────── */}
+      {/* ── POR QUE PARTICIPAR (ênfase) ────────────────────── */}
       <ScrollReveal>
         <section className="home-section">
           <div className="home-section-head">
@@ -206,10 +272,7 @@ export default async function HomePage() {
             {PERKS.map((p) => {
               const Icon = p.icon;
               return (
-                <div
-                  key={p.title}
-                  className={`home-perk glass-card-static accent-${p.accent}`}
-                >
+                <div key={p.title} className={`home-perk glass-card-static accent-${p.accent}`}>
                   <div className="home-perk-icon">
                     <Icon size={22} />
                   </div>
@@ -222,7 +285,7 @@ export default async function HomePage() {
         </section>
       </ScrollReveal>
 
-      {/* ── TERMÔMETRO ─────────────────────────────────────── */}
+      {/* ── TERMÔMETRO (ênfase) ────────────────────────────── */}
       <ScrollReveal>
         <section className="home-section">
           <JoinThermometer
@@ -236,44 +299,44 @@ export default async function HomePage() {
         </section>
       </ScrollReveal>
 
-      {/* ── CTA FINAL ──────────────────────────────────────── */}
+      {/* ── CTA + LOGIN ────────────────────────────────────── */}
       <ScrollReveal>
         <section className="home-cta-band glass-card-static">
           <div className="home-cta-band-glow" aria-hidden="true" />
           <Trophy size={34} className="home-cta-band-icon" />
-          <h2 className="home-cta-band-title">
-            {isPremium
-              ? 'A taça não espera. Faça seus palpites!'
-              : 'Bora pro Bolão? A virada começa agora.'}
-          </h2>
+          <h2 className="home-cta-band-title">A virada começa agora.</h2>
           <p className="home-cta-band-text">
-            {isPremium
-              ? 'Registre os placares dos próximos jogos antes do apito inicial.'
-              : `Entre por ${PRICE}, palpite nos próximos jogos e dispute os prêmios MinduBier.`}
+            Entre por {PRICE}, palpite nos próximos jogos e dispute os prêmios MinduBier.
           </p>
           <Link href="/bolao" className="btn btn-gold home-btn-lg">
-            {isPremium ? 'Ir para meus palpites' : 'Quero participar'}{' '}
-            <ArrowRight size={18} />
+            Quero participar <ArrowRight size={18} />
           </Link>
         </section>
       </ScrollReveal>
+
+      {/* Card de login/criar conta logo abaixo (só para deslogados) */}
+      {!authenticated && (
+        <ScrollReveal>
+          <section id="entrar" className="home-auth">
+            <div className="home-section-head">
+              <h2 className="home-h2">
+                <Trophy size={20} /> Entrar ou criar conta
+              </h2>
+              <p className="home-sub">Comece agora — leva menos de um minuto.</p>
+            </div>
+            <AuthPanel />
+          </section>
+        </ScrollReveal>
+      )}
 
       {/* ── EXPLORE TAMBÉM ─────────────────────────────────── */}
       <section className="home-explore">
         <span className="home-explore-label">Explore também</span>
         <div className="home-explore-links">
-          <Link href="/jogos" className="home-explore-link">
-            <Calendar size={15} /> Jogos
-          </Link>
-          <Link href="/grupos" className="home-explore-link">
-            <BarChart3 size={15} /> Grupos
-          </Link>
-          <Link href="/selecoes" className="home-explore-link">
-            <Flag size={15} /> Seleções
-          </Link>
-          <Link href="/probabilidades" className="home-explore-link">
-            <Trophy size={15} /> Probabilidades
-          </Link>
+          <Link href="/jogos" className="home-explore-link"><Calendar size={15} /> Jogos</Link>
+          <Link href="/grupos" className="home-explore-link"><BarChart3 size={15} /> Grupos</Link>
+          <Link href="/selecoes" className="home-explore-link"><Flag size={15} /> Seleções</Link>
+          <Link href="/probabilidades" className="home-explore-link"><Trophy size={15} /> Probabilidades</Link>
         </div>
       </section>
     </div>

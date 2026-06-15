@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { runFootballSync } from '@/lib/football-data/sync';
 import { creditReferralOnPremium } from '@/lib/bolao/referral';
+import { scrapeUfmgProbabilities } from '@/lib/ufmg/scrape';
 import type { Profile } from '@/lib/bolao/types';
 
 export interface AdminActionResult {
@@ -67,6 +68,55 @@ export async function triggerSync(): Promise<SyncActionResult> {
     console.error('[admin] triggerSync falhou:', message);
     return { ok: false, error: message };
   }
+}
+
+export interface RefreshProbabilitiesResult {
+  ok: boolean;
+  teams?: number;
+  updatedAt?: string;
+  error?: string;
+}
+
+/**
+ * Atualiza as probabilidades (modelo UFMG): faz o scraping das 6 fases e
+ * grava na tabela `team_probabilities`. Admin-only.
+ */
+export async function refreshProbabilities(): Promise<RefreshProbabilitiesResult> {
+  const auth = await requireAdmin();
+  if ('error' in auth) return { ok: false, error: auth.error };
+
+  let scraped;
+  try {
+    scraped = await scrapeUfmgProbabilities();
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'erro desconhecido';
+    console.error('[admin] scraping UFMG falhou:', message);
+    return { ok: false, error: `Não foi possível ler a UFMG: ${message}` };
+  }
+
+  const updatedAt = new Date().toISOString();
+  const admin = createAdminClient();
+  const { error } = await admin.from('team_probabilities').upsert(
+    scraped.map((p) => ({
+      team_id: p.teamId,
+      champion: p.champion,
+      final: p.final,
+      semifinal: p.semifinal,
+      quarter_final: p.quarterFinal,
+      round_of_16: p.roundOf16,
+      round_of_32: p.roundOf32,
+      updated_at: updatedAt,
+    })),
+    { onConflict: 'team_id' },
+  );
+
+  if (error) {
+    console.error('[admin] falha ao gravar probabilidades:', error);
+    return { ok: false, error: 'Falha ao salvar as probabilidades no banco.' };
+  }
+
+  revalidatePath('/probabilidades');
+  return { ok: true, teams: scraped.length, updatedAt };
 }
 
 /** Aprova uma solicitação de Pix: libera o Premium e marca como aprovada. */
