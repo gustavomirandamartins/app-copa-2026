@@ -101,6 +101,12 @@
   color: transparent;
 }
 
+/* Sobre fundo vibrante, gradient-clip não aceita text-shadow; usar drop-shadow */
+.home .home-title .home-title-accent,
+.dash-hello .home-title-accent {
+  filter: drop-shadow(0 2px 16px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 6px rgba(0, 0, 0, 0.45));
+}
+
 .home-lede {
   font-size: clamp(0.98rem, 2.4vw, 1.18rem);
   color: var(--text-secondary);
@@ -234,12 +240,16 @@
   grid-template-columns: 1.35fr 1fr;
   gap: var(--space-lg);
   margin-bottom: var(--space-2xl);
-  align-items: start;
+  align-items: stretch;
 }
 .dash-side {
   display: flex;
   flex-direction: column;
   gap: var(--space-lg);
+}
+.dash-rank {
+  height: 100%;
+  box-sizing: border-box;
 }
 
 .dash-card-title {

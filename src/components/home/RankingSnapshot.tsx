@@ -63,7 +63,7 @@ export function RankingSnapshot({ rows, meName, mePoints }: Props) {
             return (
               <li key={`${r.full_name}-${i}`} className={`dash-rank-row ${mine ? 'is-me' : ''}`}>
                 <span className={`dash-rank-pos ${i === 0 ? 'gold' : ''}`}>
-                  {i === 0 ? <Crown size={15} /> : `${r.pos}º`}
+                  {i === 0 ? <Crown size={15} /> : r.pos !== null ? `${r.pos}º` : '-'}
                 </span>
                 <span className="dash-rank-name">
                   {r.full_name ?? 'Participante'}

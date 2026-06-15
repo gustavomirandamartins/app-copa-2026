@@ -329,11 +329,13 @@
 
 .bolao-message {
   font-size: 0.85rem;
-  color: var(--text-secondary);
-  background: var(--bg-card);
+  /* Force dark text — fora de glass-card, herda branco do .page-content */
+  color: #323231;
+  background: rgba(255, 255, 244, 0.92);
+  backdrop-filter: blur(10px);
   padding: 8px 14px;
   border-radius: var(--radius-full);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
 }
 
 /* ── Notices / Paywall ─────────────────────────────────────── */

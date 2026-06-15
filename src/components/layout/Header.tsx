@@ -99,7 +99,9 @@ export function Header() {
           className="app-header-logo"
           aria-label="Bolão da Mindu na Copa 2026"
           style={{
-            filter: scrolled ? 'none' : 'drop-shadow(0 2px 10px rgba(0, 0, 0, 0.35))',
+            filter: scrolled
+              ? 'drop-shadow(0 1px 6px rgba(0,0,0,0.30)) drop-shadow(0 0 1px rgba(0,0,0,0.18))'
+              : 'drop-shadow(0 2px 10px rgba(0, 0, 0, 0.35))',
             transition: 'filter 0.45s ease',
           }}
         >

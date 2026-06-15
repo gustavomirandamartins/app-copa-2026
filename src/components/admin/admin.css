@@ -7,7 +7,9 @@
 .admin-section-title {
   font-size: 1rem;
   margin: 0 0 var(--space-sm);
-  color: var(--text-secondary);
+  /* Fora de glass-card — herda branco do .page-content; forçar legível */
+  color: rgba(255, 255, 255, 0.82);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.5);
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -30,6 +32,10 @@
   padding: var(--space-md);
   margin-bottom: var(--space-sm);
   flex-wrap: wrap;
+  /* Reforça glass sobre o fundo vibrante — mais transparente para mostrar o blur */
+  background: rgba(255, 255, 244, 0.52) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.55) !important;
 }
 
 .admin-row.status-approved { opacity: 0.7; }
