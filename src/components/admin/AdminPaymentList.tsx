@@ -54,7 +54,7 @@ function Row({ req }: { req: PaymentRequest }) {
   }
 
   return (
-    <div className={`admin-row glass-card-static status-${req.status}`}>
+    <div className={`admin-row status-${req.status}`}>
       <div className="admin-row-main">
         <div className="admin-row-name">
           <User size={15} />

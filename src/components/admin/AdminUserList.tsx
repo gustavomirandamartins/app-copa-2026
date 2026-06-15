@@ -86,7 +86,7 @@ function UserRow({ u }: { u: AdminUser }) {
   }
 
   return (
-    <div className={`admin-row glass-card-static ${u.is_premium ? 'status-approved' : ''}`}>
+    <div className={`admin-row ${u.is_premium ? 'status-approved' : ''}`}>
       <div className="admin-row-main">
         <div className="admin-row-name">
           <User size={15} />
@@ -219,7 +219,7 @@ export function AdminUserList({ users }: { users: AdminUser[] }) {
   const premiumCount = users.filter((u) => u.is_premium).length;
 
   return (
-    <section>
+    <section className="admin-glass-section">
       <h2 className="admin-section-title">
         Todos os usuários ({users.length}) · {premiumCount} com acesso
       </h2>

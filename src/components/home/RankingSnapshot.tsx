@@ -27,9 +27,9 @@ export function RankingSnapshot({ rows, meName, mePoints }: Props) {
     return { ...r, pos, admin };
   });
 
-  const top = ranked.slice(0, 5);
+  const top = ranked.slice(0, 7);
   const me = meName ? ranked.find((r) => norm(r.full_name) === norm(meName)) : undefined;
-  const meInTop = me ? me.pos !== null && me.pos <= 5 : false;
+  const meInTop = me ? me.pos !== null && me.pos <= 7 : false;
 
   return (
     <div className="dash-rank glass-card-static">

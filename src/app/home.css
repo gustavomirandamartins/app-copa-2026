@@ -101,10 +101,21 @@
   color: transparent;
 }
 
-/* Sobre fundo vibrante, gradient-clip não aceita text-shadow; usar drop-shadow */
+/* Sobre fundo vibrante, o gradiente âmbar→verde some. Sobrescrever com cor
+   sólida chamativa + text-shadow (funciona quando -webkit-text-fill-color não
+   é transparent). drop-shadow com spread grande cria box visível — evitar. */
 .home .home-title .home-title-accent,
 .dash-hello .home-title-accent {
-  filter: drop-shadow(0 2px 16px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 6px rgba(0, 0, 0, 0.45));
+  background: none;
+  -webkit-background-clip: unset;
+  background-clip: unset;
+  -webkit-text-fill-color: #ffe566;
+  color: #ffe566;
+  text-shadow:
+    0 0 28px rgba(255, 210, 0, 0.90),
+    0 0  8px rgba(255, 255, 120, 0.70),
+    0 2px 12px rgba(0, 0, 0, 0.70);
+  filter: none;
 }
 
 .home-lede {
