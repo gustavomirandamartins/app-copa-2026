@@ -26,17 +26,29 @@ export default function SelecaoPage({ params }: { params: Promise<{ teamId: stri
   const { teamId } = use(params);
 
   useEffect(() => {
-    const html = document.documentElement;
-    // Pré-carrega a imagem; só troca o background quando estiver pronta
-    // (evita flash de fundo vazio sobrescrevendo o CSS global).
-    const img = new Image();
-    img.onload = () => {
-      html.style.backgroundImage = `url('${STORAGE_URL}/bg-${teamId}.avif')`;
-    };
-    img.src = `${STORAGE_URL}/bg-${teamId}.avif`;
+    // Estratégia: overlay fixo com z-index:-1 (acima do canvas do html, abaixo
+    // de todo o conteúdo da página). Faz crossfade com o background global.
+    const overlay = document.createElement('div');
+    Object.assign(overlay.style, {
+      position: 'fixed',
+      inset: '0',
+      zIndex: '-1',
+      backgroundImage: `url('${STORAGE_URL}/bg-${teamId}.avif')`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center top',
+      backgroundAttachment: 'fixed',
+      opacity: '0',
+      transition: 'opacity 0.85s ease',
+      pointerEvents: 'none',
+    });
+    document.body.appendChild(overlay);
+    // Força o browser a registrar o estado inicial antes de animar.
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      overlay.style.opacity = '1';
+    }));
     return () => {
-      img.onload = null;
-      html.style.backgroundImage = '';
+      overlay.style.opacity = '0';
+      overlay.addEventListener('transitionend', () => overlay.remove(), { once: true });
     };
   }, [teamId]);
   const team = getTeamById(teamId);
