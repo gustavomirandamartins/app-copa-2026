@@ -289,7 +289,7 @@
   gap: 4px;
   font-size: 0.8rem;
   font-weight: 700;
-  color: var(--copa-green);
+  color: var(--gold);
   text-decoration: none;
 }
 .dash-rank-all:hover { text-decoration: underline; }
@@ -381,7 +381,7 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--text-tertiary);
-  background: rgba(50, 50, 49, 0.08);
+  background: rgba(255, 255, 255, 0.12);
   padding: 2px 6px;
   border-radius: var(--radius-full);
   white-space: nowrap;
@@ -821,23 +821,24 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 16px;
+  padding: 9px 18px;
   border-radius: var(--radius-full);
-  background: rgba(255, 255, 244, 0.55);
-  border: 1px solid var(--glass-border);
+  background: linear-gradient(135deg, #c97000 0%, #e8a000 100%);
+  border: 1px solid transparent;
   font-size: 0.84rem;
-  font-weight: 600;
-  color: var(--text-secondary);
+  font-weight: 700;
+  color: #fff;
   text-decoration: none;
+  box-shadow: 0 4px 14px rgba(201, 112, 0, 0.30), inset 0 1px 0 rgba(255,255,255,0.18);
   transition: all var(--transition-fast);
 }
 .home-explore-link:hover {
-  color: var(--copa-green);
-  border-color: rgba(0, 151, 57, 0.30);
+  color: #fff;
   transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(201, 112, 0, 0.45), inset 0 1px 0 rgba(255,255,255,0.18);
 }
 .home-explore-link svg {
-  color: var(--gold);
+  color: #fff;
 }
 
 /* ── Responsivo ────────────────────────────────────────────── */

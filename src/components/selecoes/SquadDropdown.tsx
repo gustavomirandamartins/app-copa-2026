@@ -12,16 +12,6 @@ const POS_GROUPS: { key: SquadPosition; label: string; color: string }[] = [
   { key: 'FW', label: 'Atacantes', color: '#d6453f' },
 ];
 
-function ageFrom(dob: string | null): number | null {
-  if (!dob) return null;
-  const d = new Date(`${dob}T00:00:00Z`);
-  const now = new Date();
-  let age = now.getUTCFullYear() - d.getUTCFullYear();
-  const m = now.getUTCMonth() - d.getUTCMonth();
-  if (m < 0 || (m === 0 && now.getUTCDate() < d.getUTCDate())) age -= 1;
-  return age;
-}
-
 interface Props {
   teamId: string;
   /** Cor de destaque da seleção (borda do toggle ao abrir). */
@@ -54,7 +44,7 @@ export function SquadDropdown({ teamId, accentColor }: Props) {
         aria-expanded={open}
         style={{ borderColor: open ? accentColor : undefined }}
       >
-        <Users size={16} style={{ color: 'var(--copa-green)' }} />
+        <Users size={16} style={{ color: 'var(--gold)' }} />
         <span>Ver elenco completo</span>
         <ChevronDown
           size={18}
@@ -98,27 +88,23 @@ export function SquadDropdown({ teamId, accentColor }: Props) {
                       <span className="squad-group-count">{players.length}</span>
                     </h4>
                     <ul className="squad-list">
-                      {players.map((p) => {
-                        const age = ageFrom(p.dob);
-                        return (
-                          <li key={p.num} className="squad-player">
-                            <span
-                              className="squad-num"
-                              style={{ background: color }}
-                            >
-                              {p.num}
+                      {players.map((p) => (
+                        <li key={p.num} className="squad-player">
+                          <span
+                            className="squad-num"
+                            style={{ background: color }}
+                          >
+                            {p.num}
+                          </span>
+                          <span className="squad-info">
+                            <span className="squad-shirt">{p.shirt}</span>
+                            <span className="squad-meta">
+                              {p.name}
+                              {p.name !== p.club && <> · {p.club}</>}
                             </span>
-                            <span className="squad-info">
-                              <span className="squad-shirt">{p.shirt}</span>
-                              <span className="squad-meta">
-                                {p.name}
-                                {p.name !== p.club && <> · {p.club}</>}
-                              </span>
-                            </span>
-                            {age !== null && <span className="squad-age">{age}a</span>}
-                          </li>
-                        );
-                      })}
+                          </span>
+                        </li>
+                      ))}
                     </ul>
                   </div>
                 );

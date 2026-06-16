@@ -235,12 +235,17 @@ a:hover { color: var(--copa-green-deep); }
   box-shadow: var(--shadow-lg);
 }
 
-/* White text inside dark glass cards */
+/* White text inside dark glass cards.
+   color é declarado aqui (não só a custom property) porque texto "solto"
+   — divs/spans sem regra de color própria — herda o color computado do
+   <body> (escuro). Declarar color: var(--text-primary) faz a sobrescrita
+   da variável realmente valer para esse texto herdado. */
 .glass-card,
 .glass-card-static {
   --text-primary:   #ffffff;
   --text-secondary: rgba(255, 255, 255, 0.75);
   --text-tertiary:  rgba(255, 255, 255, 0.50);
+  color: var(--text-primary);
 }
 
 /* ---- Container ---- */
@@ -262,10 +267,13 @@ a:hover { color: var(--copa-green-deep); }
   min-height: 100vh;
   position: relative;
   z-index: 1;
-  /* Text outside cards sits on dark background — use white */
+  /* Text outside cards sits on dark background — use white.
+     color é declarado (não só a variável) para que texto herdado fique
+     branco; do contrário herdaria o color escuro computado no <body>. */
   --text-primary:   #ffffff;
   --text-secondary: rgba(255,255,255,0.75);
   --text-tertiary:  rgba(255,255,255,0.50);
+  color: var(--text-primary);
 }
 
 @media (min-width: 768px) {
@@ -350,9 +358,10 @@ a:hover { color: var(--copa-green-deep); }
 }
 
 .badge-group {
-  background: rgba(0, 151, 57, 0.10);
-  color: var(--copa-green-deep);
-  border: 1px solid rgba(0, 151, 57, 0.22);
+  background: var(--gold);
+  color: #fff;
+  border: 1px solid var(--gold);
+  box-shadow: 0 2px 8px rgba(224, 124, 0, 0.30);
   font-family: var(--font-heading);
   font-size: 0.72rem;
 }
@@ -481,7 +490,8 @@ a:hover { color: var(--copa-green-deep); }
 .match-card-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  gap: var(--space-sm);
   margin-bottom: var(--space-sm);
   font-size: 0.72rem;
   font-weight: 600;
@@ -568,12 +578,12 @@ a:hover { color: var(--copa-green-deep); }
 .standings-table th {
   padding: 8px 12px;
   text-align: center;
-  color: var(--copa-green-deep);
+  color: var(--gold);
   font-weight: 700;
   font-size: 0.68rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  border-bottom: 2px solid rgba(0, 151, 57, 0.15);
+  border-bottom: 2px solid rgba(224, 124, 0, 0.25);
 }
 
 .standings-table th:first-child,
@@ -617,7 +627,7 @@ a:hover { color: var(--copa-green-deep); }
 
 .standings-table .pts {
   font-weight: 800;
-  color: var(--copa-green);
+  color: var(--gold);
   font-family: var(--font-heading);
 }
 
@@ -706,10 +716,10 @@ a:hover { color: var(--copa-green-deep); }
 }
 
 .tab.active {
-  background: var(--glass-bg-active);
-  color: var(--copa-green);
-  box-shadow: var(--shadow-sm);
-  border: 1px solid rgba(0, 151, 57, 0.18);
+  background: var(--gold);
+  color: #fff;
+  box-shadow: 0 2px 10px rgba(224, 124, 0, 0.35);
+  border: 1px solid var(--gold);
 }
 
 /* ---- Score Input ---- */

@@ -198,7 +198,7 @@ export function BolaoClient({
       <div className="bolao-savebar">
         {message && <span className="bolao-message">{message}</span>}
         <button
-          className="btn btn-primary bolao-save-btn"
+          className="btn btn-gold bolao-save-btn"
           onClick={handleSave}
           disabled={pending || isDemo || payload.length === 0}
           title={isDemo ? 'Indisponível no modo demonstração' : undefined}

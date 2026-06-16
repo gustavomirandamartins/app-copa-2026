@@ -206,11 +206,12 @@
   font-size: 1.3rem;
   font-weight: 800;
   font-family: var(--font-heading, inherit);
-  color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.12);
-  border: 2px solid rgba(255, 255, 255, 0.28);
+  /* Campo editável (jogo a acontecer) → fundo branco, dígitos escuros. */
+  color: #323231;
+  background: #fff;
+  border: 2px solid rgba(255, 255, 255, 0.45);
   border-radius: var(--radius-md);
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.20);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.12);
   -moz-appearance: textfield;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
@@ -229,7 +230,8 @@
 
 .bolao-score-input:disabled {
   cursor: not-allowed;
-  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.06);
   border-color: rgba(255, 255, 255, 0.12);
 }
 
@@ -249,8 +251,9 @@
 .bolao-countdown {
   font-size: 0.88rem;
   font-weight: 800;
-  color: var(--copa-green-deep);
-  background: rgba(0, 151, 57, 0.10);
+  color: #fff;
+  background: var(--gold);
+  box-shadow: 0 2px 8px rgba(224, 124, 0, 0.40);
   border-radius: var(--radius-full);
   padding: 5px 14px;
   white-space: nowrap;
@@ -302,15 +305,15 @@
   line-height: 1.4;
 }
 
-.bolao-feedback-msg.good { color: var(--copa-green); }
+.bolao-feedback-msg.good { color: #4ade80; }
 .bolao-feedback-msg.bad  { color: var(--text-secondary); }
 .bolao-feedback-msg.none { color: var(--text-tertiary); font-style: italic; }
 
 .bolao-card-guess {
   font-size: 0.72rem;
   font-weight: 600;
-  color: var(--text-tertiary);
-  background: rgba(255, 255, 255, 0.10);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
   border-radius: var(--radius-full);
   padding: 3px 10px;
   white-space: nowrap;
@@ -363,7 +366,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  box-shadow: 0 10px 30px rgba(0, 151, 57, 0.35);
+  box-shadow: 0 10px 30px rgba(224, 124, 0, 0.40);
 }
 
 .bolao-save-count {
@@ -470,7 +473,7 @@
     justify-content: center;
     height: 52px;
     font-size: 1rem;
-    box-shadow: 0 12px 34px rgba(0, 151, 57, 0.45);
+    box-shadow: 0 12px 34px rgba(224, 124, 0, 0.45);
   }
 
   .bolao-message {

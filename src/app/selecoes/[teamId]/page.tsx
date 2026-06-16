@@ -11,6 +11,15 @@ import { getKeyPlayer } from '@/data/key-players';
 import { TeamFlag } from '@/components/ui/TeamFlag';
 import { SquadDropdown } from '@/components/selecoes/SquadDropdown';
 import { formatKickoffTime } from '@/lib/datetime';
+import { createBrowserSupabaseClient } from '@/lib/supabase/client';
+import { isSupabaseConfigured } from '@/lib/supabase/config';
+import type { MatchStatus } from '@/lib/types';
+
+interface LiveResult {
+  status: MatchStatus;
+  homeScore: number | null;
+  awayScore: number | null;
+}
 
 const STORAGE_URL = 'https://sdyilmgixyynnmczsnhc.supabase.co/storage/v1/object/public/backgrounds';
 const JERSEYS_URL = 'https://sdyilmgixyynnmczsnhc.supabase.co/storage/v1/object/public/jerseys';
@@ -25,6 +34,36 @@ function ClientTime({ dateUTC }: { dateUTC: string }) {
 
 export default function SelecaoPage({ params }: { params: Promise<{ teamId: string }> }) {
   const { teamId } = use(params);
+
+  // Resultados ao vivo / encerrados das partidas (atualizam conforme acontecem).
+  const [liveResults, setLiveResults] = useState<Record<string, LiveResult>>({});
+  useEffect(() => {
+    if (!isSupabaseConfigured()) return;
+    let active = true;
+    const supabase = createBrowserSupabaseClient();
+    const load = async () => {
+      const { data } = await supabase
+        .from('matches')
+        .select('id, status, home_score, away_score');
+      if (!active || !data) return;
+      const map: Record<string, LiveResult> = {};
+      for (const m of data) {
+        map[m.id] = {
+          status: m.status as MatchStatus,
+          homeScore: m.home_score as number | null,
+          awayScore: m.away_score as number | null,
+        };
+      }
+      setLiveResults(map);
+    };
+    load();
+    // Re-busca a cada 60 s para refletir jogos em andamento.
+    const id = setInterval(load, 60_000);
+    return () => {
+      active = false;
+      clearInterval(id);
+    };
+  }, []);
 
   useEffect(() => {
     const html = document.documentElement;
@@ -122,22 +161,6 @@ export default function SelecaoPage({ params }: { params: Promise<{ teamId: stri
         overflow: 'hidden',
         borderLeft: `4px solid ${team.primaryColor}`,
       }}>
-        {/* Uniforme decorativo — posicionado à direita */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={`${JERSEYS_URL}/uniforme-${teamId}.avif`}
-          alt=""
-          aria-hidden="true"
-          style={{
-            position: 'absolute', right: '-8px', top: '50%',
-            transform: 'translateY(-50%)',
-            height: '110%', width: 'auto',
-            objectFit: 'contain',
-            opacity: 0.18,
-            pointerEvents: 'none',
-            userSelect: 'none',
-          }}
-        />
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-lg)', flexWrap: 'wrap', position: 'relative' }}>
           <TeamFlag name={team.name} flagEmoji={team.flag} size={72} style={{ borderRadius: 6 }} />
           <div style={{ flex: 1 }}>
@@ -154,6 +177,18 @@ export default function SelecaoPage({ params }: { params: Promise<{ teamId: stri
               )}
             </div>
           </div>
+          {/* Uniforme — ao lado, antes da chance de título */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={`${JERSEYS_URL}/uniforme-${teamId}.avif`}
+            alt={`Uniforme da seleção ${team.name}`}
+            style={{
+              height: 96, width: 'auto',
+              objectFit: 'contain',
+              flexShrink: 0,
+              filter: 'drop-shadow(0 6px 16px rgba(0,0,0,0.45))',
+            }}
+          />
           {prob && (
             <div style={{ textAlign: 'center', position: 'relative' }}>
               <div style={{
@@ -308,9 +343,32 @@ export default function SelecaoPage({ params }: { params: Promise<{ teamId: stri
                         {home?.name || 'TBD'}
                       </span>
                     </div>
-                    <span style={{ color: 'var(--gold)', fontWeight: 700, fontFamily: 'var(--font-heading)' }}>
-                      <ClientTime dateUTC={match.dateUTC} />
-                    </span>
+                    {(() => {
+                      const live = liveResults[match.id];
+                      const status = live?.status ?? match.status;
+                      if (status === 'finished' || status === 'live') {
+                        const isLive = status === 'live';
+                        return (
+                          <span style={{
+                            display: 'inline-flex', alignItems: 'center', gap: 6,
+                            fontWeight: 800, fontFamily: 'var(--font-heading)',
+                            color: isLive ? 'var(--copa-green)' : '#fff',
+                            whiteSpace: 'nowrap',
+                          }}>
+                            {isLive && <span style={{
+                              width: 7, height: 7, borderRadius: '50%',
+                              background: 'var(--copa-green)', display: 'inline-block',
+                            }} />}
+                            {live?.homeScore ?? 0} <span style={{ color: 'var(--text-tertiary)' }}>×</span> {live?.awayScore ?? 0}
+                          </span>
+                        );
+                      }
+                      return (
+                        <span style={{ color: 'var(--gold)', fontWeight: 700, fontFamily: 'var(--font-heading)' }}>
+                          <ClientTime dateUTC={match.dateUTC} />
+                        </span>
+                      );
+                    })()}
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, justifyContent: 'flex-end' }}>
                       <span style={{ fontWeight: match.awayTeamId === teamId ? 700 : 400, fontSize: '0.85rem' }}>
                         {away?.name || 'TBD'}
