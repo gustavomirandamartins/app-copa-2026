@@ -124,7 +124,7 @@ body {
   color: var(--text-primary);
   line-height: 1.7;
   min-height: 100vh;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 /* .parallax-bg kept in DOM but invisible — JS still targets it to
@@ -437,7 +437,7 @@ a:hover { color: var(--copa-green-deep); }
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  min-width: 160px;
+  min-width: 200px;
 }
 
 .probability-bar-info .flag {

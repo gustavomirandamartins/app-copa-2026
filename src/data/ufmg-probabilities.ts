@@ -58,9 +58,9 @@ const rawData: (UfmgProbability & { teamId: string })[] = [
   { teamId: 'jor', champion: 0.8, final: 1.7, semifinal: 3.67, quarterFinal: 8.1, roundOf16: 17.9, roundOf32: 43.4 },
   { teamId: 'gha', champion: 0.7, final: 1.5, semifinal: 3.39, quarterFinal: 7.9, roundOf16: 18.7, roundOf32: 46.9 },
   { teamId: 'rsa', champion: 0.6, final: 1.3, semifinal: 2.89, quarterFinal: 6.6, roundOf16: 15.0, roundOf32: 33.7 },
-  { teamId: 'hti', champion: 0.5, final: 0.4, semifinal: 0.91, quarterFinal: 2.2, roundOf16: 5.4, roundOf32: 16.0 },
+  { teamId: 'hai', champion: 0.5, final: 0.4, semifinal: 0.91, quarterFinal: 2.2, roundOf16: 5.4, roundOf32: 16.0 },
   { teamId: 'nzl', champion: 0.5, final: 1.1, semifinal: 2.52, quarterFinal: 6.0, roundOf16: 15.4, roundOf32: 38.3 },
-  { teamId: 'cur', champion: 0.5, final: 0.5, semifinal: 1.10, quarterFinal: 2.7, roundOf16: 6.7, roundOf32: 18.6 },
+  { teamId: 'cuw', champion: 0.5, final: 0.5, semifinal: 1.10, quarterFinal: 2.7, roundOf16: 6.7, roundOf32: 18.6 },
 ];
 
 export const ufmgProbabilities: UfmgProbability[] = rawData;
@@ -94,5 +94,5 @@ export const UFMG_NAME_TO_TEAM_ID: Record<string, string> = {
   'TUNÍSIA': 'tun', 'RD CONGO': 'cod', 'CANADÁ': 'can', 'AUSTRÁLIA': 'aus', IRAQUE: 'irq',
   'UZBEQUISTÃO': 'uzb', 'ARÁBIA SAUDITA': 'ksa', CATAR: 'qat', 'BÓSNIA E HERZEGOVINA': 'bih',
   'REPÚBLICA TCHECA': 'cze', 'PANAMÁ': 'pan', 'CABO VERDE': 'cpv', 'JORDÂNIA': 'jor', GANA: 'gha',
-  'ÁFRICA DO SUL': 'rsa', HAITI: 'hti', 'NOVA ZELÂNDIA': 'nzl', 'CURAÇAO': 'cur',
+  'ÁFRICA DO SUL': 'rsa', HAITI: 'hai', 'NOVA ZELÂNDIA': 'nzl', 'CURAÇAO': 'cuw',
 };

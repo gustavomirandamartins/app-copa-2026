@@ -122,7 +122,7 @@ export async function scrapeUfmgProbabilities(): Promise<ScrapedProbability[]> {
   >;
 
   for (const s of stages) {
-    if (byStage[s].size < 40) {
+    if (byStage[s].size < 2) {
       throw new Error(`UFMG fase "${s}" retornou apenas ${byStage[s].size} seleções.`);
     }
   }

@@ -23,11 +23,13 @@ export default function SelecoesPage() {
   const [conf, setConf] = useState<Confederation | 'all'>('all');
 
   const filtered = useMemo(() => {
-    return teams.filter(t => {
-      const matchSearch = search === '' || t.name.toLowerCase().includes(search.toLowerCase()) || t.nameEn.toLowerCase().includes(search.toLowerCase());
-      const matchConf = conf === 'all' || t.confederation === conf;
-      return matchSearch && matchConf;
-    });
+    return teams
+      .filter(t => {
+        const matchSearch = search === '' || t.name.toLowerCase().includes(search.toLowerCase()) || t.nameEn.toLowerCase().includes(search.toLowerCase());
+        const matchConf = conf === 'all' || t.confederation === conf;
+        return matchSearch && matchConf;
+      })
+      .sort((a, b) => a.group.localeCompare(b.group));
   }, [search, conf]);
 
   return (

@@ -24,6 +24,9 @@ interface LiveResult {
 const STORAGE_URL = 'https://sdyilmgixyynnmczsnhc.supabase.co/storage/v1/object/public/backgrounds';
 const JERSEYS_URL = 'https://sdyilmgixyynnmczsnhc.supabase.co/storage/v1/object/public/jerseys';
 
+// Bucket file names that differ from the team's id.
+const JERSEY_ID_MAP: Record<string, string> = { jpn: 'jap' };
+
 function ClientTime({ dateUTC }: { dateUTC: string }) {
   const [time, setTime] = useState('--:--');
   useEffect(() => {
@@ -147,8 +150,13 @@ export default function SelecaoPage({ params }: { params: Promise<{ teamId: stri
       {/* Back */}
       <Link href="/selecoes" style={{
         display: 'inline-flex', alignItems: 'center', gap: 6,
-        color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: 'var(--space-lg)',
+        color: 'var(--text-primary)', fontSize: '0.85rem', fontWeight: 600, marginBottom: 'var(--space-lg)',
         textDecoration: 'none',
+        background: 'rgba(6,5,16,0.60)',
+        backdropFilter: 'blur(12px)',
+        padding: '6px 14px 6px 10px',
+        borderRadius: '999px',
+        border: '1px solid rgba(255,255,255,0.12)',
       }}>
         <ArrowLeft size={16} /> Seleções
       </Link>
@@ -180,7 +188,7 @@ export default function SelecaoPage({ params }: { params: Promise<{ teamId: stri
           {/* Uniforme — ao lado, antes da chance de título */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={`${JERSEYS_URL}/uniforme-${teamId}.avif`}
+            src={`${JERSEYS_URL}/uniforme-${JERSEY_ID_MAP[teamId] ?? teamId}.avif`}
             alt={`Uniforme da seleção ${team.name}`}
             style={{
               height: 96, width: 'auto',
