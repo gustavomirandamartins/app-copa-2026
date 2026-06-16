@@ -13,6 +13,7 @@ import { SquadDropdown } from '@/components/selecoes/SquadDropdown';
 import { formatKickoffTime } from '@/lib/datetime';
 
 const STORAGE_URL = 'https://sdyilmgixyynnmczsnhc.supabase.co/storage/v1/object/public/backgrounds';
+const JERSEYS_URL = 'https://sdyilmgixyynnmczsnhc.supabase.co/storage/v1/object/public/jerseys';
 
 function ClientTime({ dateUTC }: { dateUTC: string }) {
   const [time, setTime] = useState('--:--');
@@ -121,13 +122,23 @@ export default function SelecaoPage({ params }: { params: Promise<{ teamId: stri
         overflow: 'hidden',
         borderLeft: `4px solid ${team.primaryColor}`,
       }}>
-        <div style={{
-          position: 'absolute', top: '-40px', right: '-40px',
-          opacity: 0.06, lineHeight: 1,
-        }}>
-          <TeamFlag name={team.name} flagEmoji={team.flag} size={160} style={{ borderRadius: 8 }} />
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-lg)', flexWrap: 'wrap' }}>
+        {/* Uniforme decorativo — posicionado à direita */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={`${JERSEYS_URL}/uniforme-${teamId}.avif`}
+          alt=""
+          aria-hidden="true"
+          style={{
+            position: 'absolute', right: '-8px', top: '50%',
+            transform: 'translateY(-50%)',
+            height: '110%', width: 'auto',
+            objectFit: 'contain',
+            opacity: 0.18,
+            pointerEvents: 'none',
+            userSelect: 'none',
+          }}
+        />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-lg)', flexWrap: 'wrap', position: 'relative' }}>
           <TeamFlag name={team.name} flagEmoji={team.flag} size={72} style={{ borderRadius: 6 }} />
           <div style={{ flex: 1 }}>
             <h1 style={{ marginBottom: 4 }}>{team.name}</h1>
@@ -144,7 +155,7 @@ export default function SelecaoPage({ params }: { params: Promise<{ teamId: stri
             </div>
           </div>
           {prob && (
-            <div style={{ textAlign: 'center' }}>
+            <div style={{ textAlign: 'center', position: 'relative' }}>
               <div style={{
                 fontSize: '2.5rem', fontWeight: 900, fontFamily: 'var(--font-heading)',
                 background: 'var(--gradient-gold)', WebkitBackgroundClip: 'text',

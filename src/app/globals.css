@@ -26,11 +26,11 @@
   --text-accent:    var(--copa-green);
 
   /* Glass */
-  --glass-bg:          rgba(255, 255, 244, 0.65);
-  --glass-bg-hover:    rgba(255, 255, 244, 0.80);
-  --glass-bg-active:   rgba(255, 255, 244, 0.90);
-  --glass-border:      rgba(255, 255, 255, 0.60);
-  --glass-border-hover:rgba(0, 151, 57, 0.30);
+  --glass-bg:          rgba(10, 8, 25, 0.60);
+  --glass-bg-hover:    rgba(10, 8, 25, 0.75);
+  --glass-bg-active:   rgba(10, 8, 25, 0.85);
+  --glass-border:      rgba(255, 255, 255, 0.14);
+  --glass-border-hover:rgba(0, 151, 57, 0.40);
   --glass-blur:        40px;
   --glass-blur-heavy:  60px;
 
@@ -47,13 +47,13 @@
   --gradient-gold:     linear-gradient(135deg, #e0b800 0%, var(--copa-yellow) 50%, #ffe94d 100%);
   --gradient-green:    linear-gradient(135deg, var(--copa-green-deep) 0%, var(--copa-green) 100%);
   --gradient-blue:     linear-gradient(135deg, var(--copa-blue) 0%, #003fa3 100%);
-  --gradient-glass:    linear-gradient(135deg, rgba(255,255,244,0.80) 0%, rgba(255,255,244,0.50) 100%);
-  --gradient-hero:     linear-gradient(180deg, rgba(255,255,244,0) 0%, rgba(255,255,244,0.8) 60%, var(--bg-light) 100%);
+  --gradient-glass:    linear-gradient(135deg, rgba(10,8,25,0.80) 0%, rgba(10,8,25,0.55) 100%);
+  --gradient-hero:     linear-gradient(180deg, rgba(10,8,25,0) 0%, rgba(10,8,25,0.8) 60%, rgba(10,8,25,0.95) 100%);
 
   /* Shadows */
-  --shadow-sm:      0 4px 12px rgba(50, 50, 49, 0.08), 0 1px 2px rgba(50, 50, 49, 0.06);
-  --shadow-md:      0 8px 24px rgba(50, 50, 49, 0.12), 0 2px 6px rgba(50, 50, 49, 0.08);
-  --shadow-lg:      0 24px 64px rgba(50, 50, 49, 0.16), 0 6px 18px rgba(50, 50, 49, 0.10), 0 1px 3px rgba(50, 50, 49, 0.06), inset 0 1px 0 rgba(255,255,255,0.85);
+  --shadow-sm:      0 4px 12px rgba(0, 0, 0, 0.18), 0 1px 2px rgba(0, 0, 0, 0.12);
+  --shadow-md:      0 8px 24px rgba(0, 0, 0, 0.22), 0 2px 6px rgba(0, 0, 0, 0.16);
+  --shadow-lg:      0 24px 64px rgba(0, 0, 0, 0.35), 0 6px 18px rgba(0, 0, 0, 0.22), 0 1px 3px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255,255,255,0.10);
   --shadow-glow-green: 0 0 24px rgba(0, 151, 57, 0.25);
   --shadow-glow-gold:  0 0 24px rgba(254, 221, 0, 0.35);
 
@@ -235,12 +235,12 @@ a:hover { color: var(--copa-green-deep); }
   box-shadow: var(--shadow-lg);
 }
 
-/* Restore dark text inside glass cards */
+/* White text inside dark glass cards */
 .glass-card,
 .glass-card-static {
-  --text-primary:   #323231;
-  --text-secondary: rgba(50, 50, 49, 0.70);
-  --text-tertiary:  rgba(50, 50, 49, 0.45);
+  --text-primary:   #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.75);
+  --text-tertiary:  rgba(255, 255, 255, 0.50);
 }
 
 /* ---- Container ---- */
@@ -387,14 +387,14 @@ a:hover { color: var(--copa-green-deep); }
 }
 
 .btn-secondary {
-  background: rgba(255, 255, 244, 0.70);
-  border: 1.5px solid rgba(50, 50, 49, 0.16);
+  background: rgba(255, 255, 255, 0.10);
+  border: 1.5px solid rgba(255, 255, 255, 0.18);
   color: var(--text-primary);
   backdrop-filter: blur(12px);
 }
 .btn-secondary:hover {
-  background: rgba(255, 255, 244, 0.90);
-  border-color: rgba(0, 151, 57, 0.30);
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(0, 151, 57, 0.40);
   color: var(--copa-green);
   transform: translateY(-1px);
 }
@@ -445,7 +445,7 @@ a:hover { color: var(--copa-green-deep); }
 .probability-bar-track {
   flex: 1;
   height: 28px;
-  background: rgba(50, 50, 49, 0.06);
+  background: rgba(255, 255, 255, 0.10);
   border-radius: var(--radius-full);
   overflow: hidden;
 }
@@ -537,7 +537,7 @@ a:hover { color: var(--copa-green-deep); }
   font-weight: 600;
   color: var(--text-tertiary);
   padding: 4px 12px;
-  background: rgba(50, 50, 49, 0.05);
+  background: rgba(255, 255, 255, 0.06);
   border-radius: var(--radius-full);
 }
 
@@ -585,12 +585,12 @@ a:hover { color: var(--copa-green-deep); }
 .standings-table td {
   padding: 10px 12px;
   text-align: center;
-  border-bottom: 1px solid rgba(50, 50, 49, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
   transition: background var(--transition-fast);
 }
 
 .standings-table tr:hover td {
-  background: rgba(0, 151, 57, 0.03);
+  background: rgba(0, 151, 57, 0.08);
 }
 
 .standings-table .team-cell {
@@ -677,8 +677,8 @@ a:hover { color: var(--copa-green-deep); }
 
 .glass-card .tabs,
 .glass-card-static .tabs {
-  background: rgba(50, 50, 49, 0.05);
-  border-color: rgba(50, 50, 49, 0.08);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .tab {
@@ -702,7 +702,7 @@ a:hover { color: var(--copa-green-deep); }
 
 .glass-card .tab:hover,
 .glass-card-static .tab:hover {
-  background: rgba(255, 255, 244, 0.60);
+  background: rgba(255, 255, 255, 0.14);
 }
 
 .tab.active {
@@ -725,9 +725,9 @@ a:hover { color: var(--copa-green-deep); }
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(50, 50, 49, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: var(--radius-sm);
-  background: rgba(255, 255, 244, 0.70);
+  background: rgba(255, 255, 255, 0.10);
   color: var(--text-primary);
   font-size: 1rem;
   cursor: pointer;
@@ -753,10 +753,10 @@ a:hover { color: var(--copa-green-deep); }
 .search-input {
   width: 100%;
   padding: 12px 16px 12px 44px;
-  background: rgba(255, 255, 244, 0.70);
-  border: 1.5px solid rgba(50, 50, 49, 0.15);
+  background: rgba(255, 255, 255, 0.10);
+  border: 1.5px solid rgba(255, 255, 255, 0.18);
   border-radius: var(--radius-md);
-  color: #323231;
+  color: #ffffff;
   font-family: var(--font-body);
   font-size: 0.9rem;
   outline: none;
@@ -765,13 +765,13 @@ a:hover { color: var(--copa-green-deep); }
 }
 
 .search-input::placeholder {
-  color: rgba(50, 50, 49, 0.45);
+  color: rgba(255, 255, 255, 0.45);
 }
 
 .search-input:focus {
   border-color: var(--copa-green);
-  box-shadow: 0 0 0 3px rgba(0, 151, 57, 0.12);
-  background: rgba(255, 255, 244, 0.90);
+  box-shadow: 0 0 0 3px rgba(0, 151, 57, 0.18);
+  background: rgba(255, 255, 255, 0.16);
 }
 
 .search-wrapper {
@@ -808,9 +808,9 @@ a:hover { color: var(--copa-green-deep); }
   padding: var(--space-sm) var(--space-md);
   min-width: 72px;
   box-shadow: var(--shadow-lg);
-  /* Glass background → restore dark text vars */
-  --text-primary:   #323231;
-  --text-secondary: rgba(50, 50, 49, 0.70);
+  /* Dark glass → white text */
+  --text-primary:   #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.75);
 }
 
 .countdown-value {
@@ -854,7 +854,7 @@ a:hover { color: var(--copa-green-deep); }
   justify-content: space-between;
   padding: 8px 12px;
   font-size: 0.8rem;
-  border-bottom: 1px solid rgba(50, 50, 49, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .bracket-team:last-child {
@@ -985,7 +985,7 @@ a:hover { color: var(--copa-green-deep); }
 
 /* ---- Skeleton Loading ---- */
 .skeleton {
-  background: linear-gradient(90deg, rgba(50,50,49,0.04) 25%, rgba(50,50,49,0.08) 50%, rgba(50,50,49,0.04) 75%);
+  background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.10) 50%, rgba(255,255,255,0.04) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   border-radius: var(--radius-sm);

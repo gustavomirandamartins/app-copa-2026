@@ -85,8 +85,8 @@
 .auth-input {
   padding: 10px 14px;
   border-radius: var(--radius-sm);
-  border: 1.5px solid rgba(50, 50, 49, 0.14);
-  background: rgba(255, 255, 255, 0.7);
+  border: 1.5px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.10);
   font-size: 0.95rem;
   color: var(--text-primary);
   outline: none;

@@ -10,16 +10,16 @@
    linhas internas sem backdrop-filter. */
 .admin-list > section,
 .admin-glass-section {
-  background: rgba(255, 255, 244, 0.60);
+  background: rgba(10, 8, 25, 0.65);
   backdrop-filter: blur(36px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: var(--radius-lg);
   padding: var(--space-lg);
-  box-shadow: 0 24px 64px rgba(0,0,0,0.16), 0 6px 18px rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,0.85);
-  /* Restaura texto escuro dentro do glass */
-  --text-primary:   #323231;
-  --text-secondary: rgba(50, 50, 49, 0.70);
-  --text-tertiary:  rgba(50, 50, 49, 0.45);
+  box-shadow: 0 24px 64px rgba(0,0,0,0.35), 0 6px 18px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.10);
+  /* White text inside dark glass */
+  --text-primary:   #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.75);
+  --text-tertiary:  rgba(255, 255, 255, 0.50);
 }
 
 .admin-section-title {
@@ -50,7 +50,7 @@
   flex-wrap: wrap;
   background: transparent;
   border: none;
-  border-bottom: 1px solid rgba(50, 50, 49, 0.09);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 0;
   box-shadow: none;
 }
@@ -323,15 +323,13 @@
 .pm-wrapper {
   display: flex;
   max-height: 70vh;
-  border: 1px solid var(--glass-border, rgba(50, 50, 49, 0.12));
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.45);
+  background: rgba(10, 8, 25, 0.50);
   overflow: hidden;
-  /* Força texto escuro — o wrapper tem fundo claro mas o contexto global
-     pode ter --text-primary branco (fora de glass-card). */
-  --text-primary:   #323231;
-  --text-secondary: rgba(50, 50, 49, 0.70);
-  --text-tertiary:  rgba(50, 50, 49, 0.45);
+  --text-primary:   #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.75);
+  --text-tertiary:  rgba(255, 255, 255, 0.50);
 }
 
 /* Painel esquerdo — fixo, sem scroll horizontal */
@@ -364,8 +362,8 @@
 .pm-table td {
   padding: 8px 10px;
   text-align: center;
-  border-bottom: 1px solid rgba(50, 50, 49, 0.08);
-  border-right: 1px solid rgba(50, 50, 49, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
   white-space: nowrap;
   box-sizing: border-box;
 }
@@ -374,7 +372,7 @@
   position: sticky;
   top: 0;
   z-index: 2;
-  background: rgba(255, 255, 244, 0.97);
+  background: rgba(8, 6, 20, 0.95);
   font-weight: 700;
   color: var(--text-secondary);
   vertical-align: bottom;
@@ -382,12 +380,12 @@
 
 .pm-left .pm-table thead th,
 .pm-right .pm-table thead th {
-  background: #fffff5;
+  background: rgba(8, 6, 20, 0.95);
 }
 
 .pm-left .pm-table td,
 .pm-right .pm-table td {
-  background: #fffffb;
+  background: rgba(14, 11, 32, 0.70);
 }
 
 .pm-col-user  { width: 160px; min-width: 160px; text-align: left; }
