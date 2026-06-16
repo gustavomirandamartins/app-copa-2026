@@ -26,29 +26,53 @@ export default function SelecaoPage({ params }: { params: Promise<{ teamId: stri
   const { teamId } = use(params);
 
   useEffect(() => {
-    // Estratégia: overlay fixo com z-index:-1 (acima do canvas do html, abaixo
-    // de todo o conteúdo da página). Faz crossfade com o background global.
-    const overlay = document.createElement('div');
-    Object.assign(overlay.style, {
-      position: 'fixed',
-      inset: '0',
-      zIndex: '-1',
-      backgroundImage: `url('${STORAGE_URL}/bg-${teamId}.avif')`,
-      backgroundSize: 'cover',
-      backgroundPosition: 'center top',
-      backgroundAttachment: 'fixed',
-      opacity: '0',
-      transition: 'opacity 0.85s ease',
-      pointerEvents: 'none',
-    });
-    document.body.appendChild(overlay);
-    // Força o browser a registrar o estado inicial antes de animar.
+    const html = document.documentElement;
+
+    // Crossfade: captura o background atual num overlay de alta z-index,
+    // troca o html.style.backgroundImage por baixo, depois fade-out do overlay.
+    // Isso funciona independente do stacking context do conteúdo da página.
+    const makeCover = (bgImage: string) => {
+      const el = document.createElement('div');
+      Object.assign(el.style, {
+        position: 'fixed',
+        inset: '0',
+        zIndex: '9990',
+        backgroundImage: bgImage,
+        backgroundSize: 'cover',
+        backgroundPosition: window.getComputedStyle(html).backgroundPosition,
+        backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'fixed',
+        opacity: '1',
+        transition: 'opacity 0.75s ease',
+        pointerEvents: 'none',
+      });
+      document.body.appendChild(el);
+      return el;
+    };
+
+    // Captura bg atual (antes da troca).
+    const prevBgImage = window.getComputedStyle(html).backgroundImage;
+
+    // Troca o background do html para o time.
+    html.style.backgroundImage = `url('${STORAGE_URL}/bg-${teamId}.avif')`;
+    html.style.backgroundPositionY = '0%';
+
+    // Overlay mostra o bg antigo; fade-out revela o novo bg abaixo.
+    const cover = makeCover(prevBgImage);
     requestAnimationFrame(() => requestAnimationFrame(() => {
-      overlay.style.opacity = '1';
+      cover.style.opacity = '0';
     }));
+    cover.addEventListener('transitionend', () => cover.remove(), { once: true });
+
     return () => {
-      overlay.style.opacity = '0';
-      overlay.addEventListener('transitionend', () => overlay.remove(), { once: true });
+      // Saída: overlay com bg do time fade-out enquanto o global volta.
+      const teamBgImage = window.getComputedStyle(html).backgroundImage;
+      const exitCover = makeCover(teamBgImage);
+      html.style.backgroundImage = '';
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        exitCover.style.opacity = '0';
+      }));
+      exitCover.addEventListener('transitionend', () => exitCover.remove(), { once: true });
     };
   }, [teamId]);
   const team = getTeamById(teamId);
