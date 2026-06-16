@@ -2,7 +2,7 @@
 
 import { use, useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Trophy, Calendar, MapPin, BarChart3 } from 'lucide-react';
+import { ArrowLeft, Trophy, Calendar, BarChart3 } from 'lucide-react';
 import { teams, getTeamById } from '@/data/teams';
 import { matches } from '@/data/matches';
 import { getStadiumById } from '@/data/stadiums';
@@ -11,6 +11,8 @@ import { getKeyPlayer } from '@/data/key-players';
 import { TeamFlag } from '@/components/ui/TeamFlag';
 import { SquadDropdown } from '@/components/selecoes/SquadDropdown';
 import { formatKickoffTime } from '@/lib/datetime';
+
+const STORAGE_URL = 'https://sdyilmgixyynnmczsnhc.supabase.co/storage/v1/object/public/backgrounds';
 
 function ClientTime({ dateUTC }: { dateUTC: string }) {
   const [time, setTime] = useState('--:--');
@@ -22,6 +24,28 @@ function ClientTime({ dateUTC }: { dateUTC: string }) {
 
 export default function SelecaoPage({ params }: { params: Promise<{ teamId: string }> }) {
   const { teamId } = use(params);
+
+  useEffect(() => {
+    const overlay = document.createElement('div');
+    Object.assign(overlay.style, {
+      position: 'fixed',
+      inset: '0',
+      zIndex: '0',
+      backgroundImage: `url('${STORAGE_URL}/bg-${teamId}.webp')`,
+      backgroundSize: 'cover',
+      backgroundAttachment: 'fixed',
+      backgroundPosition: 'center top',
+      opacity: '0',
+      transition: 'opacity 0.9s ease',
+      pointerEvents: 'none',
+    });
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => requestAnimationFrame(() => { overlay.style.opacity = '1'; }));
+    return () => {
+      overlay.style.opacity = '0';
+      setTimeout(() => overlay.remove(), 950);
+    };
+  }, [teamId]);
   const team = getTeamById(teamId);
   const prob = getTeamProbability(teamId);
 

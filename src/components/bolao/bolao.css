@@ -101,6 +101,7 @@
 .bolao-card-tags {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 6px;
   min-height: 18px;
 }
@@ -246,12 +247,12 @@
 }
 
 .bolao-countdown {
-  font-size: 0.7rem;
+  font-size: 0.88rem;
   font-weight: 800;
   color: var(--copa-green-deep);
   background: rgba(0, 151, 57, 0.10);
   border-radius: var(--radius-full);
-  padding: 3px 10px;
+  padding: 5px 14px;
   white-space: nowrap;
   letter-spacing: 0.01em;
 }
@@ -260,6 +261,58 @@
   font-size: 0.72rem;
   font-weight: 700;
   color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* ── Placar real (partida ao vivo / encerrada) ─────────────── */
+.bolao-realscores {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bolao-realscore {
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  font-weight: 900;
+  font-family: var(--font-heading, inherit);
+  background: rgba(50, 50, 49, 0.07);
+  border: 2px solid rgba(50, 50, 49, 0.16);
+  border-radius: var(--radius-md);
+}
+
+/* ── Feedback de resultado ─────────────────────────────────── */
+.bolao-card-feedback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: var(--space-sm) 0;
+  text-align: center;
+}
+
+.bolao-feedback-msg {
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.bolao-feedback-msg.good { color: var(--copa-green); }
+.bolao-feedback-msg.bad  { color: var(--text-secondary); }
+.bolao-feedback-msg.none { color: var(--text-tertiary); font-style: italic; }
+
+.bolao-card-guess {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  background: rgba(50, 50, 49, 0.06);
+  border-radius: var(--radius-full);
+  padding: 3px 10px;
   white-space: nowrap;
 }
 

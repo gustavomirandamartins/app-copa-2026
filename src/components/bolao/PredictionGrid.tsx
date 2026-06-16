@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Lock, Dices, Zap, Sparkles, Trophy } from 'lucide-react';
+import { Lock, Dices, Zap, Trophy } from 'lucide-react';
 import { matches as allMatches } from '@/data/matches';
 import { getTeamById } from '@/data/teams';
 import { TeamFlag } from '@/components/ui/TeamFlag';
@@ -55,6 +55,26 @@ interface Props {
   multipliers?: Record<string, number>;
   results?: Record<string, MatchResult>;
   pointsByMatch?: Record<string, number>;
+}
+
+/** Mensagem contextual de resultado após a partida. */
+function resultMessage(
+  points: number | undefined,
+  hasGuess: boolean,
+  multiplier: number,
+): string {
+  if (!hasGuess) return 'Essa partida não teve palpite!';
+  if (!points || points === 0) return 'Ah não! Você errou o placar! Quem sabe na próxima?';
+  const base = points / multiplier;
+  if (base >= 5) return multiplier > 1
+    ? `Você acertou o placar exato e ganhou ${points} pontos! Parabéns!`
+    : 'Você acertou o placar exato e ganhou 5 pontos! Parabéns!';
+  if (base >= 3) return multiplier > 1
+    ? `Você acertou o vencedor e a diferença, ganhou ${points} pontos!`
+    : 'Você chegou quase lá! Acertou o vencedor e a diferença, ganhou 3 pontos!';
+  return multiplier > 1
+    ? `Você pelo menos acertou o vencedor, ganhou ${points} ponto${points === 1 ? '' : 's'}!`
+    : 'Você pelo menos acertou o vencedor, ganhou 1 pontinho!';
 }
 
 /** "Pontos em dobro!", "Pontos em triplo!"… conforme o multiplicador. */
@@ -224,87 +244,99 @@ export function PredictionGrid({
                       live ? 'live' : '',
                     ].join(' ').trim()}
                   >
-                    {/* Tags no topo */}
-                    <div className="bolao-card-tags">
-                      {boosted && (
-                        <span className="bolao-tag bolao-tag-boost">
-                          <Zap size={12} /> {boostLabel(multiplier)}
-                        </span>
-                      )}
-                      {upcoming && (
-                        <span className="bolao-tag bolao-tag-soon">
-                          <Sparkles size={12} /> Em breve
-                        </span>
-                      )}
-                      {live && <span className="bolao-tag bolao-tag-live">● Ao vivo</span>}
-                    </div>
-
-                    {/* Confronto */}
-                    <div className="bolao-card-match">
-                      <TeamCell teamId={match.homeTeamId} align="left" />
-
-                      <div className="bolao-scores">
-                        <input
-                          type="number"
-                          min={0}
-                          max={20}
-                          inputMode="numeric"
-                          className="bolao-score-input"
-                          aria-label="Placar mandante"
-                          disabled={locked}
-                          value={value?.home ?? ''}
-                          onChange={(e) =>
-                            onScore(
-                              match.id,
-                              'home',
-                              e.target.value === '' ? null : Number(e.target.value),
-                            )
-                          }
-                        />
-                        <span className="bolao-x">×</span>
-                        <input
-                          type="number"
-                          min={0}
-                          max={20}
-                          inputMode="numeric"
-                          className="bolao-score-input"
-                          aria-label="Placar visitante"
-                          disabled={locked}
-                          value={value?.away ?? ''}
-                          onChange={(e) =>
-                            onScore(
-                              match.id,
-                              'away',
-                              e.target.value === '' ? null : Number(e.target.value),
-                            )
-                          }
-                        />
+                    {/* Tags no topo — centralizadas */}
+                    {(boosted || live) && (
+                      <div className="bolao-card-tags">
+                        {boosted && (
+                          <span className="bolao-tag bolao-tag-boost">
+                            <Zap size={12} /> {boostLabel(multiplier)}
+                          </span>
+                        )}
+                        {live && <span className="bolao-tag bolao-tag-live">● Ao vivo</span>}
                       </div>
+                    )}
 
-                      <TeamCell teamId={match.awayTeamId} align="right" />
-                    </div>
+                    {/* Placar real em destaque (partida ao vivo ou encerrada) */}
+                    {(finished || live) ? (
+                      <>
+                        <div className="bolao-card-match">
+                          <TeamCell teamId={match.homeTeamId} align="left" />
+                          <div className="bolao-realscores">
+                            <span className="bolao-realscore">{result?.homeScore ?? 0}</span>
+                            <span className="bolao-x">×</span>
+                            <span className="bolao-realscore">{result?.awayScore ?? 0}</span>
+                          </div>
+                          <TeamCell teamId={match.awayTeamId} align="right" />
+                        </div>
 
-                    {/* Linha de status (full width, sob o confronto) */}
-                    <div className="bolao-card-status">
-                      {upcoming ? (
-                        <Countdown targetUTC={match.dateUTC} />
-                      ) : finished || live ? (
-                        <span className="bolao-card-result">
-                          {live ? 'Parcial' : 'Resultado'}: {result?.homeScore ?? 0} × {result?.awayScore ?? 0}
-                        </span>
-                      ) : (
-                        <span className="bolao-match-time">
-                          {mounted ? formatKickoffTime(match.dateUTC) : '--:--'}
-                        </span>
-                      )}
-                    </div>
+                        {/* Palpite + mensagem de feedback */}
+                        <div className="bolao-card-feedback">
+                          {hasGuess && (
+                            <span className="bolao-card-guess">
+                              Palpite: {value!.home} × {value!.away}
+                            </span>
+                          )}
+                          <p className={`bolao-feedback-msg ${points ? 'good' : hasGuess ? 'bad' : 'none'}`}>
+                            {resultMessage(points, hasGuess, multiplier)}
+                          </p>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        {/* Confronto editável (agendado) */}
+                        <div className="bolao-card-match">
+                          <TeamCell teamId={match.homeTeamId} align="left" />
+                          <div className="bolao-scores">
+                            <input
+                              type="number"
+                              min={0}
+                              max={20}
+                              inputMode="numeric"
+                              className="bolao-score-input"
+                              aria-label="Placar mandante"
+                              disabled={locked}
+                              value={value?.home ?? ''}
+                              onChange={(e) =>
+                                onScore(
+                                  match.id,
+                                  'home',
+                                  e.target.value === '' ? null : Number(e.target.value),
+                                )
+                              }
+                            />
+                            <span className="bolao-x">×</span>
+                            <input
+                              type="number"
+                              min={0}
+                              max={20}
+                              inputMode="numeric"
+                              className="bolao-score-input"
+                              aria-label="Placar visitante"
+                              disabled={locked}
+                              value={value?.away ?? ''}
+                              onChange={(e) =>
+                                onScore(
+                                  match.id,
+                                  'away',
+                                  e.target.value === '' ? null : Number(e.target.value),
+                                )
+                              }
+                            />
+                          </div>
+                          <TeamCell teamId={match.awayTeamId} align="right" />
+                        </div>
 
-                    {/* Pontos conquistados (após o fim) */}
-                    {finished && hasGuess && (
-                      <div className={`bolao-card-points ${points ? 'scored' : 'zero'}`}>
-                        <Trophy size={13} />
-                        {points ? `+${points} ${points === 1 ? 'ponto' : 'pontos'}` : '0 pontos'}
-                      </div>
+                        {/* Status: contagem regressiva ou horário */}
+                        <div className="bolao-card-status">
+                          {upcoming ? (
+                            <Countdown targetUTC={match.dateUTC} />
+                          ) : (
+                            <span className="bolao-match-time">
+                              {mounted ? formatKickoffTime(match.dateUTC) : '--:--'}
+                            </span>
+                          )}
+                        </div>
+                      </>
                     )}
 
                     {locked && !finished && !live && (

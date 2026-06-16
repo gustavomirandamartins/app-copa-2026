@@ -50,18 +50,12 @@ export function Header() {
     return () => window.removeEventListener('keydown', onKey);
   }, [isOpen]);
 
-  // Cor dos links: branco no topo (sobre o fundo), escuro quando rolado.
+  // Links sempre brancos — header escurece ao rolar, mantendo contraste.
   const linkColor = (active: boolean) =>
-    scrolled
-      ? active
-        ? 'var(--copa-green)'
-        : 'rgba(50, 50, 49, 0.70)'
-      : active
-        ? '#ffffff'
-        : 'rgba(255, 255, 255, 0.80)';
+    active ? '#ffffff' : 'rgba(255, 255, 255, 0.80)';
 
-  // Drawer aberto → ícone escuro (fica sobre o glass claro do menu).
-  const iconColor = scrolled || isOpen ? 'var(--text-primary)' : '#ffffff';
+  // Ícone sempre branco (fundo claro do drawer na versão mobile é exceção tratada abaixo).
+  const iconColor = isOpen ? 'var(--text-primary)' : '#ffffff';
 
   return (
     <>
@@ -72,11 +66,11 @@ export function Header() {
         left: 0,
         right: 0,
         height: 'var(--header-height)',
-        background: scrolled ? 'rgba(255, 255, 244, 0.50)' : 'transparent',
+        background: scrolled ? 'rgba(10, 8, 20, 0.72)' : 'transparent',
         backdropFilter: scrolled ? 'blur(30px) saturate(180%)' : 'none',
         WebkitBackdropFilter: scrolled ? 'blur(30px) saturate(180%)' : 'none',
         boxShadow: scrolled
-          ? '0 28px 72px rgba(0,0,0,0.22), 0 8px 24px rgba(0,0,0,0.14), 0 2px 6px rgba(0,0,0,0.08)'
+          ? '0 4px 32px rgba(0,0,0,0.45), 0 1px 0 rgba(255,255,255,0.06)'
           : 'none',
         // Acima do drawer (120) quando aberto, p/ o botão X seguir clicável.
         zIndex: isOpen ? 130 : 100,
@@ -99,10 +93,7 @@ export function Header() {
           className="app-header-logo"
           aria-label="Bolão da Mindu na Copa 2026"
           style={{
-            filter: scrolled
-              ? 'drop-shadow(0 2px 8px rgba(0,0,0,0.55)) drop-shadow(0 1px 3px rgba(0,0,0,0.40))'
-              : 'drop-shadow(0 2px 10px rgba(0, 0, 0, 0.35))',
-            transition: 'filter 0.45s ease',
+            filter: 'drop-shadow(0 2px 10px rgba(0, 0, 0, 0.40))',
           }}
         >
           <Image
@@ -115,22 +106,6 @@ export function Header() {
             style={{
               objectFit: 'contain',
               objectPosition: 'left center',
-              opacity: scrolled ? 0 : 1,
-              transition: 'opacity 0.45s ease',
-            }}
-          />
-          <Image
-            src="/logo-mindubier-horizontal.avif"
-            alt="MinduBier"
-            fill
-            sizes="148px"
-            priority
-            unoptimized
-            style={{
-              objectFit: 'contain',
-              objectPosition: 'left center',
-              opacity: scrolled ? 1 : 0,
-              transition: 'opacity 0.45s ease',
             }}
           />
         </Link>
@@ -153,8 +128,8 @@ export function Header() {
                   fontWeight: 600,
                   color: linkColor(active),
                   background:
-                    active && scrolled ? 'rgba(0, 151, 57, 0.08)' : 'transparent',
-                  textShadow: scrolled ? 'none' : '0 1px 10px rgba(0, 0, 0, 0.30)',
+                    active ? 'rgba(255, 255, 255, 0.12)' : 'transparent',
+                  textShadow: '0 1px 10px rgba(0, 0, 0, 0.40)',
                   transition: 'color 0.3s ease, background 0.3s ease',
                   textDecoration: 'none',
                 }}
@@ -179,7 +154,7 @@ export function Header() {
             color: iconColor,
             cursor: 'pointer',
             padding: 8,
-            filter: scrolled || isOpen ? 'none' : 'drop-shadow(0 1px 6px rgba(0,0,0,0.35))',
+            filter: isOpen ? 'none' : 'drop-shadow(0 1px 6px rgba(0,0,0,0.45))',
             transition: 'color 0.3s ease',
           }}
         >
