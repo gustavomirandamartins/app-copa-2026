@@ -25,6 +25,23 @@ export const metadata: Metadata = {
   title: "Bolão da Mindu na Copa 2026",
   description: "Dê seus palpites, dispute a classificação e concorra aos prêmios MinduBier na Copa do Mundo FIFA 2026 nos EUA, Canadá e México.",
   keywords: "Copa do Mundo 2026, FIFA, futebol, seleções, jogos, probabilidades, bolão, MinduBier",
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: '16x16 32x32 48x48', type: 'image/x-icon' },
+      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icon-512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+    shortcut: '/favicon.ico',
+  },
+  manifest: '/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Bolão Mindu',
+  },
   openGraph: {
     title: "Bolão da Mindu na Copa 2026",
     description: "Palpites, classificação e prêmios MinduBier na Copa FIFA 2026",
