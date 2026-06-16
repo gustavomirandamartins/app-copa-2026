@@ -26,24 +26,17 @@ export default function SelecaoPage({ params }: { params: Promise<{ teamId: stri
   const { teamId } = use(params);
 
   useEffect(() => {
-    const overlay = document.createElement('div');
-    Object.assign(overlay.style, {
-      position: 'fixed',
-      inset: '0',
-      zIndex: '0',
-      backgroundImage: `url('${STORAGE_URL}/bg-${teamId}.webp')`,
-      backgroundSize: 'cover',
-      backgroundAttachment: 'fixed',
-      backgroundPosition: 'center top',
-      opacity: '0',
-      transition: 'opacity 0.9s ease',
-      pointerEvents: 'none',
-    });
-    document.body.appendChild(overlay);
-    requestAnimationFrame(() => requestAnimationFrame(() => { overlay.style.opacity = '1'; }));
+    const html = document.documentElement;
+    // Pré-carrega a imagem; só troca o background quando estiver pronta
+    // (evita flash de fundo vazio sobrescrevendo o CSS global).
+    const img = new Image();
+    img.onload = () => {
+      html.style.backgroundImage = `url('${STORAGE_URL}/bg-${teamId}.avif')`;
+    };
+    img.src = `${STORAGE_URL}/bg-${teamId}.avif`;
     return () => {
-      overlay.style.opacity = '0';
-      setTimeout(() => overlay.remove(), 950);
+      img.onload = null;
+      html.style.backgroundImage = '';
     };
   }, [teamId]);
   const team = getTeamById(teamId);
