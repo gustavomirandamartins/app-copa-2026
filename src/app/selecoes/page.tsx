@@ -111,7 +111,7 @@ export default function SelecoesPage() {
                   }}>
                     <Trophy size={12} color="var(--gold)" />
                     <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                      Campeão: <strong style={{ color: 'var(--gold)' }}>{prob.champion}%</strong>
+                      Chance de título: <strong style={{ color: 'var(--gold)' }}>{prob.champion}%</strong>
                     </span>
                   </div>
                 )}
