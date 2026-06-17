@@ -384,3 +384,149 @@
   border-color: rgba(96, 165, 250, 0.30);
   color: #60a5fa;
 }
+
+/* ── Linha clicável ────────────────────────────────────────────────── */
+.ranking-row-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.ranking-row-clickable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.ranking-row-clickable:hover {
+  border-color: rgba(212, 175, 55, 0.30);
+}
+
+/* Quando expandido, remove bordas/radius do fundo para unir ao breakdown */
+.ranking-row-clickable.row-open {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  border-bottom-color: transparent;
+}
+
+.ranking-row-end {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ranking-chevron {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+  transition: transform 0.25s ease;
+}
+.ranking-chevron.rotated {
+  transform: rotate(180deg);
+}
+
+/* ── Painel de breakdown ───────────────────────────────────────────── */
+.ranking-breakdown {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-top: none;
+  border-bottom-left-radius: var(--radius-lg);
+  border-bottom-right-radius: var(--radius-lg);
+  padding: var(--space-md) var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  animation: breakdown-in 0.18s ease;
+  /* As variáveis de texto precisam ser redeclaradas aqui, assim como no glass-card-static */
+  --text-primary:   #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.75);
+  --text-tertiary:  rgba(255, 255, 255, 0.50);
+  color: var(--text-primary);
+}
+
+@keyframes breakdown-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.breakdown-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.breakdown-title {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  margin-bottom: 2px;
+}
+
+.breakdown-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-sm);
+}
+
+.breakdown-cat {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.breakdown-cat em {
+  font-style: normal;
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+}
+
+.breakdown-pts {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 0.82rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.breakdown-exact  .breakdown-pts { color: var(--copa-green); }
+.breakdown-diff   .breakdown-pts { color: #60a5fa; }
+.breakdown-winner .breakdown-pts { color: var(--text-secondary); }
+.breakdown-miss   .breakdown-pts { color: var(--text-tertiary); }
+.breakdown-bonus  .breakdown-pts { color: var(--gold); }
+
+.breakdown-subtotal {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+}
+.breakdown-subtotal span:last-child {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.breakdown-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.breakdown-total span:last-child {
+  font-family: var(--font-heading);
+  font-weight: 900;
+  font-size: 1rem;
+  color: var(--gold);
+}
