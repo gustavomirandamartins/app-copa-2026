@@ -21,16 +21,17 @@ export function BottomNav() {
       bottom: 0,
       left: 0,
       right: 0,
-      height: 'var(--bottom-nav-height)',
-      background: 'rgba(255, 255, 244, 0.88)',
+      height: 'calc(var(--bottom-nav-height) + env(safe-area-inset-bottom))',
+      background: 'rgba(10, 8, 20, 0.85)',
       backdropFilter: 'blur(24px) saturate(180%)',
       WebkitBackdropFilter: 'blur(24px) saturate(180%)',
-      borderTop: '1px solid rgba(50, 50, 49, 0.08)',
-      boxShadow: '0 -1px 0 rgba(255,255,255,0.70)',
+      borderTop: '1px solid rgba(255, 255, 255, 0.10)',
+      boxShadow: '0 -4px 24px rgba(0,0,0,0.40)',
       zIndex: 100,
       display: 'flex',
-      alignItems: 'center',
+      alignItems: 'flex-start',
       justifyContent: 'space-around',
+      paddingTop: '4px',
       paddingBottom: 'env(safe-area-inset-bottom)',
     }}>
       {tabs.map((tab) => {
@@ -58,19 +59,19 @@ export function BottomNav() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              background: isActive ? 'rgba(0, 151, 57, 0.10)' : 'transparent',
+              background: isActive ? 'rgba(212,175,55,0.15)' : 'transparent',
               transition: 'all var(--transition-fast)',
             }}>
               <Icon
                 size={20}
                 strokeWidth={isActive ? 2.5 : 1.8}
-                color={isActive ? 'var(--copa-green)' : 'var(--text-tertiary)'}
+                color={isActive ? 'var(--gold)' : 'rgba(255,255,255,0.45)'}
               />
             </div>
             <span style={{
               fontSize: '0.6rem',
               fontWeight: isActive ? 700 : 500,
-              color: isActive ? 'var(--copa-green)' : 'var(--text-tertiary)',
+              color: isActive ? 'var(--gold)' : 'rgba(255,255,255,0.45)',
               letterSpacing: '0.02em',
             }}>
               {tab.label}

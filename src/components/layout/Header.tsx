@@ -50,12 +50,11 @@ export function Header() {
     return () => window.removeEventListener('keydown', onKey);
   }, [isOpen]);
 
-  // Links sempre brancos — header escurece ao rolar, mantendo contraste.
+  // Links sempre brancos — header sempre escuro.
   const linkColor = (active: boolean) =>
     active ? '#ffffff' : 'rgba(255, 255, 255, 0.80)';
 
-  // Ícone sempre branco (fundo claro do drawer na versão mobile é exceção tratada abaixo).
-  const iconColor = isOpen ? 'var(--text-primary)' : '#ffffff';
+  const iconColor = '#ffffff';
 
   return (
     <>
@@ -65,18 +64,19 @@ export function Header() {
         top: 0,
         left: 0,
         right: 0,
-        height: 'var(--header-height)',
-        background: scrolled ? 'rgba(10, 8, 20, 0.72)' : 'transparent',
-        backdropFilter: scrolled ? 'blur(30px) saturate(180%)' : 'none',
-        WebkitBackdropFilter: scrolled ? 'blur(30px) saturate(180%)' : 'none',
+        height: 'calc(var(--header-height) + env(safe-area-inset-top))',
+        paddingTop: 'env(safe-area-inset-top)',
+        background: scrolled ? 'rgba(10, 8, 20, 0.85)' : 'rgba(10, 8, 20, 0.55)',
+        backdropFilter: 'blur(30px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(30px) saturate(180%)',
         boxShadow: scrolled
           ? '0 4px 32px rgba(0,0,0,0.45), 0 1px 0 rgba(255,255,255,0.06)'
-          : 'none',
+          : '0 1px 0 rgba(255,255,255,0.06)',
         // Acima do drawer (120) quando aberto, p/ o botão X seguir clicável.
         zIndex: isOpen ? 130 : 100,
         display: 'flex',
         alignItems: 'center',
-        transition: 'background 0.45s ease, box-shadow 0.45s ease, backdrop-filter 0.45s ease',
+        transition: 'background 0.45s ease, box-shadow 0.45s ease',
       }}
     >
       <div
@@ -181,7 +181,7 @@ export function Header() {
         }}
       />
 
-      {/* Mobile — drawer deslizando da direita, com glass do header */}
+      {/* Mobile — drawer deslizando da direita, dark glass */}
       <nav
         className="hide-desktop"
         aria-hidden={!isOpen}
@@ -191,13 +191,13 @@ export function Header() {
           right: 0,
           bottom: 0,
           width: 'min(80vw, 320px)',
-          background: 'rgba(255, 255, 244, 0.88)',
-          backdropFilter: 'blur(30px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(30px) saturate(180%)',
-          borderLeft: '1px solid rgba(255, 255, 255, 0.55)',
+          background: 'rgba(10, 8, 20, 0.88)',
+          backdropFilter: 'blur(36px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(36px) saturate(180%)',
+          borderLeft: '1px solid rgba(255, 255, 255, 0.10)',
           boxShadow:
-            '-28px 0 72px rgba(0,0,0,0.22), -8px 0 24px rgba(0,0,0,0.14)',
-          padding: 'calc(var(--header-height) + var(--space-md)) var(--space-md) var(--space-lg)',
+            '-28px 0 72px rgba(0,0,0,0.55), -8px 0 24px rgba(0,0,0,0.35)',
+          padding: 'calc(var(--header-height) + env(safe-area-inset-top) + var(--space-md)) var(--space-md) var(--space-lg)',
           display: 'flex',
           flexDirection: 'column',
           gap: '4px',
@@ -219,9 +219,10 @@ export function Header() {
                 borderRadius: 'var(--radius-md)',
                 fontSize: '0.98rem',
                 fontWeight: 600,
-                color: active ? 'var(--copa-green)' : 'var(--text-primary)',
-                background: active ? 'rgba(0, 151, 57, 0.10)' : 'transparent',
+                color: active ? 'var(--gold)' : 'rgba(255,255,255,0.85)',
+                background: active ? 'rgba(212,175,55,0.12)' : 'transparent',
                 textDecoration: 'none',
+                borderLeft: active ? '3px solid var(--gold)' : '3px solid transparent',
               }}
             >
               {link.label}

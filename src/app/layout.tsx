@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Nunito_Sans, Outfit } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/layout/Header";
@@ -17,6 +17,10 @@ const outfit = Outfit({
   display: 'swap',
   variable: '--font-heading',
 });
+
+export const viewport: Viewport = {
+  themeColor: '#0a0814',
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(
