@@ -17,12 +17,12 @@ const stageTabs: { key: MatchStage | 'all'; label: string }[] = [
   { key: 'final', label: 'Final' },
 ];
 
-function MatchTime({ dateUTC }: { dateUTC: string }) {
+function MatchTimeChip({ dateUTC }: { dateUTC: string }) {
   const [time, setTime] = useState('--:--');
   useEffect(() => {
     setTime(formatKickoffTime(dateUTC));
   }, [dateUTC]);
-  return <div className="match-card-time">{time}</div>;
+  return <span className="match-card-time-chip">{time}</span>;
 }
 
 export function JogosClient({ matches }: { matches: Match[] }) {
@@ -86,7 +86,13 @@ export function JogosClient({ matches }: { matches: Match[] }) {
                 <div key={match.id} className="glass-card match-card">
                   <div className="match-card-header">
                     {match.group && <span className="badge badge-group">Grupo {match.group}</span>}
-                    <span>Jogo #{match.matchNumber}</span>
+                    <span>
+                      Jogo #{match.matchNumber}
+                      {match.status === 'live' && (
+                        <span className="match-live-dot"> ● AO VIVO</span>
+                      )}
+                    </span>
+                    <MatchTimeChip dateUTC={match.dateUTC} />
                   </div>
                   <div className="match-card-teams">
                     <div className="match-card-team">
@@ -100,13 +106,15 @@ export function JogosClient({ matches }: { matches: Match[] }) {
                         <span>{match.awayGoals}</span>
                       </div>
                     ) : match.status === 'live' ? (
-                      <div className="match-card-score" style={{ color: 'var(--green)' }}>
+                      <div className="match-card-score" style={{ color: 'var(--copa-green)' }}>
                         <span>{match.homeGoals ?? 0}</span>
                         <span className="separator">×</span>
                         <span>{match.awayGoals ?? 0}</span>
                       </div>
                     ) : (
-                      <MatchTime dateUTC={match.dateUTC} />
+                      <div className="match-card-score match-card-score-vs">
+                        <span className="separator">×</span>
+                      </div>
                     )}
                     <div className="match-card-team">
                       {away ? <TeamFlag name={away.name} flagEmoji={away.flag} size={40} /> : <span className="flag">🏳️</span>}

@@ -309,6 +309,19 @@
 .bolao-feedback-msg.bad  { color: var(--text-secondary); }
 .bolao-feedback-msg.none { color: var(--text-tertiary); font-style: italic; }
 
+.bolao-live-notice {
+  margin: 6px 0 0;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm, 8px);
+  background: rgba(255, 200, 0, 0.08);
+  border: 1px solid rgba(255, 200, 0, 0.22);
+  font-size: 0.78rem;
+  font-style: italic;
+  color: rgba(255, 220, 80, 0.90);
+  text-align: center;
+  line-height: 1.4;
+}
+
 .bolao-card-guess {
   font-size: 0.72rem;
   font-weight: 600;

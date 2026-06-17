@@ -254,3 +254,133 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ── Seção de Regras ──────────────────────────────────────────── */
+.rules-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  margin-top: var(--space-md);
+}
+
+.rules-section {
+  padding: var(--space-lg);
+}
+
+.rules-section-title {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin: 0 0 var(--space-md);
+}
+
+.rules-score-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: var(--space-sm);
+}
+
+.rules-score-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.rules-pts {
+  font-family: var(--font-heading);
+  font-weight: 900;
+  font-size: 0.95rem;
+  flex-shrink: 0;
+  width: 44px;
+  text-align: right;
+}
+
+.rules-score-exact  .rules-pts { color: var(--copa-green); }
+.rules-score-diff   .rules-pts { color: #60a5fa; }
+.rules-score-winner .rules-pts { color: var(--text-secondary); }
+.rules-score-miss   .rules-pts { color: var(--text-tertiary); }
+
+.rules-desc {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+.rules-desc strong { color: var(--text-primary); }
+
+.rules-note {
+  font-size: 0.78rem;
+  color: var(--text-tertiary);
+  font-style: italic;
+  margin: var(--space-sm) 0 0;
+}
+.rules-note strong { color: var(--text-secondary); }
+.rules-note-sub { margin-top: var(--space-md); }
+
+.rules-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.rules-list li {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  padding-left: 18px;
+  position: relative;
+  line-height: 1.5;
+}
+.rules-list li::before {
+  content: '•';
+  position: absolute;
+  left: 4px;
+  color: var(--gold);
+}
+.rules-list li strong { color: var(--text-primary); }
+
+/* Lista numerada de critérios de desempate */
+.rules-tiebreaker-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  counter-reset: none;
+}
+.rules-tiebreaker-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+.rules-tiebreaker-list li strong { color: var(--text-primary); }
+.rules-tiebreaker-list li em     { color: var(--text-tertiary); font-style: normal; }
+
+.rules-tb-num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(212, 175, 55, 0.15);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  font-family: var(--font-heading);
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: var(--gold);
+}
+
+/* Critérios exclusivos da classificação geral — levemente destacados */
+.rules-tb-general-only .rules-tb-num {
+  background: rgba(96, 165, 250, 0.10);
+  border-color: rgba(96, 165, 250, 0.30);
+  color: #60a5fa;
+}

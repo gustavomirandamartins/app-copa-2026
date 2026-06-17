@@ -107,7 +107,7 @@ export function HeaderAdmin({ variant, onNavigate }: Props) {
     return (
       <div className="header-admin-mobile">
         <span className="header-admin-label">Admin</span>
-        <Link href="/admin" className="btn btn-secondary btn-sm" onClick={onNavigate}>
+        <Link href="/admin" className="btn btn-gold btn-sm" onClick={onNavigate}>
           <ShieldCheck size={16} /> Central de controle
         </Link>
         <button

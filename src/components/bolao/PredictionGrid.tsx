@@ -280,6 +280,12 @@ export function PredictionGrid({
                             {resultMessage(points, hasGuess, multiplier)}
                           </p>
                         </div>
+
+                        {live && (
+                          <p className="bolao-live-notice">
+                            Esta partida já começou. Agora é preciso aguardar o apito final!
+                          </p>
+                        )}
                       </>
                     ) : (
                       <>

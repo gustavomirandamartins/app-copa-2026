@@ -558,6 +558,36 @@ a:hover { color: var(--copa-green-deep); }
   color: var(--copa-green);
 }
 
+/* Chip de horário no cabeçalho do card de jogo */
+.match-card-time-chip {
+  font-family: var(--font-heading);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: var(--radius-full);
+  padding: 2px 8px;
+  letter-spacing: 0.02em;
+}
+
+/* "×" centralizado em jogos ainda não disputados */
+.match-card-score-vs {
+  justify-content: center;
+}
+.match-card-score-vs .separator {
+  font-size: 1.5rem;
+  color: var(--text-tertiary);
+}
+
+/* Indicador de ao vivo no cabeçalho do jogo */
+.match-live-dot {
+  color: var(--copa-green);
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
+  margin-left: 4px;
+}
+
 .match-card-footer {
   display: flex;
   align-items: center;
