@@ -15,7 +15,7 @@ export async function login(formData: FormData) {
   if (error) return { error: error.message };
 
   revalidatePath('/', 'layout');
-  redirect('/bolao');
+  redirect('/');
 }
 
 export async function signup(formData: FormData) {

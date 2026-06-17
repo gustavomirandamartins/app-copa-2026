@@ -19,7 +19,7 @@ export function ReferralCard({ code, bonus }: Props) {
     const url =
       typeof window !== 'undefined'
         ? `${window.location.origin}/bolao`
-        : 'https://copa.mindubier.com.br/bolao';
+        : 'https://bolao.mindubier.com';
     return (
       `🏆 Tô no Bolão da Mindu na Copa 2026! Entra com o meu cupom *${code}* ` +
       `ao se cadastrar e bora disputar os prêmios MinduBier. ${url}`
