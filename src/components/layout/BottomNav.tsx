@@ -8,8 +8,8 @@ const tabs = [
   { href: '/', label: 'Início', icon: Home },
   { href: '/jogos', label: 'Jogos', icon: Calendar },
   { href: '/grupos', label: 'Grupos', icon: BarChart3 },
-  { href: '/bolao', label: 'Bolão', icon: Trophy },
   { href: '/selecoes', label: 'Seleções', icon: Users },
+  { href: '/bolao', label: 'Bolão', icon: Trophy },
 ];
 
 export function BottomNav() {

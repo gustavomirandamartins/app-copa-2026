@@ -138,7 +138,7 @@ export function RankingList({ users, isRound = false }: Props) {
           place += 1;
           displayPlace = place;
         }
-        const isTop = isRound ? !!user.is_winner : (displayPlace !== null && displayPlace <= 5);
+        const isTop = isRound ? displayPlace === 1 : (displayPlace !== null && displayPlace <= 5);
         const isExpanded = expandedId === user.id + String(i);
         const toggle = () => setExpandedId(isExpanded ? null : user.id + String(i));
 

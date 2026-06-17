@@ -66,12 +66,12 @@ export function Header() {
         right: 0,
         height: 'calc(var(--header-height) + env(safe-area-inset-top))',
         paddingTop: 'env(safe-area-inset-top)',
-        background: scrolled ? 'rgba(10, 8, 20, 0.85)' : 'rgba(10, 8, 20, 0.55)',
-        backdropFilter: 'blur(30px) saturate(180%)',
-        WebkitBackdropFilter: 'blur(30px) saturate(180%)',
+        background: scrolled ? 'rgba(10, 8, 20, 0.85)' : 'transparent',
+        backdropFilter: scrolled ? 'blur(30px) saturate(180%)' : 'none',
+        WebkitBackdropFilter: scrolled ? 'blur(30px) saturate(180%)' : 'none',
         boxShadow: scrolled
           ? '0 4px 32px rgba(0,0,0,0.45), 0 1px 0 rgba(255,255,255,0.06)'
-          : '0 1px 0 rgba(255,255,255,0.06)',
+          : 'none',
         // Acima do drawer (120) quando aberto, p/ o botão X seguir clicável.
         zIndex: isOpen ? 130 : 100,
         display: 'flex',

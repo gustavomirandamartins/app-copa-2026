@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { Trophy, Medal, Award, Info, ArrowLeft, ChevronDown, Crown, Zap, BookOpen } from 'lucide-react';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { ROUND_ORDER, ROUND_LABELS, ROUND_BONUS_POINTS, ROUND_MATCH_IDS, type RoundKey } from '@/lib/bolao/rounds';
+import { ROUND_ORDER, ROUND_LABELS, ROUND_BONUS_POINTS, ROUND_MATCH_IDS, ROUND_END_DATES, type RoundKey } from '@/lib/bolao/rounds';
 import { RankingList, type RankedUserRow } from '@/components/ranking/RankingList';
 import './ranking.css';
 
@@ -308,6 +308,16 @@ export default async function RankingPage() {
     : [];
   const currentRoundComplete = currentRoundRows[0]?.complete ?? false;
 
+  const roundEndLabel = currentRoundKey
+    ? (() => {
+        const dateUTC = ROUND_END_DATES[currentRoundKey];
+        if (!dateUTC) return null;
+        return new Intl.DateTimeFormat('pt-BR', {
+          day: 'numeric', month: 'long', timeZone: 'America/Bahia',
+        }).format(new Date(dateUTC));
+      })()
+    : null;
+
   // ── Converte para o formato do componente cliente ───────────────────
   const generalRows: RankedUserRow[] = ranking.map((u) =>
     toGeneralRow(u, roundBonusMap.get(u.id) ?? [])
@@ -562,7 +572,7 @@ export default async function RankingPage() {
           <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: 'var(--space-md)' }}>
             {currentRoundComplete
               ? `Rodada encerrada — o 1º levou +${ROUND_BONUS_POINTS} pontos de bônus.`
-              : `Rodada em andamento — o 1º ao fim leva +${ROUND_BONUS_POINTS} pontos de bônus.`}
+              : `Rodada em andamento${roundEndLabel ? ` · encerra em ${roundEndLabel}` : ''} — o 1º ao fim leva +${ROUND_BONUS_POINTS} pts de bônus.`}
           </p>
           <RankingList users={roundUserRows} isRound={true} />
         </section>

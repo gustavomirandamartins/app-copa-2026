@@ -82,3 +82,22 @@ for (const m of matches) {
 
 /** Bônus concedido ao vencedor de cada rodada. */
 export const ROUND_BONUS_POINTS = 50;
+
+/** Data UTC da última partida de cada rodada (prazo do bônus). */
+export const ROUND_END_DATES: Record<RoundKey, string> = {
+  'group-1': '',
+  'group-2': '',
+  'group-3': '',
+  'round-of-32': '',
+  'round-of-16': '',
+  'quarter-final': '',
+  'semi-final': '',
+};
+
+for (const key of ROUND_ORDER) {
+  const sorted = ROUND_MATCH_IDS[key]
+    .map(id => matches.find(m => m.id === id)?.dateUTC ?? '')
+    .filter(Boolean)
+    .sort();
+  ROUND_END_DATES[key] = sorted[sorted.length - 1] ?? '';
+}

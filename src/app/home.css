@@ -411,6 +411,61 @@
   gap: var(--space-sm);
 }
 
+/* ── Card instalar app ─────────────────────────────────────── */
+.dash-install-card {
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.install-platform {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  margin: 0;
+}
+
+.install-steps {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.install-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.83rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.install-step-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(212, 175, 55, 0.12);
+  border: 1px solid rgba(212, 175, 55, 0.28);
+  font-size: 0.72rem;
+  color: var(--gold);
+}
+
+.install-done {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
 .dash-predictions {
   margin-bottom: var(--space-2xl);
 }

@@ -27,6 +27,7 @@ import { JoinThermometer } from '@/components/home/JoinThermometer';
 import { RankingSnapshot } from '@/components/home/RankingSnapshot';
 import { AuthPanel } from '@/components/auth/AuthPanel';
 import { ReferralCard } from '@/components/bolao/ReferralCard';
+import { InstallAppCard } from '@/components/home/InstallAppCard';
 import { BolaoClient, type MatchResult } from '@/components/bolao/BolaoClient';
 import './home.css';
 
@@ -159,6 +160,7 @@ export default async function HomePage() {
             {profile.referral_code && (
               <ReferralCard code={profile.referral_code} bonus={profile.referral_bonus ?? 0} />
             )}
+            <InstallAppCard />
             <div className="dash-links glass-card-static">
               <span className="dash-card-title">
                 <Sparkles size={16} /> Explore
