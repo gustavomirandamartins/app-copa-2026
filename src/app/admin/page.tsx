@@ -121,9 +121,25 @@ export default async function AdminPage() {
     (matchRows ?? []).map((m) => [m.id, { home: m.home_score as number | null, away: m.away_score as number | null }]),
   );
 
-  const { data: predRows } = await admin
-    .from('predictions')
-    .select('user_id, match_id, home_score_guess, away_score_guess, points_earned');
+  // Paginado: o PostgREST corta em 1000 linhas e a tabela de palpites já
+  // passa disso — sem paginar, alguns palpites somem da matriz (o usuário
+  // aparece sem palpite mesmo tendo pontuado).
+  type PredRow = {
+    user_id: string; match_id: string;
+    home_score_guess: number | null; away_score_guess: number | null;
+    points_earned: number | null;
+  };
+  const predRows: PredRow[] = [];
+  for (let from = 0; ; from += 1000) {
+    const { data } = await admin
+      .from('predictions')
+      .select('user_id, match_id, home_score_guess, away_score_guess, points_earned')
+      .order('id', { ascending: true })
+      .range(from, from + 999);
+    const rows = (data ?? []) as PredRow[];
+    predRows.push(...rows);
+    if (rows.length < 1000) break;
+  }
 
   const matrixColumns: MatrixColumn[] = [...matches]
     .sort((a, b) => a.matchNumber - b.matchNumber)
