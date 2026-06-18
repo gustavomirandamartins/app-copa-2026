@@ -31,6 +31,24 @@
   letter-spacing: 0.06em;
 }
 
+.admin-history-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: var(--space-sm);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: var(--space-sm);
+  color: inherit;
+  text-align: left;
+}
+.admin-history-toggle:hover .admin-section-title {
+  color: var(--text-primary);
+}
+
 .admin-empty {
   font-size: 0.88rem;
   color: var(--text-tertiary);

@@ -134,14 +134,12 @@ export function AdminPredictionsMatrix({ users, columns, cells }: Props) {
         <p className="admin-empty">Nenhum jogo finalizado ainda.</p>
       ) : (
         <div className="pm-wrapper">
-          {/* Colunas fixas: usuário, bônus, total */}
+          {/* Coluna fixa: apenas nome */}
           <div className="pm-left" ref={leftRef} onScroll={syncRight}>
             <table className="pm-table">
               <thead>
                 <tr>
                   <th className="pm-col-user">Usuário</th>
-                  <th className="pm-col-bonus">Bônus</th>
-                  <th className="pm-col-total">Total</th>
                 </tr>
               </thead>
               <tbody>
@@ -151,34 +149,19 @@ export function AdminPredictionsMatrix({ users, columns, cells }: Props) {
                       <span className="pm-user-name">{u.name}</span>
                       {u.isAdmin && <span className="pm-admin-tag">admin</span>}
                     </td>
-                    <td className="pm-col-bonus">
-                      {u.bonus > 0 && (
-                        <span className="pm-bonus">{`+${u.bonus}`}</span>
-                      )}
-                      {u.adjustment !== 0 && (
-                        <span className="pm-adjustment">
-                          {u.adjustment > 0 ? `+${u.adjustment}` : u.adjustment} adj
-                        </span>
-                      )}
-                      {u.referral > 0 && (
-                        <span className="pm-referral">+{u.referral} ind</span>
-                      )}
-                      {u.bonus === 0 && u.adjustment === 0 && u.referral === 0 && (
-                        <span style={{ color: 'var(--text-tertiary)' }}>—</span>
-                      )}
-                    </td>
-                    <td className="pm-col-total pm-total">{u.total}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
 
-          {/* Colunas de palpites: scroll horizontal */}
+          {/* Bônus, total e palpites: scroll horizontal */}
           <div className="pm-right" ref={rightRef} onScroll={syncLeft}>
             <table className="pm-table">
               <thead>
                 <tr>
+                  <th className="pm-col-bonus">Bônus</th>
+                  <th className="pm-col-total">Total</th>
                   {visibleColumns.map((c) => {
                     const hasScore =
                       c.finished && c.homeScore != null && c.awayScore != null;
@@ -206,6 +189,23 @@ export function AdminPredictionsMatrix({ users, columns, cells }: Props) {
                   const row = cells[u.id] ?? {};
                   return (
                     <tr key={u.id} className={u.isAdmin ? 'pm-admin-row' : undefined}>
+                      <td className="pm-col-bonus">
+                        {u.bonus > 0 && (
+                          <span className="pm-bonus">{`+${u.bonus}`}</span>
+                        )}
+                        {u.adjustment !== 0 && (
+                          <span className="pm-adjustment">
+                            {u.adjustment > 0 ? `+${u.adjustment}` : u.adjustment} adj
+                          </span>
+                        )}
+                        {u.referral > 0 && (
+                          <span className="pm-referral">+{u.referral} ind</span>
+                        )}
+                        {u.bonus === 0 && u.adjustment === 0 && u.referral === 0 && (
+                          <span style={{ color: 'var(--text-tertiary)' }}>—</span>
+                        )}
+                      </td>
+                      <td className="pm-col-total pm-total">{u.total}</td>
                       {visibleColumns.map((c) => {
                         const cell = row[c.matchId];
                         return (

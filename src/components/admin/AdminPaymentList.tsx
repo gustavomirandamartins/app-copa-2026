@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react';
 import {
   AlertCircle,
   Check,
+  ChevronDown,
   Clock,
   Mail,
   Phone,
@@ -116,6 +117,8 @@ export function AdminPaymentList({
   pending: PaymentRequest[];
   reviewed: PaymentRequest[];
 }) {
+  const [showHistory, setShowHistory] = useState(false);
+
   return (
     <div className="admin-list">
       <section>
@@ -131,8 +134,25 @@ export function AdminPaymentList({
 
       {reviewed.length > 0 && (
         <section>
-          <h2 className="admin-section-title">Histórico recente</h2>
-          {reviewed.map((req) => (
+          <button
+            type="button"
+            className="admin-history-toggle"
+            onClick={() => setShowHistory((v) => !v)}
+            aria-expanded={showHistory}
+          >
+            <h2 className="admin-section-title" style={{ margin: 0 }}>
+              Histórico recente ({reviewed.length})
+            </h2>
+            <ChevronDown
+              size={18}
+              style={{
+                transition: 'transform 0.2s ease',
+                transform: showHistory ? 'rotate(180deg)' : 'none',
+                color: 'var(--text-tertiary)',
+              }}
+            />
+          </button>
+          {showHistory && reviewed.map((req) => (
             <Row key={req.id} req={req} />
           ))}
         </section>

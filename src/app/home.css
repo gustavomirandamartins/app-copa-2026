@@ -478,6 +478,13 @@
   .dash-grid {
     grid-template-columns: 1fr;
   }
+  .dash-links-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .dash-links-row .home-explore-link {
+    justify-content: center;
+  }
 }
 
 /* ── Seções genéricas ──────────────────────────────────────── */

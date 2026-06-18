@@ -188,17 +188,16 @@ export function PredictionGrid({
   return (
     <div>
       <div className="bolao-actionbar">
-        <div className="tabs" style={{ marginBottom: 0, flex: 1 }}>
+        <select
+          className="bolao-round-select"
+          value={activeTab}
+          onChange={(e) => setActiveTab(e.target.value as TabKey)}
+          aria-label="Selecionar fase"
+        >
           {stageTabs.map((tab) => (
-            <button
-              key={tab.key}
-              className={`tab ${activeTab === tab.key ? 'active' : ''}`}
-              onClick={() => setActiveTab(tab.key)}
-            >
-              {tab.label}
-            </button>
+            <option key={tab.key} value={tab.key}>{tab.label}</option>
           ))}
-        </div>
+        </select>
         <button
           className="btn btn-gold btn-sm"
           onClick={onAutofill}
