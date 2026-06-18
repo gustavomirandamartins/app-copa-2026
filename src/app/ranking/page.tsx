@@ -284,13 +284,19 @@ export default async function RankingPage() {
     byRound.set(key, list);
   }
 
-  // Campeões: rodadas encerradas com vencedor(es).
+  // Campeões: rodadas encerradas com vencedor(es) + ranking completo da rodada.
   const champions = ROUND_ORDER.flatMap((key) => {
     const rows = byRound.get(key);
     if (!rows || !rows[0]?.complete) return [];
     const winners = rows.filter((r) => r.is_winner);
     if (winners.length === 0) return [];
-    return [{ key, winners, points: winners[0].points }];
+    const allRows = [...rows].sort((a, b) => {
+      if (b.points !== a.points) return b.points - a.points;
+      if (b.tb.exact_pts !== a.tb.exact_pts) return b.tb.exact_pts - a.tb.exact_pts;
+      if (b.tb.diff_pts  !== a.tb.diff_pts)  return b.tb.diff_pts  - a.tb.diff_pts;
+      return 0;
+    });
+    return [{ key, winners, points: winners[0].points, allRows }];
   });
 
   // Rodada atual = última rodada (na ordem) que já tem pontuação registrada.
@@ -523,6 +529,22 @@ export default async function RankingPage() {
         </div>
       )}
 
+      {/* Classificação da rodada — aparece primeiro */}
+      {currentRoundKey && roundUserRows.length > 0 && (
+        <section style={{ marginBottom: 'var(--space-2xl)' }}>
+          <h3 style={{ marginBottom: 'var(--space-xs)' }}>
+            <Zap size={18} style={{ color: 'var(--gold)', verticalAlign: 'middle', marginRight: 6 }} />
+            Classificação · {ROUND_LABELS[currentRoundKey]}
+          </h3>
+          <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: 'var(--space-md)' }}>
+            {currentRoundComplete
+              ? `Rodada encerrada — o 1º levou +${ROUND_BONUS_POINTS} pontos de bônus.`
+              : `Rodada em andamento${roundEndLabel ? ` · encerra em ${roundEndLabel}` : ''} — o 1º ao fim leva +${ROUND_BONUS_POINTS} pts de bônus.`}
+          </p>
+          <RankingList users={roundUserRows} isRound={true} />
+        </section>
+      )}
+
       {/* Campeões de rodada */}
       {champions.length > 0 && (
         <section style={{ marginBottom: 'var(--space-xl)' }}>
@@ -531,20 +553,39 @@ export default async function RankingPage() {
             Campeões de rodada
           </h3>
           <div className="champions-grid">
-            {champions.map(({ key, winners, points }) => (
-              <div key={key} className="glass-card-static champion-card">
-                <div className="champion-round">{ROUND_LABELS[key]}</div>
-                <div className="champion-names">
-                  {winners.map((w) => (
-                    <span key={w.full_name} className="champion-name">
-                      <Crown size={14} /> {w.full_name ?? 'Participante'}
-                    </span>
+            {champions.map(({ key, winners, points, allRows }) => (
+              <details key={key} className="glass-card-static champion-card">
+                <summary>
+                  <div>
+                    <div className="champion-round">{ROUND_LABELS[key]}</div>
+                    <div className="champion-names">
+                      {winners.map((w) => (
+                        <span key={w.full_name} className="champion-name">
+                          <Crown size={14} /> {w.full_name ?? 'Participante'}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="champion-meta">
+                      {points} pts na rodada · <strong>+{ROUND_BONUS_POINTS} bônus</strong>
+                    </div>
+                  </div>
+                  <ChevronDown size={16} className="champion-chevron" />
+                </summary>
+                <div className="champion-ranking">
+                  {allRows.map((r, i) => (
+                    <div
+                      key={r.user_id}
+                      className={`champion-rank-row${r.is_winner ? ' is-winner' : ''}`}
+                    >
+                      <span className="champion-rank-pos">
+                        {i === 0 ? <Crown size={12} /> : `${i + 1}º`}
+                      </span>
+                      <span className="champion-rank-name">{r.full_name ?? 'Participante'}</span>
+                      <span className="champion-rank-pts">{r.points} pts</span>
+                    </div>
                   ))}
                 </div>
-                <div className="champion-meta">
-                  {points} pts na rodada · <strong>+{ROUND_BONUS_POINTS} bônus</strong>
-                </div>
-              </div>
+              </details>
             ))}
           </div>
         </section>
@@ -560,22 +601,6 @@ export default async function RankingPage() {
         </div>
       ) : (
         <RankingList users={generalRows} />
-      )}
-
-      {/* Classificação da rodada */}
-      {currentRoundKey && roundUserRows.length > 0 && (
-        <section style={{ marginTop: 'var(--space-2xl)' }}>
-          <h3 style={{ marginBottom: 'var(--space-xs)' }}>
-            <Zap size={18} style={{ color: 'var(--gold)', verticalAlign: 'middle', marginRight: 6 }} />
-            Classificação · {ROUND_LABELS[currentRoundKey]}
-          </h3>
-          <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: 'var(--space-md)' }}>
-            {currentRoundComplete
-              ? `Rodada encerrada — o 1º levou +${ROUND_BONUS_POINTS} pontos de bônus.`
-              : `Rodada em andamento${roundEndLabel ? ` · encerra em ${roundEndLabel}` : ''} — o 1º ao fim leva +${ROUND_BONUS_POINTS} pts de bônus.`}
-          </p>
-          <RankingList users={roundUserRows} isRound={true} />
-        </section>
       )}
     </div>
   );

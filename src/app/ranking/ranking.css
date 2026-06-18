@@ -240,6 +240,74 @@
   color: var(--gold);
 }
 
+/* ── Champion card com dropdown de classificação da rodada ──────── */
+details.champion-card > summary {
+  list-style: none;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  cursor: pointer;
+  user-select: none;
+}
+details.champion-card > summary::-webkit-details-marker { display: none; }
+
+.champion-chevron {
+  transition: transform 0.2s ease;
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+details.champion-card[open] .champion-chevron {
+  transform: rotate(180deg);
+}
+
+.champion-ranking {
+  border-top: 1px solid rgba(212, 175, 55, 0.2);
+  margin-top: var(--space-sm);
+  padding-top: var(--space-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.champion-rank-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: 0.82rem;
+  padding: 4px 2px;
+  border-radius: var(--radius-sm);
+}
+.champion-rank-row.is-winner {
+  font-weight: 700;
+}
+.champion-rank-pos {
+  width: 22px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.72rem;
+  color: var(--text-tertiary);
+}
+.champion-rank-row.is-winner .champion-rank-pos { color: var(--gold); }
+.champion-rank-pos svg { color: var(--gold); }
+.champion-rank-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.champion-rank-pts {
+  font-weight: 700;
+  white-space: nowrap;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+}
+.champion-rank-row.is-winner .champion-rank-pts { color: var(--gold); }
+
 /* ── Linha da classificação por rodada ─────────────────────────── */
 .ranking-tag.tag-bonus {
   color: var(--gold);

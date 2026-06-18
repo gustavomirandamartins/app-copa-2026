@@ -1,35 +1,77 @@
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
-import { Trophy, Crown, ArrowRight } from 'lucide-react';
+import { Trophy, Crown, ArrowRight, Zap } from 'lucide-react';
 
 interface RankRow {
   full_name: string | null;
   total_score: number;
 }
 
+interface RoundRow {
+  full_name: string | null;
+  points: number;
+}
+
 interface Props {
   rows: RankRow[];
   meName: string | null;
   mePoints: number;
+  roundRows?: RoundRow[];
+  currentRoundLabel?: string;
+  meRoundPoints?: number;
 }
 
-// Mesmo critério da página de Classificação: o admin aparece fora de
-// competição (não ocupa colocação).
 const ADMIN_NAME = 'gustavo martins';
 const norm = (s: string | null) => (s ?? '').trim().toLowerCase();
-const isAdmin = (s: string | null) => norm(s) === ADMIN_NAME;
+const isAdminRow = (s: string | null) => norm(s) === ADMIN_NAME;
 
-export function RankingSnapshot({ rows, meName, mePoints }: Props) {
-  // Coloca posições ignorando o admin.
+export function RankingSnapshot({
+  rows,
+  meName,
+  mePoints,
+  roundRows,
+  currentRoundLabel,
+  meRoundPoints = 0,
+}: Props) {
+  const hasRound = !!roundRows && roundRows.length > 0;
+  const [tab, setTab] = useState<'round' | 'general'>(hasRound ? 'round' : 'general');
+
+  // ── Classificação geral ──────────────────────────────────────
   let place = 0;
   const ranked = rows.map((r) => {
-    const admin = isAdmin(r.full_name);
+    const admin = isAdminRow(r.full_name);
     const pos = admin ? null : ++place;
     return { ...r, pos, admin };
   });
-
-  const top = ranked.slice(0, 7);
+  const generalTop = ranked.slice(0, 7);
   const me = meName ? ranked.find((r) => norm(r.full_name) === norm(meName)) : undefined;
   const meInTop = me ? me.pos !== null && me.pos <= 7 : false;
+
+  // ── Classificação da rodada ──────────────────────────────────
+  let roundPlace = 0;
+  const rankedRound = (roundRows ?? []).map((r) => {
+    const admin = isAdminRow(r.full_name);
+    const pos = admin ? null : ++roundPlace;
+    return { ...r, pos, admin };
+  });
+  const roundTop = rankedRound.slice(0, 7);
+  const meRound = meName
+    ? rankedRound.find((r) => norm(r.full_name) === norm(meName))
+    : undefined;
+  const meRoundPos = meRound?.pos ?? null;
+  const meRoundInTop = meRoundPos !== null && meRoundPos <= 7;
+
+  const activePoints = tab === 'round' ? meRoundPoints : mePoints;
+  const activePosLabel =
+    tab === 'round'
+      ? meRoundPos !== null
+        ? `${meRoundPos}º lugar`
+        : 'sem pontuação'
+      : me && me.pos !== null
+      ? `${me.pos}º lugar`
+      : 'fora da classificação';
 
   return (
     <div className="dash-rank glass-card-static">
@@ -42,27 +84,69 @@ export function RankingSnapshot({ rows, meName, mePoints }: Props) {
         </Link>
       </div>
 
+      {/* Toggle rodada / geral */}
+      {hasRound && (
+        <div className="dash-rank-tabs">
+          <button
+            type="button"
+            className={`dash-rank-tab${tab === 'round' ? ' active' : ''}`}
+            onClick={() => setTab('round')}
+          >
+            <Zap size={12} />
+            {currentRoundLabel ? currentRoundLabel.split('·')[0].trim() : 'Rodada'}
+          </button>
+          <button
+            type="button"
+            className={`dash-rank-tab${tab === 'general' ? ' active' : ''}`}
+            onClick={() => setTab('general')}
+          >
+            Geral
+          </button>
+        </div>
+      )}
+
       {/* Sua posição */}
       <div className="dash-me">
         <span className="dash-me-label">Você</span>
-        <span className="dash-me-pos">
-          {me && me.pos !== null ? `${me.pos}º lugar` : 'fora da classificação'}
-        </span>
+        <span className="dash-me-pos">{activePosLabel}</span>
         <span className="dash-me-pts">
-          {mePoints}
+          {activePoints}
           <small>pts</small>
         </span>
       </div>
 
-      {top.length === 0 ? (
+      {/* Lista */}
+      {tab === 'round' ? (
+        roundTop.length === 0 ? (
+          <p className="dash-rank-empty">Nenhum palpite registrado nessa rodada ainda.</p>
+        ) : (
+          <ol className="dash-rank-list">
+            {roundTop.map((r, i) => {
+              const mine = meName && norm(r.full_name) === norm(meName);
+              return (
+                <li key={`${r.full_name}-${i}`} className={`dash-rank-row${mine ? ' is-me' : ''}`}>
+                  <span className={`dash-rank-pos${i === 0 ? ' gold' : ''}`}>
+                    {i === 0 ? <Crown size={15} /> : r.pos !== null ? `${r.pos}º` : '-'}
+                  </span>
+                  <span className="dash-rank-name">
+                    {r.full_name ?? 'Participante'}
+                    {r.admin && <span className="dash-rank-tag">fora de competição</span>}
+                  </span>
+                  <span className="dash-rank-score">{r.points}</span>
+                </li>
+              );
+            })}
+          </ol>
+        )
+      ) : generalTop.length === 0 ? (
         <p className="dash-rank-empty">A classificação começa com os primeiros jogos.</p>
       ) : (
         <ol className="dash-rank-list">
-          {top.map((r, i) => {
-            const mine = me && norm(r.full_name) === norm(meName);
+          {generalTop.map((r, i) => {
+            const mine = meName && norm(r.full_name) === norm(meName);
             return (
-              <li key={`${r.full_name}-${i}`} className={`dash-rank-row ${mine ? 'is-me' : ''}`}>
-                <span className={`dash-rank-pos ${i === 0 ? 'gold' : ''}`}>
+              <li key={`${r.full_name}-${i}`} className={`dash-rank-row${mine ? ' is-me' : ''}`}>
+                <span className={`dash-rank-pos${i === 0 ? ' gold' : ''}`}>
                   {i === 0 ? <Crown size={15} /> : r.pos !== null ? `${r.pos}º` : '-'}
                 </span>
                 <span className="dash-rank-name">
@@ -76,9 +160,14 @@ export function RankingSnapshot({ rows, meName, mePoints }: Props) {
         </ol>
       )}
 
-      {me && !meInTop && me.pos !== null && (
+      {tab === 'general' && me && !meInTop && me.pos !== null && (
         <p className="dash-rank-foot">
           Você está em <strong>{me.pos}º</strong> — falta pouco para o pódio!
+        </p>
+      )}
+      {tab === 'round' && meRound && !meRoundInTop && meRoundPos !== null && (
+        <p className="dash-rank-foot">
+          Você está em <strong>{meRoundPos}º</strong> na rodada.
         </p>
       )}
     </div>

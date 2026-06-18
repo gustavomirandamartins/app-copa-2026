@@ -399,6 +399,38 @@
 }
 .dash-rank-foot { text-align: center; }
 
+/* Toggle rodada / geral no card de classificação */
+.dash-rank-tabs {
+  display: flex;
+  gap: 3px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-sm);
+  padding: 3px;
+  margin-bottom: var(--space-md);
+}
+.dash-rank-tab {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border-radius: calc(var(--radius-sm) - 2px);
+  background: transparent;
+  border: none;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+}
+.dash-rank-tab.active {
+  background: rgba(212, 175, 55, 0.18);
+  color: var(--gold);
+}
+.dash-rank-tab svg { color: inherit; flex-shrink: 0; }
+
 .dash-links {
   padding: var(--space-lg);
   display: flex;

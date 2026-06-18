@@ -16,10 +16,11 @@ import {
   ListChecks,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
 import { isProfileComplete } from '@/lib/bolao/profile';
 import { computeThermometer, verdictFor } from '@/lib/bolao/thermometer';
-import { ROUND_BONUS_POINTS } from '@/lib/bolao/rounds';
+import { ROUND_BONUS_POINTS, ROUND_ORDER, ROUND_LABELS, type RoundKey } from '@/lib/bolao/rounds';
 import { REFERRAL_BONUS_POINTS } from '@/lib/bolao/referral';
 import type { Profile, PredictionInput } from '@/lib/bolao/types';
 import { ScrollReveal } from '@/components/ui/ScrollReveal';
@@ -79,6 +80,7 @@ export default async function HomePage() {
   let leaderPoints = 0;
   let authenticated = false;
   let profile: Profile | null = null;
+  let userId: string | null = null;
   let rankRows: RankRow[] = [];
   let existingPredictions: PredictionInput[] = [];
   const multipliers: Record<string, number> = {};
@@ -113,6 +115,7 @@ export default async function HomePage() {
 
     if (user) {
       authenticated = true;
+      userId = user.id;
       const [{ data: prof }, { data: preds }] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', user.id).single(),
         supabase
@@ -135,6 +138,49 @@ export default async function HomePage() {
   // ════════════════════════════════════════════════════════════════
   if (isPremium && profile) {
     const firstName = (profile.full_name ?? '').trim().split(/\s+/)[0] || 'craque';
+
+    // Dados da rodada atual para o card de classificação
+    type RoundSnapRow = { full_name: string | null; points: number };
+    let roundSnapshotRows: RoundSnapRow[] = [];
+    let currentRoundLabel: string | undefined;
+    let meRoundPoints = 0;
+
+    if (configured) {
+      const adminForRound = createAdminClient();
+      const [{ data: rScores }, { data: profileNames }] = await Promise.all([
+        adminForRound.from('round_scores').select('user_id, round_key, points'),
+        adminForRound.from('profiles').select('id, full_name').eq('agreed_to_ranking', true),
+      ]);
+
+      const nameMap = new Map<string, string | null>(
+        ((profileNames ?? []) as { id: string; full_name: string | null }[]).map((p) => [p.id, p.full_name])
+      );
+
+      const byRound = new Map<string, { user_id: string; round_key: string; points: number }[]>();
+      for (const r of (rScores ?? []) as { user_id: string; round_key: string; points: number }[]) {
+        const list = byRound.get(r.round_key) ?? [];
+        list.push(r);
+        byRound.set(r.round_key, list);
+      }
+
+      let currentRoundKey: RoundKey | null = null;
+      for (const key of ROUND_ORDER) {
+        if (byRound.has(key)) currentRoundKey = key;
+      }
+
+      if (currentRoundKey) {
+        currentRoundLabel = ROUND_LABELS[currentRoundKey];
+        const myRow = (rScores as { user_id: string; round_key: string; points: number }[] ?? [])
+          .find((r) => r.user_id === userId && r.round_key === currentRoundKey);
+        meRoundPoints = myRow?.points ?? 0;
+
+        roundSnapshotRows = (byRound.get(currentRoundKey) ?? [])
+          .filter((r) => nameMap.has(r.user_id))
+          .map((r) => ({ full_name: nameMap.get(r.user_id) ?? null, points: r.points }))
+          .sort((a, b) => b.points - a.points);
+      }
+    }
+
     return (
       <div className="container home">
         <section className="dash-hero">
@@ -154,6 +200,9 @@ export default async function HomePage() {
             rows={rankRows}
             meName={profile.full_name}
             mePoints={profile.total_score ?? 0}
+            roundRows={roundSnapshotRows}
+            currentRoundLabel={currentRoundLabel}
+            meRoundPoints={meRoundPoints}
           />
 
           <div className="dash-side">
