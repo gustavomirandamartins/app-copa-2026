@@ -112,6 +112,10 @@ html {
   background-attachment: fixed;
   background-position: center top;
   background-repeat: no-repeat;
+  /* Clip horizontal overflow at the viewport level. Keeping this on <html>
+     (not body) avoids a WebKit edge-case where overflow:clip on <body>
+     can act as a scroll-container, breaking position:fixed on mobile. */
+  overflow-x: clip;
 }
 
 ::selection {
@@ -124,7 +128,6 @@ body {
   color: var(--text-primary);
   line-height: 1.7;
   min-height: 100vh;
-  overflow-x: clip;
 }
 
 /* .parallax-bg kept in DOM but invisible — JS still targets it to

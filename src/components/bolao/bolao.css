@@ -694,18 +694,28 @@
   line-height: 1.55;
 }
 .referral-code-row {
-  display: flex;
-  align-items: center;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  align-items: stretch;
   gap: var(--space-sm);
-  flex-wrap: wrap;
+}
+/* Código, Copiar e WhatsApp com a mesma largura e centralizados. */
+.referral-code-row > * {
+  width: 100%;
+  justify-content: center;
+  text-align: center;
+  white-space: nowrap;
 }
 .referral-code {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-family: var(--font-heading);
   font-weight: 900;
-  font-size: 1.35rem;
-  letter-spacing: 0.14em;
+  font-size: 1.15rem;
+  letter-spacing: 0.1em;
   color: var(--gold);
-  padding: 8px 16px;
+  padding: 8px 10px;
   border-radius: var(--radius-md);
   background: rgba(224, 124, 0, 0.10);
   border: 1px dashed rgba(224, 124, 0, 0.5);

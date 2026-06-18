@@ -35,7 +35,9 @@ export function RankingSnapshot({
   currentRoundLabel,
   meRoundPoints = 0,
 }: Props) {
-  const hasRound = !!roundRows && roundRows.length > 0;
+  // Mostra a aba da rodada sempre que houver uma rodada vigente (mesmo sem
+  // pontos ainda — ex.: rodada recém-iniciada), com estado vazio amigável.
+  const hasRound = !!currentRoundLabel;
   const [tab, setTab] = useState<'round' | 'general'>(hasRound ? 'round' : 'general');
 
   // ── Classificação geral ──────────────────────────────────────
@@ -63,9 +65,11 @@ export function RankingSnapshot({
   const meRoundPos = meRound?.pos ?? null;
   const meRoundInTop = meRoundPos !== null && meRoundPos <= 7;
 
+  const meIsAdmin = isAdminRow(meName);
   const activePoints = tab === 'round' ? meRoundPoints : mePoints;
-  const activePosLabel =
-    tab === 'round'
+  const activePosLabel = meIsAdmin
+    ? 'Fora da competição'
+    : tab === 'round'
       ? meRoundPos !== null
         ? `${meRoundPos}º lugar`
         : 'sem pontuação'
@@ -118,13 +122,14 @@ export function RankingSnapshot({
       {/* Lista */}
       {tab === 'round' ? (
         roundTop.length === 0 ? (
-          <p className="dash-rank-empty">Nenhum palpite registrado nessa rodada ainda.</p>
+          <p className="dash-rank-empty">A rodada está começando — os pontos aparecem conforme os jogos terminam.</p>
         ) : (
           <ol className="dash-rank-list">
             {roundTop.map((r, i) => {
               const mine = meName && norm(r.full_name) === norm(meName);
+              const top5 = r.pos !== null && r.pos <= 5;
               return (
-                <li key={`${r.full_name}-${i}`} className={`dash-rank-row${mine ? ' is-me' : ''}`}>
+                <li key={`${r.full_name}-${i}`} className={`dash-rank-row${top5 ? ' is-top5' : ''}${mine ? ' is-me' : ''}`}>
                   <span className={`dash-rank-pos${i === 0 ? ' gold' : ''}`}>
                     {i === 0 ? <Crown size={15} /> : r.pos !== null ? `${r.pos}º` : '-'}
                   </span>
@@ -144,8 +149,9 @@ export function RankingSnapshot({
         <ol className="dash-rank-list">
           {generalTop.map((r, i) => {
             const mine = meName && norm(r.full_name) === norm(meName);
+            const top5 = r.pos !== null && r.pos <= 5;
             return (
-              <li key={`${r.full_name}-${i}`} className={`dash-rank-row${mine ? ' is-me' : ''}`}>
+              <li key={`${r.full_name}-${i}`} className={`dash-rank-row${top5 ? ' is-top5' : ''}${mine ? ' is-me' : ''}`}>
                 <span className={`dash-rank-pos${i === 0 ? ' gold' : ''}`}>
                   {i === 0 ? <Crown size={15} /> : r.pos !== null ? `${r.pos}º` : '-'}
                 </span>

@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { Crown, ChevronDown } from 'lucide-react';
-import { ROUND_BONUS_POINTS } from '@/lib/bolao/rounds';
 
 export interface UserBreakdown {
   exact_pts: number;
@@ -20,6 +19,8 @@ export interface RankedUserRow {
   score: number;
   is_admin: boolean;
   is_winner?: boolean;
+  /** Bônus escalonado da rodada (só na classificação por rodada). */
+  round_bonus?: number;
   breakdown: UserBreakdown;
 }
 
@@ -138,7 +139,7 @@ export function RankingList({ users, isRound = false }: Props) {
           place += 1;
           displayPlace = place;
         }
-        const isTop = isRound ? displayPlace === 1 : (displayPlace !== null && displayPlace <= 5);
+        const isTop = displayPlace !== null && displayPlace <= 5;
         const isExpanded = expandedId === user.id + String(i);
         const toggle = () => setExpandedId(isExpanded ? null : user.id + String(i));
 
@@ -164,8 +165,8 @@ export function RankingList({ users, isRound = false }: Props) {
               <div className="ranking-name">
                 {user.full_name ?? 'Participante'}
                 {isAdmin && <span className="ranking-tag">fora de competição</span>}
-                {isRound && user.is_winner && (
-                  <span className="ranking-tag tag-bonus">+{ROUND_BONUS_POINTS} bônus</span>
+                {isRound && !isAdmin && (user.round_bonus ?? 0) > 0 && (
+                  <span className="ranking-tag tag-bonus">+{user.round_bonus} bônus</span>
                 )}
               </div>
               <div className="ranking-row-end">

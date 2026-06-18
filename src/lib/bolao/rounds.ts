@@ -80,8 +80,25 @@ for (const m of matches) {
   }
 }
 
-/** Bônus concedido ao vencedor de cada rodada. */
+/** Bônus concedido ao 1º colocado de cada rodada (headline). */
 export const ROUND_BONUS_POINTS = 50;
+
+/**
+ * Bônus escalonado por colocação na rodada (após desempate).
+ * 1º +50 · 2º +30 · 3º +20 · 4º +10 · 5º +5. Fora do top 5 → 0.
+ */
+export const ROUND_BONUS_BY_PLACE: Record<number, number> = {
+  1: 50,
+  2: 30,
+  3: 20,
+  4: 10,
+  5: 5,
+};
+
+/** Bônus para uma dada colocação (1-based). 0 se fora do top 5. */
+export function roundBonusForPlace(place: number): number {
+  return ROUND_BONUS_BY_PLACE[place] ?? 0;
+}
 
 /** Data UTC da última partida de cada rodada (prazo do bônus). */
 export const ROUND_END_DATES: Record<RoundKey, string> = {

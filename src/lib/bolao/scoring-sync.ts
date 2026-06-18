@@ -4,11 +4,50 @@ import {
   ROUND_ORDER,
   ROUND_MATCH_IDS,
   roundKeyForMatch,
-  ROUND_BONUS_POINTS,
+  roundBonusForPlace,
   type RoundKey,
 } from './rounds';
 
 type Admin = ReturnType<typeof createAdminClient>;
+
+interface PredRow {
+  id: string;
+  user_id: string;
+  match_id: string;
+  home_score_guess: number | null;
+  away_score_guess: number | null;
+  points_earned: number | null;
+  base_points: number | null;
+}
+
+/**
+ * Lê TODOS os palpites paginando de 1000 em 1000. O PostgREST limita cada
+ * resposta a 1000 linhas; sem paginar, palpites além disso somem do cálculo
+ * (e a pontuação de quem está no fim da tabela fica errada).
+ */
+async function fetchAllPredictions(admin: Admin): Promise<PredRow[]> {
+  const pageSize = 1000;
+  const all: PredRow[] = [];
+  for (let from = 0; ; from += pageSize) {
+    const { data, error } = await admin
+      .from('predictions')
+      .select('id, user_id, match_id, home_score_guess, away_score_guess, points_earned, base_points')
+      .order('id', { ascending: true })
+      .range(from, from + pageSize - 1);
+    if (error) throw new Error(`scoring: ler predictions: ${error.message}`);
+    const rows = (data ?? []) as PredRow[];
+    all.push(...rows);
+    if (rows.length < pageSize) break;
+  }
+  return all;
+}
+
+/** Acúmulo de uma rodada para um usuário (pontos + desempates). */
+interface RoundStat {
+  points: number; // pontos do palpite na rodada (com multiplicador)
+  exact: number; // desempate: nº de placares exatos × 5
+  diff: number; // desempate: nº de acertos de saldo × 3
+}
 
 /**
  * Aplica a pontuação no banco (gancho do sync). Idempotente: recalcula tudo
@@ -16,9 +55,10 @@ type Admin = ReturnType<typeof createAdminClient>;
  *
  * Etapas:
  *   1. Pontua cada palpite de jogo finalizado (com multiplicador "turbinado").
- *   2. Calcula os pontos de cada usuário por rodada (round_scores) e, quando a
- *      rodada encerra, o(s) vencedor(es) — que ganham +50 de bônus. O admin
- *      fica fora de competição (não recebe bônus).
+ *      Guarda base_points (antes do multiplicador) para os desempates.
+ *   2. Classifica cada rodada com critérios de desempate (pontos → placar exato
+ *      → saldo) e premia em camadas: 1º +50, 2º +30, 3º +20, 4º +10, 5º +5.
+ *      O admin fica fora de competição (sem colocação nem bônus).
  *   3. total_score = palpites + correção manual + bônus de rodada + indicação.
  */
 export async function applyScoring(admin: Admin): Promise<{ updatedPredictions: number }> {
@@ -47,19 +87,17 @@ export async function applyScoring(admin: Admin): Promise<{ updatedPredictions: 
     multiplierByMatch.set(s.match_id, s.score_multiplier ?? 1);
   }
 
-  // Todos os palpites (uma query só).
-  const { data: preds } = await admin
-    .from('predictions')
-    .select('id, user_id, match_id, home_score_guess, away_score_guess, points_earned');
+  // Todos os palpites (paginado — pode passar de 1000 linhas).
+  const preds = await fetchAllPredictions(admin);
 
   // earned[user] = soma dos pontos dos palpites (jogos finalizados).
   const earnedByUser = new Map<string, number>();
-  // roundPoints[round][user] = pontos do usuário naquela rodada.
-  const roundPoints = new Map<RoundKey, Map<string, number>>();
+  // roundStats[round][user] = pontos + desempates do usuário naquela rodada.
+  const roundStats = new Map<RoundKey, Map<string, RoundStat>>();
   // Usuários que têm palpite em cada rodada (para montar a tabela da rodada).
   const usersWithPick = new Map<RoundKey, Set<string>>();
   for (const k of ROUND_ORDER) {
-    roundPoints.set(k, new Map());
+    roundStats.set(k, new Map());
     usersWithPick.set(k, new Set());
   }
 
@@ -70,18 +108,22 @@ export async function applyScoring(admin: Admin): Promise<{ updatedPredictions: 
     affectedUsers.add(p.user_id);
     const finished = finishedScore.get(p.match_id);
     const multiplier = multiplierByMatch.get(p.match_id) ?? 1;
-    const points = finished
+    const base = finished
       ? calculateMatchPoints(
           p.home_score_guess,
           p.away_score_guess,
           finished.home,
           finished.away,
-        ) * multiplier
+        )
       : 0;
+    const points = base * multiplier;
 
     // Só grava se mudou (evita writes desnecessários no re-sync).
-    if ((p.points_earned ?? 0) !== points) {
-      await admin.from('predictions').update({ points_earned: points }).eq('id', p.id);
+    if ((p.points_earned ?? 0) !== points || (p.base_points ?? 0) !== base) {
+      await admin
+        .from('predictions')
+        .update({ points_earned: points, base_points: base })
+        .eq('id', p.id);
       updatedPredictions += 1;
     }
 
@@ -90,8 +132,14 @@ export async function applyScoring(admin: Admin): Promise<{ updatedPredictions: 
     const rk = roundKeyForMatch(p.match_id);
     if (rk) {
       usersWithPick.get(rk)!.add(p.user_id);
-      const rp = roundPoints.get(rk)!;
-      rp.set(p.user_id, (rp.get(p.user_id) ?? 0) + points);
+      const stats = roundStats.get(rk)!;
+      const cur = stats.get(p.user_id) ?? { points: 0, exact: 0, diff: 0 };
+      cur.points += points;
+      // Desempate por contagem de acertos (5 cada / 3 cada), independente do
+      // multiplicador — o turbo entra só no total de pontos, não no desempate.
+      if (base === 5) cur.exact += 5; // acerto de placar exato
+      if (base === 3) cur.diff += 3; // acerto de saldo de gols
+      stats.set(p.user_id, cur);
     }
   }
 
@@ -123,18 +171,22 @@ export async function applyScoring(admin: Admin): Promise<{ updatedPredictions: 
     );
   }
 
-  // Monta round_scores e apura vencedores; acumula o bônus por usuário.
+  // Monta round_scores: classifica cada rodada (desempate) e premia em camadas.
   const roundBonusByUser = new Map<string, number>();
   const roundScoreRows: Array<{
     round_key: RoundKey;
     user_id: string;
     points: number;
+    exact_pts: number;
+    diff_pts: number;
+    place: number | null;
+    bonus: number;
     complete: boolean;
     is_winner: boolean;
   }> = [];
 
   for (const rk of ROUND_ORDER) {
-    const rp = roundPoints.get(rk)!;
+    const stats = roundStats.get(rk)!;
     const users = usersWithPick.get(rk)!;
     if (users.size === 0) continue; // rodada sem palpites ainda → ignora.
 
@@ -145,29 +197,43 @@ export async function applyScoring(admin: Admin): Promise<{ updatedPredictions: 
 
     const complete = roundComplete.get(rk)!;
 
-    // Vencedor: maior pontuação entre não-admins (e > 0), só se a rodada encerrou.
-    let maxPoints = 0;
-    if (complete) {
-      for (const u of users) {
-        if (isAdminByUser.get(u)) continue; // admin fora de competição
-        const pts = rp.get(u) ?? 0;
-        if (pts > maxPoints) maxPoints = pts;
-      }
-    }
+    // Classifica os NÃO-admins pela ordem de desempate da rodada:
+    //   1) pontos · 2) placar exato · 3) saldo · 4) fallback estável (user_id).
+    // (Critérios 4–7 — final/semi/etc — valem só na classificação geral.)
+    const contenders = Array.from(users)
+      .filter((u) => !isAdminByUser.get(u))
+      .map((u) => ({ user: u, ...(stats.get(u) ?? { points: 0, exact: 0, diff: 0 }) }))
+      .sort((a, b) => {
+        if (b.points !== a.points) return b.points - a.points;
+        if (b.exact !== a.exact) return b.exact - a.exact;
+        if (b.diff !== a.diff) return b.diff - a.diff;
+        return a.user < b.user ? -1 : a.user > b.user ? 1 : 0;
+      });
+
+    // place (1-based) e bônus escalonado por usuário não-admin.
+    const placeByUser = new Map<string, number>();
+    contenders.forEach((c, i) => placeByUser.set(c.user, i + 1));
 
     for (const u of users) {
-      const pts = rp.get(u) ?? 0;
-      const isWinner =
-        complete && maxPoints > 0 && !isAdminByUser.get(u) && pts === maxPoints;
-      if (isWinner) {
-        roundBonusByUser.set(u, (roundBonusByUser.get(u) ?? 0) + ROUND_BONUS_POINTS);
+      const stat = stats.get(u) ?? { points: 0, exact: 0, diff: 0 };
+      const isAdmin = !!isAdminByUser.get(u);
+      const place = isAdmin ? null : placeByUser.get(u) ?? null;
+      // Bônus só vale quando a rodada encerra; só pontuou na rodada conta (>0).
+      const bonus =
+        complete && place != null && stat.points > 0 ? roundBonusForPlace(place) : 0;
+      if (bonus > 0) {
+        roundBonusByUser.set(u, (roundBonusByUser.get(u) ?? 0) + bonus);
       }
       roundScoreRows.push({
         round_key: rk,
         user_id: u,
-        points: pts,
+        points: stat.points,
+        exact_pts: stat.exact,
+        diff_pts: stat.diff,
+        place,
+        bonus,
         complete,
-        is_winner: isWinner,
+        is_winner: complete && place === 1 && stat.points > 0,
       });
     }
   }

@@ -41,6 +41,20 @@ function matchesForTab(tab: TabKey): Match[] {
   return allMatches.filter((m) => m.stage === (tab as MatchStage));
 }
 
+/**
+ * Aba inicial = rodada vigente: a primeira aba cujas partidas ainda não
+ * estão todas encerradas. Determinístico (sem Date.now) — seguro p/ hidratar.
+ */
+function vigenteTab(results: Record<string, MatchResult>): TabKey {
+  for (const tab of stageTabs) {
+    const ms = matchesForTab(tab.key);
+    if (ms.length === 0) continue;
+    const allFinished = ms.every((m) => (results[m.id]?.status ?? m.status) === 'finished');
+    if (!allFinished) return tab.key;
+  }
+  return 'final';
+}
+
 export interface PredictionValue {
   home: number | null;
   away: number | null;
@@ -159,7 +173,7 @@ export function PredictionGrid({
   results = {},
   pointsByMatch = {},
 }: Props) {
-  const [activeTab, setActiveTab] = useState<TabKey>('group-1');
+  const [activeTab, setActiveTab] = useState<TabKey>(() => vigenteTab(results));
   const [now, setNow] = useState<number | null>(null);
   const [mounted, setMounted] = useState(false);
 
@@ -204,7 +218,7 @@ export function PredictionGrid({
           disabled={!canEdit}
           title="Preenche todos os jogos editáveis com placares simulados"
         >
-          <Dices size={16} /> Gerar resultados aleatórios
+          <Dices size={16} /> Vou na sorte!
         </button>
       </div>
 
@@ -268,19 +282,20 @@ export function PredictionGrid({
                           <TeamCell teamId={match.awayTeamId} align="right" />
                         </div>
 
-                        {/* Palpite + mensagem de feedback */}
-                        <div className="bolao-card-feedback">
-                          {hasGuess && (
-                            <span className="bolao-card-guess">
-                              Palpite: {value!.home} × {value!.away}
-                            </span>
-                          )}
-                          <p className={`bolao-feedback-msg ${points ? 'good' : hasGuess ? 'bad' : 'none'}`}>
-                            {resultMessage(points, hasGuess, multiplier)}
-                          </p>
-                        </div>
-
-                        {live && (
+                        {/* Encerrada: palpite + mensagem de pontuação.
+                            Ao vivo: apenas o aviso, sem frase de pontuação. */}
+                        {finished ? (
+                          <div className="bolao-card-feedback">
+                            {hasGuess && (
+                              <span className="bolao-card-guess">
+                                Palpite: {value!.home} × {value!.away}
+                              </span>
+                            )}
+                            <p className={`bolao-feedback-msg ${points ? 'good' : hasGuess ? 'bad' : 'none'}`}>
+                              {resultMessage(points, hasGuess, multiplier)}
+                            </p>
+                          </div>
+                        ) : (
                           <p className="bolao-live-notice">
                             Esta partida já começou. Agora é preciso aguardar o apito final!
                           </p>

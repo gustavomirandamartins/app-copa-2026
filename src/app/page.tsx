@@ -148,37 +148,44 @@ export default async function HomePage() {
     if (configured) {
       const adminForRound = createAdminClient();
       const [{ data: rScores }, { data: profileNames }] = await Promise.all([
-        adminForRound.from('round_scores').select('user_id, round_key, points'),
+        adminForRound.from('round_scores').select('user_id, round_key, points, exact_pts, diff_pts, complete'),
         adminForRound.from('profiles').select('id, full_name').eq('agreed_to_ranking', true),
       ]);
 
+      type RS = {
+        user_id: string; round_key: string; points: number;
+        exact_pts: number; diff_pts: number; complete: boolean;
+      };
       const nameMap = new Map<string, string | null>(
         ((profileNames ?? []) as { id: string; full_name: string | null }[]).map((p) => [p.id, p.full_name])
       );
 
-      const byRound = new Map<string, { user_id: string; round_key: string; points: number }[]>();
-      for (const r of (rScores ?? []) as { user_id: string; round_key: string; points: number }[]) {
+      const byRound = new Map<string, RS[]>();
+      const completeKeys = new Set<string>();
+      for (const r of (rScores ?? []) as RS[]) {
         const list = byRound.get(r.round_key) ?? [];
         list.push(r);
         byRound.set(r.round_key, list);
+        if (r.complete) completeKeys.add(r.round_key);
       }
 
-      let currentRoundKey: RoundKey | null = null;
-      for (const key of ROUND_ORDER) {
-        if (byRound.has(key)) currentRoundKey = key;
-      }
+      // Rodada vigente = primeira rodada que ainda NÃO encerrou.
+      const vigenteKey: RoundKey =
+        ROUND_ORDER.find((key) => !completeKeys.has(key)) ?? ROUND_ORDER[ROUND_ORDER.length - 1];
 
-      if (currentRoundKey) {
-        currentRoundLabel = ROUND_LABELS[currentRoundKey];
-        const myRow = (rScores as { user_id: string; round_key: string; points: number }[] ?? [])
-          .find((r) => r.user_id === userId && r.round_key === currentRoundKey);
-        meRoundPoints = myRow?.points ?? 0;
+      currentRoundLabel = ROUND_LABELS[vigenteKey];
+      const myRow = (byRound.get(vigenteKey) ?? []).find((r) => r.user_id === userId);
+      meRoundPoints = myRow?.points ?? 0;
 
-        roundSnapshotRows = (byRound.get(currentRoundKey) ?? [])
-          .filter((r) => nameMap.has(r.user_id))
-          .map((r) => ({ full_name: nameMap.get(r.user_id) ?? null, points: r.points }))
-          .sort((a, b) => b.points - a.points);
-      }
+      // Desempate da rodada: pontos → placar exato → saldo (valores já gravados).
+      roundSnapshotRows = (byRound.get(vigenteKey) ?? [])
+        .filter((r) => nameMap.has(r.user_id))
+        .sort((a, b) => {
+          if (b.points !== a.points) return b.points - a.points;
+          if (b.exact_pts !== a.exact_pts) return b.exact_pts - a.exact_pts;
+          return b.diff_pts - a.diff_pts;
+        })
+        .map((r) => ({ full_name: nameMap.get(r.user_id) ?? null, points: r.points }));
     }
 
     return (
