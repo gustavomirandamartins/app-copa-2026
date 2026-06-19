@@ -107,7 +107,7 @@ html {
      Chrome. background-attachment: fixed keeps it viewport-pinned (parallax).
      JS in ParallaxBackground.tsx pans backgroundPositionY on scroll. */
   background-color: var(--bg-light);
-  background-image: url('https://sdyilmgixyynnmczsnhc.supabase.co/storage/v1/object/public/backgrounds/bg-bolao-copa.webp');
+  background-image: url('https://sdyilmgixyynnmczsnhc.supabase.co/storage/v1/object/public/backgrounds/fifa-background.webp');
   background-size: cover;
   background-attachment: fixed;
   background-position: center top;
