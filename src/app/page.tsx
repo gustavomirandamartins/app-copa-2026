@@ -57,13 +57,13 @@ const PERKS = [
   },
   {
     icon: Crown,
-    title: `Bônus de rodada +${ROUND_BONUS_POINTS}`,
-    text: 'Quem faz mais pontos na rodada leva +50. São 7 rodadas premiadas ao longo da Copa.',
+    title: 'Bônus de rodada',
+    text: 'Os cinco que acertarem mais em cada rodada levam pontos extras para a classificação final!',
     accent: 'gold',
   },
   {
     icon: Users,
-    title: `Indique e ganhe +${REFERRAL_BONUS_POINTS}`,
+    title: 'Indique e ganhe',
     text: 'Cada amigo que entra com o seu cupom te dá +5 pontos. Sem limite de indicações.',
     accent: 'green',
   },
@@ -198,7 +198,7 @@ export default async function HomePage() {
             Salve, <span className="home-title-accent">{firstName}</span>!
           </h1>
           <p className="dash-hello-sub">
-            Seus palpites e a classificação, tudo aqui. Bora subir no ranking?
+            Seja bem-vindo de volta!
           </p>
         </section>
 
@@ -268,11 +268,11 @@ export default async function HomePage() {
         </span>
 
         <h1 className="home-title home-title-xl animate-fade-in">
-          Dá tempo de <span className="home-title-accent">virar o jogo</span>.
+          Dá tempo de<br /><span className="home-title-accent">virar o jogo!</span>
         </h1>
         <p className="home-lede animate-fade-in">
-          Palpite nos jogos da Copa, vença rodadas, indique amigos — e concorra
-          aos prêmios exclusivos da MinduBier. Entrada única de {PRICE}.
+          Acerte os placares, lidere o ranking, indique amigos e conquiste
+          prêmios exclusivos da MinduBier! Tudo isso por {PRICE}!
         </p>
 
         <div className="home-hero-cta animate-fade-in">
@@ -323,7 +323,7 @@ export default async function HomePage() {
               <Sparkles size={20} /> Por que participar
             </h2>
             <p className="home-sub">
-              Mais que um bolão — várias formas de pontuar e ganhar.
+              Um pequeno resumo do que está em jogo.
             </p>
           </div>
           <div className="home-perks">
@@ -380,7 +380,7 @@ export default async function HomePage() {
               <h2 className="home-h2">
                 <Trophy size={20} /> Entrar ou criar conta
               </h2>
-              <p className="home-sub">Comece agora — leva menos de um minuto.</p>
+              <p className="home-sub">Comece agora! leva menos de um minuto.</p>
             </div>
             <AuthPanel />
           </section>

@@ -4,8 +4,10 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, LogOut } from 'lucide-react';
 import { HeaderAdmin } from './HeaderAdmin';
+import { createBrowserSupabaseClient } from '@/lib/supabase/client';
+import { logout } from '@/app/login/actions';
 
 const navLinks = [
   { href: '/', label: 'Início' },
@@ -20,6 +22,7 @@ const navLinks = [
 export function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const pathname = usePathname();
 
   const onScroll = useCallback(() => {
@@ -49,6 +52,18 @@ export function Header() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [isOpen]);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const supabase = createBrowserSupabaseClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (active && user) setIsAuthenticated(true);
+      } catch {}
+    })();
+    return () => { active = false; };
+  }, []);
 
   // Links sempre brancos — header sempre escuro.
   const linkColor = (active: boolean) =>
@@ -138,6 +153,31 @@ export function Header() {
               </Link>
             );
           })}
+          {isAuthenticated && (
+            <form action={logout} style={{ display: 'inline' }}>
+              <button
+                type="submit"
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: 'var(--radius-sm)',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  color: 'rgba(255, 255, 255, 0.80)',
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  textShadow: '0 1px 10px rgba(0, 0, 0, 0.40)',
+                  transition: 'color 0.3s ease, background 0.3s ease',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                }}
+              >
+                <LogOut size={14} />
+                Sair
+              </button>
+            </form>
+          )}
           <HeaderAdmin variant="desktop" />
         </nav>
 
@@ -229,6 +269,33 @@ export function Header() {
             </Link>
           );
         })}
+        {isAuthenticated && (
+          <form action={logout}>
+            <button
+              type="submit"
+              onClick={() => setIsOpen(false)}
+              style={{
+                width: '100%',
+                padding: '13px 16px',
+                borderRadius: 'var(--radius-md)',
+                fontSize: '0.98rem',
+                fontWeight: 600,
+                color: 'rgba(255,255,255,0.85)',
+                background: 'transparent',
+                border: 'none',
+                borderLeft: '3px solid transparent',
+                cursor: 'pointer',
+                textAlign: 'left',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              <LogOut size={16} />
+              Sair
+            </button>
+          </form>
+        )}
         <HeaderAdmin variant="mobile" onNavigate={() => setIsOpen(false)} />
       </nav>
     </>

@@ -1,8 +1,8 @@
 import Link from 'next/link';
-import { Trophy, Medal, Award, Info, ArrowLeft, ChevronDown, Crown, Zap, BookOpen } from 'lucide-react';
+import { Trophy, Medal, Award, Info, ChevronDown, Crown, Zap, BookOpen } from 'lucide-react';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { ROUND_ORDER, ROUND_LABELS, ROUND_BONUS_POINTS, ROUND_END_DATES, type RoundKey } from '@/lib/bolao/rounds';
+import { ROUND_ORDER, ROUND_LABELS, ROUND_BONUS_POINTS, ROUND_END_DATES, roundKeyForMatch, type RoundKey } from '@/lib/bolao/rounds';
 import { RankingList, type RankedUserRow } from '@/components/ranking/RankingList';
 import { RoundClassification, type RoundOption } from '@/components/ranking/RoundClassification';
 import './ranking.css';
@@ -41,6 +41,7 @@ interface RoundRow {
   points: number;
   exact_pts: number;
   diff_pts: number;
+  winner_pts: number;
   place: number | null;
   bonus: number;
   complete: boolean;
@@ -138,8 +139,6 @@ function toGeneralRow(user: RankedUser, roundBonuses: Array<{ roundKey: string; 
 }
 
 function toRoundRow(row: RoundRow): RankedUserRow {
-  // winner_pts da rodada = pontos só-vencedor = total − exatos − saldo.
-  const winnerPts = Math.max(0, row.points - row.exact_pts - row.diff_pts);
   return {
     id: row.user_id,
     full_name: row.full_name,
@@ -150,7 +149,7 @@ function toRoundRow(row: RoundRow): RankedUserRow {
     breakdown: {
       exact_pts: row.exact_pts,
       diff_pts: row.diff_pts,
-      winner_pts: winnerPts,
+      winner_pts: row.winner_pts,
       prediction_pts: row.points,
       round_bonuses: [],
       referral_bonus: 0,
@@ -269,6 +268,20 @@ export default async function RankingPage() {
     const nameMap    = new Map<string, string | null>(profiles.map((p) => [p.id, p.full_name]));
     const isAdminMap = new Map<string, boolean>(profiles.map((p) => [p.id, p.is_admin ?? false]));
 
+    // ── winner_pts por rodada (contagem de base===1, sem multiplicador) ──
+    // Calcula a partir dos palpites brutos, igual à classificação geral,
+    // garantindo que o breakdown de "Apenas vencedor" bata entre as duas.
+    const roundWinnerMap = new Map<string, number>();
+    for (const p of preds) {
+      const rk = roundKeyForMatch(p.match_id);
+      if (!rk) continue;
+      const base = p.base_points ?? 0;
+      if (base === 1) {
+        const key = `${p.user_id}::${rk}`;
+        roundWinnerMap.set(key, (roundWinnerMap.get(key) ?? 0) + 1);
+      }
+    }
+
     roundRows = rScores
       .filter((r) => ROUND_ORDER.includes(r.round_key as RoundKey))
       .map((r) => ({
@@ -277,6 +290,7 @@ export default async function RankingPage() {
         points: r.points,
         exact_pts: r.exact_pts,
         diff_pts: r.diff_pts,
+        winner_pts: roundWinnerMap.get(`${r.user_id}::${r.round_key}`) ?? 0,
         place: r.place,
         bonus: r.bonus,
         complete: r.complete,
@@ -297,14 +311,15 @@ export default async function RankingPage() {
     byRound.set(key, list);
   }
 
-  // Ordena os participantes de uma rodada: colocados (place asc), admin/sem
-  // colocação por último (por pontos).
+  // Ordena os participantes de uma rodada pela pontuação (com desempate),
+  // deixando o admin INTERCALADO pela sua pontuação — a colocação dele vira
+  // "—" e a numeração pula para o próximo (igual à classificação geral).
   const sortRound = (rows: RoundRow[]) =>
     [...rows].sort((a, b) => {
-      const pa = a.place ?? Number.POSITIVE_INFINITY;
-      const pb = b.place ?? Number.POSITIVE_INFINITY;
-      if (pa !== pb) return pa - pb;
-      return b.points - a.points;
+      if (b.points !== a.points) return b.points - a.points;
+      if (b.exact_pts !== a.exact_pts) return b.exact_pts - a.exact_pts;
+      if (b.diff_pts !== a.diff_pts) return b.diff_pts - a.diff_pts;
+      return (a.place ?? Number.POSITIVE_INFINITY) - (b.place ?? Number.POSITIVE_INFINITY);
     });
 
   // Campeões: rodadas encerradas com vencedor + ranking completo da rodada.
@@ -359,21 +374,8 @@ export default async function RankingPage() {
             size={28}
             style={{ color: 'var(--gold)', verticalAlign: 'middle', marginRight: 8 }}
           />
-          Classificação & Prêmios
+          Classificação por Rodada e Final
         </h1>
-        <p
-          className="animate-fade-in"
-          style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}
-        >
-          Premiação para os cinco primeiros colocados ao final da Copa. Além
-          disso, os <strong>5 primeiros de cada rodada</strong> ganham bônus
-          (1º +50 · 2º +30 · 3º +20 · 4º +10 · 5º +5). Custos de frete não inclusos.
-        </p>
-        <div className="animate-fade-in" style={{ marginTop: 'var(--space-md)' }}>
-          <Link href="/bolao" className="btn btn-gold btn-sm">
-            <ArrowLeft size={15} /> Registrar palpites
-          </Link>
-        </div>
       </section>
 
       {/* Prêmios (dropdown) */}
@@ -580,24 +582,31 @@ export default async function RankingPage() {
                   <ChevronDown size={16} className="champion-chevron" />
                 </summary>
                 <div className="champion-ranking">
-                  {allRows.map((r) => (
-                    <div
-                      key={r.user_id}
-                      className={`champion-rank-row${r.is_winner ? ' is-winner' : ''}`}
-                    >
-                      <span className="champion-rank-pos">
-                        {r.is_winner ? <Crown size={12} /> : r.place != null ? `${r.place}º` : '—'}
-                      </span>
-                      <span className="champion-rank-name">
-                        {r.full_name ?? 'Participante'}
-                        {r.is_admin && <span className="champion-rank-tag">fora de competição</span>}
-                      </span>
-                      <span className="champion-rank-pts">
-                        {r.bonus > 0 && <span className="champion-rank-bonus">+{r.bonus}</span>}
-                        {r.points} pts
-                      </span>
-                    </div>
-                  ))}
+                  {(() => {
+                    let pos = 0;
+                    return allRows.map((r) => {
+                      const isAdminRow = r.is_admin;
+                      if (!isAdminRow) pos += 1;
+                      return (
+                        <div
+                          key={r.user_id}
+                          className={`champion-rank-row${r.is_winner ? ' is-winner' : ''}`}
+                        >
+                          <span className="champion-rank-pos">
+                            {r.is_winner ? <Crown size={12} /> : isAdminRow ? '—' : `${pos}º`}
+                          </span>
+                          <span className="champion-rank-name">
+                            {r.full_name ?? 'Participante'}
+                            {isAdminRow && <span className="champion-rank-tag">fora de competição</span>}
+                          </span>
+                          <span className="champion-rank-pts">
+                            {r.bonus > 0 && <span className="champion-rank-bonus">+{r.bonus}</span>}
+                            {r.points} pts
+                          </span>
+                        </div>
+                      );
+                    });
+                  })()}
                 </div>
               </details>
             ))}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import Link from 'next/link';
 import { Calendar, MapPin } from 'lucide-react';
 import { getTeamById } from '@/data/teams';
 import { getStadiumById } from '@/data/stadiums';
@@ -96,8 +97,17 @@ export function JogosClient({ matches }: { matches: Match[] }) {
                   </div>
                   <div className="match-card-teams">
                     <div className="match-card-team">
-                      {home ? <TeamFlag name={home.name} flagEmoji={home.flag} size={40} /> : <span className="flag">🏳️</span>}
-                      <span className="name">{home?.name || match.homeTeamPlaceholder || 'A definir'}</span>
+                      {home ? (
+                        <Link href={`/selecoes/${match.homeTeamId}`} style={{ display: 'contents', textDecoration: 'none', color: 'inherit' }}>
+                          <TeamFlag name={home.name} flagEmoji={home.flag} size={40} />
+                          <span className="name">{home.name}</span>
+                        </Link>
+                      ) : (
+                        <>
+                          <span className="flag">🏳️</span>
+                          <span className="name">{match.homeTeamPlaceholder || 'A definir'}</span>
+                        </>
+                      )}
                     </div>
                     {match.status === 'finished' ? (
                       <div className="match-card-score">
@@ -117,8 +127,17 @@ export function JogosClient({ matches }: { matches: Match[] }) {
                       </div>
                     )}
                     <div className="match-card-team">
-                      {away ? <TeamFlag name={away.name} flagEmoji={away.flag} size={40} /> : <span className="flag">🏳️</span>}
-                      <span className="name">{away?.name || match.awayTeamPlaceholder || 'A definir'}</span>
+                      {away ? (
+                        <Link href={`/selecoes/${match.awayTeamId}`} style={{ display: 'contents', textDecoration: 'none', color: 'inherit' }}>
+                          <TeamFlag name={away.name} flagEmoji={away.flag} size={40} />
+                          <span className="name">{away.name}</span>
+                        </Link>
+                      ) : (
+                        <>
+                          <span className="flag">🏳️</span>
+                          <span className="name">{match.awayTeamPlaceholder || 'A definir'}</span>
+                        </>
+                      )}
                     </div>
                   </div>
                   {stadium && (
