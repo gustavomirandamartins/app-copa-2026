@@ -130,6 +130,24 @@ body {
   min-height: 100vh;
 }
 
+/* Scrim escuro translúcido sobre o background (fifa-background.webp) para
+   manter o texto de tema escuro legível mesmo nas regiões claras da imagem.
+   Fica acima do background do <html> e atrás do conteúdo; o backdrop-filter
+   dos cards de vidro continua compondo contra ele. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(8, 6, 18, 0.58) 0%,
+    rgba(8, 6, 18, 0.42) 38%,
+    rgba(8, 6, 18, 0.52) 100%
+  );
+}
+
 /* .parallax-bg kept in DOM but invisible — JS still targets it to
    drive document.documentElement.style.backgroundPositionY */
 .parallax-bg {
