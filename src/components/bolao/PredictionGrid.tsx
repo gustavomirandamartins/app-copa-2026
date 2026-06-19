@@ -282,24 +282,26 @@ export function PredictionGrid({
                           <TeamCell teamId={match.awayTeamId} align="right" />
                         </div>
 
-                        {/* Encerrada: palpite + mensagem de pontuação.
-                            Ao vivo: apenas o aviso, sem frase de pontuação. */}
-                        {finished ? (
-                          <div className="bolao-card-feedback">
-                            {hasGuess && (
-                              <span className="bolao-card-guess">
-                                Palpite: {value!.home} × {value!.away}
-                              </span>
-                            )}
+                        {/* Palpite sempre visível depois que o jogo começa
+                            (ao vivo ou encerrado), junto do placar real.
+                            Encerrada: mensagem de pontuação.
+                            Ao vivo: aviso, sem frase de pontuação. */}
+                        <div className="bolao-card-feedback">
+                          {hasGuess && (
+                            <span className="bolao-card-guess">
+                              Palpite: {value!.home} × {value!.away}
+                            </span>
+                          )}
+                          {finished ? (
                             <p className={`bolao-feedback-msg ${points ? 'good' : hasGuess ? 'bad' : 'none'}`}>
                               {resultMessage(points, hasGuess, multiplier)}
                             </p>
-                          </div>
-                        ) : (
-                          <p className="bolao-live-notice">
-                            Esta partida já começou. Agora é preciso aguardar o apito final!
-                          </p>
-                        )}
+                          ) : (
+                            <p className="bolao-live-notice">
+                              Esta partida já começou. Agora é preciso aguardar o apito final!
+                            </p>
+                          )}
+                        </div>
                       </>
                     ) : (
                       <>

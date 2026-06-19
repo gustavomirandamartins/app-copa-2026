@@ -1,7 +1,7 @@
 'use client';
 
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { Search, Table2 } from 'lucide-react';
+import { Search, Table2, FileDown } from 'lucide-react';
 
 export interface MatrixUser {
   id: string;
@@ -60,6 +60,59 @@ export function AdminPredictionsMatrix({ users, columns, cells }: Props) {
     if (!q) return users;
     return users.filter((u) => u.name.toLowerCase().includes(q));
   }, [users, query]);
+
+  const [exporting, setExporting] = useState(false);
+
+  // Exporta a matriz completa (todos os usuários e TODAS as partidas,
+  // inclusive as não finalizadas) para .xlsx. O xlsx é carregado sob demanda.
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const XLSX = await import('xlsx');
+      const header = [
+        'Usuário',
+        'Bônus rodada',
+        'Ajuste',
+        'Indicação',
+        'Total',
+        ...columns.map((c) => {
+          const result =
+            c.finished && c.homeScore != null && c.awayScore != null
+              ? ` (${c.homeScore}-${c.awayScore})`
+              : '';
+          return `#${c.number} ${c.round} ${c.homeCode ?? ''}×${c.awayCode ?? ''}${result}`;
+        }),
+      ];
+
+      const body = users.map((u) => {
+        const row = cells[u.id] ?? {};
+        return [
+          u.isAdmin ? `${u.name} (admin)` : u.name,
+          u.bonus,
+          u.adjustment,
+          u.referral,
+          u.total,
+          ...columns.map((c) => {
+            const cell = row[c.matchId];
+            if (!cell) return '';
+            return c.finished ? `${cell.guess} (${cell.points} pts)` : cell.guess;
+          }),
+        ];
+      });
+
+      const ws = XLSX.utils.aoa_to_sheet([header, ...body]);
+      // Larguras: nome largo, colunas de jogo médias.
+      ws['!cols'] = [
+        { wch: 26 }, { wch: 11 }, { wch: 8 }, { wch: 9 }, { wch: 7 },
+        ...columns.map(() => ({ wch: 16 })),
+      ];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Palpites e pontos');
+      XLSX.writeFile(wb, `palpites-bolao-${new Date().toISOString().slice(0, 10)}.xlsx`);
+    } finally {
+      setExporting(false);
+    }
+  };
 
   // Sincroniza a altura de cada linha entre os dois painéis.
   useLayoutEffect(() => {
@@ -128,6 +181,15 @@ export function AdminPredictionsMatrix({ users, columns, cells }: Props) {
           />
           Só jogos finalizados ({columns.filter((c) => c.finished).length}/{columns.length})
         </label>
+        <button
+          type="button"
+          className="btn btn-secondary btn-sm"
+          onClick={handleExport}
+          disabled={exporting}
+          title="Exporta todos os palpites e pontos (todas as partidas) em .xlsx"
+        >
+          <FileDown size={15} /> {exporting ? 'Exportando…' : 'Exportar planilha'}
+        </button>
       </div>
 
       {visibleColumns.length === 0 ? (

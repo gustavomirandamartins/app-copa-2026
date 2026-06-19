@@ -57,7 +57,7 @@ export function RoundClassification({ rounds, defaultKey }: Props) {
 
       <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: 'var(--space-xs) 0 var(--space-md)' }}>
         {round.complete
-          ? `Rodada encerrada — os 5 primeiros levaram bônus (1º +50 · 2º +30 · 3º +20 · 4º +10 · 5º +5).`
+          ? `Rodada encerrada`
           : `Rodada em andamento${round.endLabel ? ` · encerra em ${round.endLabel}` : ''}.`}
       </p>
 
