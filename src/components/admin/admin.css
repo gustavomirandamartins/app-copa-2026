@@ -150,6 +150,8 @@
   margin-bottom: var(--space-md);
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.06);
+  /* Glassmorphism. O Lightning CSS adiciona o -webkit-. */
+  backdrop-filter: blur(16px) saturate(160%);
   border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.12));
   color: var(--text-secondary);
 }
@@ -346,7 +348,9 @@
   max-height: 70vh;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: var(--radius-md);
-  background: rgba(10, 8, 25, 0.50);
+  background: rgba(10, 8, 25, 0.42);
+  /* Glassmorphism. O Lightning CSS adiciona o -webkit-. */
+  backdrop-filter: blur(20px) saturate(160%);
   overflow: hidden;
   --text-primary:   #ffffff;
   --text-secondary: rgba(255, 255, 255, 0.75);
@@ -407,7 +411,7 @@
 
 .pm-left .pm-table td,
 .pm-right .pm-table td {
-  background: rgba(14, 11, 32, 0.70);
+  background: rgba(14, 11, 32, 0.45);
 }
 
 .pm-col-user  { width: 160px; min-width: 160px; text-align: left; }
