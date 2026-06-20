@@ -17,7 +17,9 @@
   min-width: 0;
   padding: 10px 36px 10px 14px;
   border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.06);
+  /* Glassmorphism na caixa de seleção. O Lightning CSS adiciona o -webkit-. */
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(18px) saturate(160%);
   border: 1px solid var(--glass-border);
   color: var(--text-primary);
   font-size: 0.9rem;
@@ -71,6 +73,14 @@
   flex-direction: column;
   gap: 10px;
   padding: var(--space-md);
+  /* Glassmorphism explícito: véu claro frosted sobre o vidro escuro, para
+     o efeito ler bem mesmo sobre o scrim escuro do background (onde o blur
+     do vidro sozinho ficava achatado). O Lightning CSS adiciona o -webkit-. */
+  background:
+    linear-gradient(155deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.03) 60%),
+    var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10), var(--shadow-lg);
   transition: opacity 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease;
 }
 
@@ -119,10 +129,13 @@
 /* Boost vence o glow branco quando ambos se aplicam */
 .bolao-card.boosted.upcoming { animation: bolao-glow-gold 2.8s ease-in-out infinite; }
 
-.bolao-card.finished { opacity: 0.92; }
+.bolao-card.finished { opacity: 1; }
 .bolao-card.live {
   border: 1px solid rgba(0, 151, 57, 0.55);
-  box-shadow: 0 0 0 1px rgba(0,151,57,0.20), 0 0 22px rgba(0,151,57,0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.10),
+    0 0 0 1px rgba(0, 151, 57, 0.20),
+    0 0 22px rgba(0, 151, 57, 0.22);
 }
 
 /* ── Tags ──────────────────────────────────────────────────── */

@@ -342,7 +342,9 @@ details.champion-card[open] .champion-chevron {
   flex-shrink: 0;
   padding: 9px 36px 9px 14px;
   border-radius: var(--radius-md);
-  background-color: rgba(255, 255, 255, 0.06);
+  /* Glassmorphism na caixa de seleção. O Lightning CSS adiciona o -webkit-. */
+  background-color: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(18px) saturate(160%);
   border: 1px solid var(--glass-border);
   color: #ffffff;
   font-size: 0.85rem;
