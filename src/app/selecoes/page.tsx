@@ -82,7 +82,6 @@ export default function SelecoesPage() {
                   borderLeft: `3px solid ${team.primaryColor}`,
                   height: '100%',
                   animationDelay: `${Math.min(i * 0.03, 0.5)}s`,
-                  opacity: 0,
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 'var(--space-sm)' }}>

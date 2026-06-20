@@ -101,17 +101,28 @@
     linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.02) 60%),
     var(--glass-bg);
   backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+  /* Glow base estático. O PULSO fica num ::after — uma `animation` no
+     próprio elemento de vidro mata o backdrop-filter neste Chrome
+     (composita a camada e o blur passa a amostrar um backdrop vazio).
+     Ver [[transform-breaks-backdrop-filter]] (mesma classe de pitfall). */
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    0 0 0 1px rgba(255, 255, 255, 0.9),
-    0 0 26px rgba(255, 255, 255, 0.95),
     0 8px 28px rgba(0, 0, 0, 0.30);
+}
+
+/* Pulso do glow num pseudo-elemento, sem animar o card (preserva o vidro). */
+.bolao-card.upcoming::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
   animation: bolao-glow-white 2.6s ease-in-out infinite;
 }
 
 @keyframes bolao-glow-white {
-  0%, 100% { box-shadow: 0 0 0 1px rgba(255,255,255,0.9), 0 0 22px rgba(255,255,255,0.75), 0 8px 28px rgba(0,0,0,0.10); }
-  50%      { box-shadow: 0 0 0 1px rgba(255,255,255,1),   0 0 36px rgba(255,255,255,1),    0 8px 30px rgba(0,0,0,0.12); }
+  0%, 100% { box-shadow: 0 0 0 1px rgba(255,255,255,0.9), 0 0 22px rgba(255,255,255,0.75); }
+  50%      { box-shadow: 0 0 0 1px rgba(255,255,255,1),   0 0 36px rgba(255,255,255,1);    }
 }
 
 /* Pontos em dobro/triplo — card dourado + glow dourado */
@@ -123,21 +134,30 @@
     linear-gradient(155deg, rgba(224, 124, 0, 0.26), rgba(255, 215, 130, 0.16) 55%, rgba(255, 255, 255, 0.04)),
     var(--glass-bg);
   backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+  /* Glow base estático; o PULSO vai no ::after (animar o card mata o
+     backdrop-filter neste Chrome). Ver nota em .bolao-card.upcoming. */
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    0 0 0 1px rgba(224, 124, 0, 0.45),
-    0 0 26px rgba(224, 124, 0, 0.35),
     0 8px 28px rgba(224, 124, 0, 0.18);
+}
+
+/* Pulso do glow dourado num pseudo-elemento, preservando o vidro do card. */
+.bolao-card.boosted::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
   animation: bolao-glow-gold 2.8s ease-in-out infinite;
 }
 
 @keyframes bolao-glow-gold {
-  0%, 100% { box-shadow: 0 0 0 1px rgba(224,124,0,0.45), 0 0 22px rgba(224,124,0,0.30), 0 8px 28px rgba(224,124,0,0.16); }
-  50%      { box-shadow: 0 0 0 1px rgba(224,124,0,0.65), 0 0 38px rgba(224,124,0,0.48), 0 8px 30px rgba(224,124,0,0.22); }
+  0%, 100% { box-shadow: 0 0 0 1px rgba(224,124,0,0.45), 0 0 22px rgba(224,124,0,0.30); }
+  50%      { box-shadow: 0 0 0 1px rgba(224,124,0,0.65), 0 0 38px rgba(224,124,0,0.48); }
 }
 
-/* Boost vence o glow branco quando ambos se aplicam */
-.bolao-card.boosted.upcoming { animation: bolao-glow-gold 2.8s ease-in-out infinite; }
+/* Boost vence o glow branco quando ambos se aplicam: usa só o ::after dourado */
+.bolao-card.boosted.upcoming::after { animation: bolao-glow-gold 2.8s ease-in-out infinite; }
 
 .bolao-card.finished { opacity: 1; }
 .bolao-card.live {

@@ -144,7 +144,7 @@ export default async function GruposPage() {
             <div
               key={groupId}
               className="glass-card-static animate-slide-up"
-              style={{ padding: 0, overflow: 'hidden', animationDelay: `${gi * 0.04}s`, opacity: 0 }}
+              style={{ padding: 0, overflow: 'hidden', animationDelay: `${gi * 0.04}s` }}
             >
               <div style={{
                 padding: 'var(--space-md) var(--space-lg)',
