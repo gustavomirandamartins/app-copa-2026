@@ -1108,6 +1108,16 @@ a:hover { color: var(--copa-green-deep); }
 /* ---- Mobile-specific ---- */
 @media (max-width: 767px) {
   .hide-mobile { display: none !important; }
+
+  /* Tabela de classificação dos grupos cabe na largura do celular: menos
+     colunas (GP/GC escondidas via .hide-mobile) + padding/fonte enxutos. */
+  .standings-table { font-size: 0.8rem; }
+  .standings-table th { padding: 7px 4px; font-size: 0.6rem; letter-spacing: 0.02em; }
+  .standings-table td { padding: 8px 4px; }
+  .standings-table th:first-child,
+  .standings-table td:first-child { padding-left: var(--space-sm); }
+  .standings-table .team-cell { gap: 6px; }
+  .standings-table .team-cell .pos { width: 14px; }
 }
 
 @media (min-width: 768px) {
