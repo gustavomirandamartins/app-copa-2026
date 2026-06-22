@@ -1109,15 +1109,21 @@ a:hover { color: var(--copa-green-deep); }
 @media (max-width: 767px) {
   .hide-mobile { display: none !important; }
 
-  /* Tabela de classificação dos grupos cabe na largura do celular: menos
-     colunas (GP/GC escondidas via .hide-mobile) + padding/fonte enxutos. */
-  .standings-table { font-size: 0.8rem; }
-  .standings-table th { padding: 7px 4px; font-size: 0.6rem; letter-spacing: 0.02em; }
-  .standings-table td { padding: 8px 4px; }
+  /* Tabela de classificação dos grupos no celular: mantém TODAS as 9 colunas.
+     As colunas de número encolhem ao conteúdo (width:1% + nowrap) e ficam
+     compactas à direita; a coluna da seleção absorve a sobra à esquerda.
+     Padding/fonte enxutos pra tudo caber na largura sem scroll. */
+  .standings-table { font-size: 0.78rem; }
+  .standings-table th { padding: 7px 5px; font-size: 0.62rem; letter-spacing: 0.01em; }
+  .standings-table td { padding: 8px 5px; }
+  .standings-table th:not(:first-child),
+  .standings-table td:not(:first-child) { width: 1%; white-space: nowrap; }
   .standings-table th:first-child,
-  .standings-table td:first-child { padding-left: var(--space-sm); }
+  .standings-table td:first-child { padding-left: var(--space-sm); padding-right: 4px; }
   .standings-table .team-cell { gap: 6px; }
   .standings-table .team-cell .pos { width: 14px; }
+  .standings-table .team-cell .name,
+  .standings-table .team-cell a { font-size: 0.82rem; }
 }
 
 @media (min-width: 768px) {

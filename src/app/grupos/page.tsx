@@ -171,8 +171,8 @@ export default async function GruposPage() {
                       <th>V</th>
                       <th>E</th>
                       <th>D</th>
-                      <th className="hide-mobile">GP</th>
-                      <th className="hide-mobile">GC</th>
+                      <th>GP</th>
+                      <th>GC</th>
                       <th>SG</th>
                     </tr>
                   </thead>
@@ -193,8 +193,8 @@ export default async function GruposPage() {
                         <td>{standing.won}</td>
                         <td>{standing.draw}</td>
                         <td>{standing.lost}</td>
-                        <td className="hide-mobile">{standing.goals_for}</td>
-                        <td className="hide-mobile">{standing.goals_against}</td>
+                        <td>{standing.goals_for}</td>
+                        <td>{standing.goals_against}</td>
                         <td>{standing.goal_difference}</td>
                       </tr>
                     ))}
