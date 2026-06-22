@@ -463,7 +463,13 @@ a:hover { color: var(--copa-green-deep); }
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  min-width: 200px;
+  /* Largura FIXA (não min-width): com min-width o nome longo "Bósnia e
+     Herzegovina" estourava a caixa e desalinhava o início da barra. Fixo +
+     flex-shrink:0 faz todas as barras começarem no mesmo x; overflow:hidden
+     impede que um nome muito comprido vaze sobre a barra. */
+  width: 212px;
+  flex-shrink: 0;
+  overflow: hidden;
 }
 
 .probability-bar-info .flag {
@@ -474,6 +480,8 @@ a:hover { color: var(--copa-green-deep); }
   font-size: 0.875rem;
   font-weight: 600;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   color: var(--text-primary);
 }
 
