@@ -161,6 +161,11 @@
 
 .bolao-card.finished { opacity: 1; }
 .bolao-card.live {
+  /* Jogo ao vivo é sempre `locked` (não dá pra editar), mas NÃO deve herdar
+     o `opacity: 0.48` do .locked — isso desbota o véu de vidro e deixa o
+     fundo nítido vazar (parece "sem glassmorphism"). Vem depois de .locked,
+     mesma especificidade, então o opacity:1 vence. Igual ao .finished. */
+  opacity: 1;
   border: 1px solid rgba(0, 151, 57, 0.55);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.10),
