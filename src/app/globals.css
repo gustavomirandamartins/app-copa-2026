@@ -118,13 +118,16 @@ html {
   overflow-x: clip;
 }
 
-/* Mobile: usa a arte vertical dedicada (melhor enquadramento em telas
-   estreitas). background-attachment: scroll evita travamentos do "fixed"
-   em alguns navegadores mobile. */
+/* Mobile: usa a arte vertical dedicada, esticada para preencher EXATAMENTE
+   a viewport (100% × 100%) — a imagem inteira fica sempre visível, sem corte,
+   encolhendo/esticando conforme a resolução da tela. `fixed` prende o
+   dimensionamento à viewport (não à altura total da página rolável). */
 @media (max-width: 767px) {
   html {
     background-image: url('https://sdyilmgixyynnmczsnhc.supabase.co/storage/v1/object/public/backgrounds/bg-worldcup-mobile.avif');
-    background-attachment: scroll;
+    background-size: 100% 100%;
+    background-attachment: fixed;
+    background-position: center center;
   }
 }
 
