@@ -143,7 +143,15 @@ function Countdown({ targetUTC }: { targetUTC: string }) {
   return <span className="bolao-countdown">Começa em {label}</span>;
 }
 
-function TeamCell({ teamId, align }: { teamId: string | null; align: 'left' | 'right' }) {
+function TeamCell({
+  teamId,
+  align,
+  placeholder,
+}: {
+  teamId: string | null;
+  align: 'left' | 'right';
+  placeholder?: string;
+}) {
   const team = teamId ? getTeamById(teamId) : undefined;
   return (
     <span className={`bolao-team ${align === 'right' ? 'is-right' : ''}`}>
@@ -153,7 +161,7 @@ function TeamCell({ teamId, align }: { teamId: string | null; align: 'left' | 'r
         ) : (
           <span className="bolao-flag">⏳</span>
         ))}
-      <span className="bolao-team-name">{team?.name ?? 'A definir'}</span>
+      <span className="bolao-team-name">{team?.name ?? placeholder ?? 'A definir'}</span>
       {align === 'right' &&
         (team ? (
           <TeamFlag name={team.name} flagEmoji={team.flag} size={24} style={{ borderRadius: 3 }} />
@@ -273,13 +281,13 @@ export function PredictionGrid({
                     {(finished || live) ? (
                       <>
                         <div className="bolao-card-match">
-                          <TeamCell teamId={match.homeTeamId} align="left" />
+                          <TeamCell teamId={match.homeTeamId} align="left" placeholder={match.homeTeamPlaceholder} />
                           <div className="bolao-realscores">
                             <span className="bolao-realscore">{result?.homeScore ?? 0}</span>
                             <span className="bolao-x">×</span>
                             <span className="bolao-realscore">{result?.awayScore ?? 0}</span>
                           </div>
-                          <TeamCell teamId={match.awayTeamId} align="right" />
+                          <TeamCell teamId={match.awayTeamId} align="right" placeholder={match.awayTeamPlaceholder} />
                         </div>
 
                         {/* Palpite sempre visível depois que o jogo começa
@@ -307,7 +315,7 @@ export function PredictionGrid({
                       <>
                         {/* Confronto editável (agendado) */}
                         <div className="bolao-card-match">
-                          <TeamCell teamId={match.homeTeamId} align="left" />
+                          <TeamCell teamId={match.homeTeamId} align="left" placeholder={match.homeTeamPlaceholder} />
                           <div className="bolao-scores">
                             <input
                               type="number"
@@ -345,7 +353,7 @@ export function PredictionGrid({
                               }
                             />
                           </div>
-                          <TeamCell teamId={match.awayTeamId} align="right" />
+                          <TeamCell teamId={match.awayTeamId} align="right" placeholder={match.awayTeamPlaceholder} />
                         </div>
 
                         {/* Status: contagem regressiva ou horário */}

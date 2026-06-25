@@ -93,56 +93,58 @@ export const matches: Match[] = [
   { id: 'gs-072', stage: 'group', group: 'J', matchday: 3, homeTeamId: 'jor', awayTeamId: 'arg', homeGoals: null, awayGoals: null, dateUTC: '2026-06-28T02:00:00Z', stadiumId: 'att', status: 'scheduled', matchNumber: 72 },
 
   // ─────────────────────────────────────────────────────────────
-  // 16-AVOS DE FINAL — Round of 32 (28 jun – 3 jul) — times a definir
+  // 16-AVOS DE FINAL — Round of 32 (28 jun – 3 jul)
+  // Vagas conforme a tabela oficial FIFA; preenchemos homeTeamId/awayTeamId
+  // conforme as seleções forem confirmadas. Até lá, exibe o placeholder.
   // ─────────────────────────────────────────────────────────────
-  { id: 'ko-073', stage: 'round-of-32', homeTeamId: null, awayTeamId: null, homeGoals: null, awayGoals: null, dateUTC: '2026-06-28T19:00:00Z', stadiumId: 'sofi', status: 'scheduled', matchNumber: 73 },
-  { id: 'ko-074', stage: 'round-of-32', homeTeamId: null, awayTeamId: null, homeGoals: null, awayGoals: null, dateUTC: '2026-06-29T17:00:00Z', stadiumId: 'nrg', status: 'scheduled', matchNumber: 74 },
-  { id: 'ko-075', stage: 'round-of-32', homeTeamId: null, awayTeamId: null, homeGoals: null, awayGoals: null, dateUTC: '2026-06-29T20:30:00Z', stadiumId: 'gillette', status: 'scheduled', matchNumber: 75 },
-  { id: 'ko-076', stage: 'round-of-32', homeTeamId: null, awayTeamId: null, homeGoals: null, awayGoals: null, dateUTC: '2026-06-30T01:00:00Z', stadiumId: 'bbva', status: 'scheduled', matchNumber: 76 },
-  { id: 'ko-077', stage: 'round-of-32', homeTeamId: null, awayTeamId: null, homeGoals: null, awayGoals: null, dateUTC: '2026-06-30T17:00:00Z', stadiumId: 'att', status: 'scheduled', matchNumber: 77 },
-  { id: 'ko-078', stage: 'round-of-32', homeTeamId: null, awayTeamId: null, homeGoals: null, awayGoals: null, dateUTC: '2026-06-30T21:00:00Z', stadiumId: 'metlife', status: 'scheduled', matchNumber: 78 },
-  { id: 'ko-079', stage: 'round-of-32', homeTeamId: null, awayTeamId: null, homeGoals: null, awayGoals: null, dateUTC: '2026-07-01T01:00:00Z', stadiumId: 'azteca', status: 'scheduled', matchNumber: 79 },
-  { id: 'ko-080', stage: 'round-of-32', homeTeamId: null, awayTeamId: null, homeGoals: null, awayGoals: null, dateUTC: '2026-07-01T16:00:00Z', stadiumId: 'mercedes-benz', status: 'scheduled', matchNumber: 80 },
-  { id: 'ko-081', stage: 'round-of-32', homeTeamId: null, awayTeamId: null, homeGoals: null, awayGoals: null, dateUTC: '2026-07-01T20:00:00Z', stadiumId: 'lumen', status: 'scheduled', matchNumber: 81 },
-  { id: 'ko-082', stage: 'round-of-32', homeTeamId: null, awayTeamId: null, homeGoals: null, awayGoals: null, dateUTC: '2026-07-02T00:00:00Z', stadiumId: 'levis', status: 'scheduled', matchNumber: 82 },
-  { id: 'ko-083', stage: 'round-of-32', homeTeamId: null, awayTeamId: null, homeGoals: null, awayGoals: null, dateUTC: '2026-07-02T19:00:00Z', stadiumId: 'sofi', status: 'scheduled', matchNumber: 83 },
-  { id: 'ko-084', stage: 'round-of-32', homeTeamId: null, awayTeamId: null, homeGoals: null, awayGoals: null, dateUTC: '2026-07-02T23:00:00Z', stadiumId: 'bmo-field', status: 'scheduled', matchNumber: 84 },
-  { id: 'ko-085', stage: 'round-of-32', homeTeamId: null, awayTeamId: null, homeGoals: null, awayGoals: null, dateUTC: '2026-07-03T03:00:00Z', stadiumId: 'bc-place', status: 'scheduled', matchNumber: 85 },
-  { id: 'ko-086', stage: 'round-of-32', homeTeamId: null, awayTeamId: null, homeGoals: null, awayGoals: null, dateUTC: '2026-07-03T18:00:00Z', stadiumId: 'att', status: 'scheduled', matchNumber: 86 },
-  { id: 'ko-087', stage: 'round-of-32', homeTeamId: null, awayTeamId: null, homeGoals: null, awayGoals: null, dateUTC: '2026-07-03T22:00:00Z', stadiumId: 'hard-rock', status: 'scheduled', matchNumber: 87 },
-  { id: 'ko-088', stage: 'round-of-32', homeTeamId: null, awayTeamId: null, homeGoals: null, awayGoals: null, dateUTC: '2026-07-04T01:30:00Z', stadiumId: 'arrowhead', status: 'scheduled', matchNumber: 88 },
+  { id: 'ko-073', stage: 'round-of-32', homeTeamId: null, awayTeamId: null, homeTeamPlaceholder: '2º do Grupo A', awayTeamPlaceholder: '2º do Grupo B', homeGoals: null, awayGoals: null, dateUTC: '2026-06-28T19:00:00Z', stadiumId: 'sofi', status: 'scheduled', matchNumber: 73 },
+  { id: 'ko-074', stage: 'round-of-32', homeTeamId: null, awayTeamId: null, homeTeamPlaceholder: '1º do Grupo E', awayTeamPlaceholder: 'Melhor 3º de A, B, C, D, F', homeGoals: null, awayGoals: null, dateUTC: '2026-06-29T17:00:00Z', stadiumId: 'nrg', status: 'scheduled', matchNumber: 74 },
+  { id: 'ko-075', stage: 'round-of-32', homeTeamId: null, awayTeamId: null, homeTeamPlaceholder: '1º do Grupo F', awayTeamPlaceholder: '2º do Grupo C', homeGoals: null, awayGoals: null, dateUTC: '2026-06-29T20:30:00Z', stadiumId: 'gillette', status: 'scheduled', matchNumber: 75 },
+  { id: 'ko-076', stage: 'round-of-32', homeTeamId: null, awayTeamId: null, homeTeamPlaceholder: '1º do Grupo C', awayTeamPlaceholder: '2º do Grupo F', homeGoals: null, awayGoals: null, dateUTC: '2026-06-30T01:00:00Z', stadiumId: 'bbva', status: 'scheduled', matchNumber: 76 },
+  { id: 'ko-077', stage: 'round-of-32', homeTeamId: null, awayTeamId: null, homeTeamPlaceholder: '1º do Grupo I', awayTeamPlaceholder: 'Melhor 3º de C, D, F, G, H', homeGoals: null, awayGoals: null, dateUTC: '2026-06-30T17:00:00Z', stadiumId: 'att', status: 'scheduled', matchNumber: 77 },
+  { id: 'ko-078', stage: 'round-of-32', homeTeamId: null, awayTeamId: null, homeTeamPlaceholder: '2º do Grupo E', awayTeamPlaceholder: '2º do Grupo I', homeGoals: null, awayGoals: null, dateUTC: '2026-06-30T21:00:00Z', stadiumId: 'metlife', status: 'scheduled', matchNumber: 78 },
+  { id: 'ko-079', stage: 'round-of-32', homeTeamId: null, awayTeamId: null, homeTeamPlaceholder: '1º do Grupo A', awayTeamPlaceholder: 'Melhor 3º de C, E, F, H, I', homeGoals: null, awayGoals: null, dateUTC: '2026-07-01T01:00:00Z', stadiumId: 'azteca', status: 'scheduled', matchNumber: 79 },
+  { id: 'ko-080', stage: 'round-of-32', homeTeamId: null, awayTeamId: null, homeTeamPlaceholder: '1º do Grupo L', awayTeamPlaceholder: 'Melhor 3º de E, H, I, J, K', homeGoals: null, awayGoals: null, dateUTC: '2026-07-01T16:00:00Z', stadiumId: 'mercedes-benz', status: 'scheduled', matchNumber: 80 },
+  { id: 'ko-081', stage: 'round-of-32', homeTeamId: null, awayTeamId: null, homeTeamPlaceholder: '1º do Grupo D', awayTeamPlaceholder: 'Melhor 3º de B, E, F, I, J', homeGoals: null, awayGoals: null, dateUTC: '2026-07-01T20:00:00Z', stadiumId: 'lumen', status: 'scheduled', matchNumber: 81 },
+  { id: 'ko-082', stage: 'round-of-32', homeTeamId: null, awayTeamId: null, homeTeamPlaceholder: '1º do Grupo G', awayTeamPlaceholder: 'Melhor 3º de A, E, H, I, J', homeGoals: null, awayGoals: null, dateUTC: '2026-07-02T00:00:00Z', stadiumId: 'levis', status: 'scheduled', matchNumber: 82 },
+  { id: 'ko-083', stage: 'round-of-32', homeTeamId: null, awayTeamId: null, homeTeamPlaceholder: '2º do Grupo K', awayTeamPlaceholder: '2º do Grupo L', homeGoals: null, awayGoals: null, dateUTC: '2026-07-02T19:00:00Z', stadiumId: 'sofi', status: 'scheduled', matchNumber: 83 },
+  { id: 'ko-084', stage: 'round-of-32', homeTeamId: null, awayTeamId: null, homeTeamPlaceholder: '1º do Grupo H', awayTeamPlaceholder: '2º do Grupo J', homeGoals: null, awayGoals: null, dateUTC: '2026-07-02T23:00:00Z', stadiumId: 'bmo-field', status: 'scheduled', matchNumber: 84 },
+  { id: 'ko-085', stage: 'round-of-32', homeTeamId: null, awayTeamId: null, homeTeamPlaceholder: '1º do Grupo B', awayTeamPlaceholder: 'Melhor 3º de E, F, G, I, J', homeGoals: null, awayGoals: null, dateUTC: '2026-07-03T03:00:00Z', stadiumId: 'bc-place', status: 'scheduled', matchNumber: 85 },
+  { id: 'ko-086', stage: 'round-of-32', homeTeamId: null, awayTeamId: null, homeTeamPlaceholder: '1º do Grupo J', awayTeamPlaceholder: '2º do Grupo H', homeGoals: null, awayGoals: null, dateUTC: '2026-07-03T18:00:00Z', stadiumId: 'att', status: 'scheduled', matchNumber: 86 },
+  { id: 'ko-087', stage: 'round-of-32', homeTeamId: null, awayTeamId: null, homeTeamPlaceholder: '1º do Grupo K', awayTeamPlaceholder: 'Melhor 3º de D, E, I, J, L', homeGoals: null, awayGoals: null, dateUTC: '2026-07-03T22:00:00Z', stadiumId: 'hard-rock', status: 'scheduled', matchNumber: 87 },
+  { id: 'ko-088', stage: 'round-of-32', homeTeamId: null, awayTeamId: null, homeTeamPlaceholder: '2º do Grupo D', awayTeamPlaceholder: '2º do Grupo G', homeGoals: null, awayGoals: null, dateUTC: '2026-07-04T01:30:00Z', stadiumId: 'arrowhead', status: 'scheduled', matchNumber: 88 },
 
   // ─────────────────────────────────────────────────────────────
   // OITAVAS DE FINAL — Round of 16 (4–7 jul)
   // ─────────────────────────────────────────────────────────────
-  { id: 'ko-089', stage: 'round-of-16', homeTeamId: null, awayTeamId: null, homeGoals: null, awayGoals: null, dateUTC: '2026-07-04T17:00:00Z', stadiumId: 'nrg', status: 'scheduled', matchNumber: 89 },
-  { id: 'ko-090', stage: 'round-of-16', homeTeamId: null, awayTeamId: null, homeGoals: null, awayGoals: null, dateUTC: '2026-07-04T21:00:00Z', stadiumId: 'lincoln-financial', status: 'scheduled', matchNumber: 90 },
-  { id: 'ko-091', stage: 'round-of-16', homeTeamId: null, awayTeamId: null, homeGoals: null, awayGoals: null, dateUTC: '2026-07-05T20:00:00Z', stadiumId: 'metlife', status: 'scheduled', matchNumber: 91 },
-  { id: 'ko-092', stage: 'round-of-16', homeTeamId: null, awayTeamId: null, homeGoals: null, awayGoals: null, dateUTC: '2026-07-06T00:00:00Z', stadiumId: 'azteca', status: 'scheduled', matchNumber: 92 },
-  { id: 'ko-093', stage: 'round-of-16', homeTeamId: null, awayTeamId: null, homeGoals: null, awayGoals: null, dateUTC: '2026-07-06T19:00:00Z', stadiumId: 'att', status: 'scheduled', matchNumber: 93 },
-  { id: 'ko-094', stage: 'round-of-16', homeTeamId: null, awayTeamId: null, homeGoals: null, awayGoals: null, dateUTC: '2026-07-07T00:00:00Z', stadiumId: 'lumen', status: 'scheduled', matchNumber: 94 },
-  { id: 'ko-095', stage: 'round-of-16', homeTeamId: null, awayTeamId: null, homeGoals: null, awayGoals: null, dateUTC: '2026-07-07T16:00:00Z', stadiumId: 'mercedes-benz', status: 'scheduled', matchNumber: 95 },
-  { id: 'ko-096', stage: 'round-of-16', homeTeamId: null, awayTeamId: null, homeGoals: null, awayGoals: null, dateUTC: '2026-07-07T20:00:00Z', stadiumId: 'bc-place', status: 'scheduled', matchNumber: 96 },
+  { id: 'ko-089', stage: 'round-of-16', homeTeamId: null, awayTeamId: null, homeTeamPlaceholder: 'Vencedor do Jogo 74', awayTeamPlaceholder: 'Vencedor do Jogo 77', homeGoals: null, awayGoals: null, dateUTC: '2026-07-04T17:00:00Z', stadiumId: 'nrg', status: 'scheduled', matchNumber: 89 },
+  { id: 'ko-090', stage: 'round-of-16', homeTeamId: null, awayTeamId: null, homeTeamPlaceholder: 'Vencedor do Jogo 73', awayTeamPlaceholder: 'Vencedor do Jogo 75', homeGoals: null, awayGoals: null, dateUTC: '2026-07-04T21:00:00Z', stadiumId: 'lincoln-financial', status: 'scheduled', matchNumber: 90 },
+  { id: 'ko-091', stage: 'round-of-16', homeTeamId: null, awayTeamId: null, homeTeamPlaceholder: 'Vencedor do Jogo 76', awayTeamPlaceholder: 'Vencedor do Jogo 78', homeGoals: null, awayGoals: null, dateUTC: '2026-07-05T20:00:00Z', stadiumId: 'metlife', status: 'scheduled', matchNumber: 91 },
+  { id: 'ko-092', stage: 'round-of-16', homeTeamId: null, awayTeamId: null, homeTeamPlaceholder: 'Vencedor do Jogo 79', awayTeamPlaceholder: 'Vencedor do Jogo 80', homeGoals: null, awayGoals: null, dateUTC: '2026-07-06T00:00:00Z', stadiumId: 'azteca', status: 'scheduled', matchNumber: 92 },
+  { id: 'ko-093', stage: 'round-of-16', homeTeamId: null, awayTeamId: null, homeTeamPlaceholder: 'Vencedor do Jogo 83', awayTeamPlaceholder: 'Vencedor do Jogo 84', homeGoals: null, awayGoals: null, dateUTC: '2026-07-06T19:00:00Z', stadiumId: 'att', status: 'scheduled', matchNumber: 93 },
+  { id: 'ko-094', stage: 'round-of-16', homeTeamId: null, awayTeamId: null, homeTeamPlaceholder: 'Vencedor do Jogo 81', awayTeamPlaceholder: 'Vencedor do Jogo 82', homeGoals: null, awayGoals: null, dateUTC: '2026-07-07T00:00:00Z', stadiumId: 'lumen', status: 'scheduled', matchNumber: 94 },
+  { id: 'ko-095', stage: 'round-of-16', homeTeamId: null, awayTeamId: null, homeTeamPlaceholder: 'Vencedor do Jogo 86', awayTeamPlaceholder: 'Vencedor do Jogo 88', homeGoals: null, awayGoals: null, dateUTC: '2026-07-07T16:00:00Z', stadiumId: 'mercedes-benz', status: 'scheduled', matchNumber: 95 },
+  { id: 'ko-096', stage: 'round-of-16', homeTeamId: null, awayTeamId: null, homeTeamPlaceholder: 'Vencedor do Jogo 85', awayTeamPlaceholder: 'Vencedor do Jogo 87', homeGoals: null, awayGoals: null, dateUTC: '2026-07-07T20:00:00Z', stadiumId: 'bc-place', status: 'scheduled', matchNumber: 96 },
 
   // ─────────────────────────────────────────────────────────────
   // QUARTAS DE FINAL (9–11 jul)
   // ─────────────────────────────────────────────────────────────
-  { id: 'ko-097', stage: 'quarter-final', homeTeamId: null, awayTeamId: null, homeGoals: null, awayGoals: null, dateUTC: '2026-07-09T20:00:00Z', stadiumId: 'gillette', status: 'scheduled', matchNumber: 97 },
-  { id: 'ko-098', stage: 'quarter-final', homeTeamId: null, awayTeamId: null, homeGoals: null, awayGoals: null, dateUTC: '2026-07-10T19:00:00Z', stadiumId: 'sofi', status: 'scheduled', matchNumber: 98 },
-  { id: 'ko-099', stage: 'quarter-final', homeTeamId: null, awayTeamId: null, homeGoals: null, awayGoals: null, dateUTC: '2026-07-11T21:00:00Z', stadiumId: 'hard-rock', status: 'scheduled', matchNumber: 99 },
-  { id: 'ko-100', stage: 'quarter-final', homeTeamId: null, awayTeamId: null, homeGoals: null, awayGoals: null, dateUTC: '2026-07-12T01:00:00Z', stadiumId: 'arrowhead', status: 'scheduled', matchNumber: 100 },
+  { id: 'ko-097', stage: 'quarter-final', homeTeamId: null, awayTeamId: null, homeTeamPlaceholder: 'Vencedor do Jogo 89', awayTeamPlaceholder: 'Vencedor do Jogo 90', homeGoals: null, awayGoals: null, dateUTC: '2026-07-09T20:00:00Z', stadiumId: 'gillette', status: 'scheduled', matchNumber: 97 },
+  { id: 'ko-098', stage: 'quarter-final', homeTeamId: null, awayTeamId: null, homeTeamPlaceholder: 'Vencedor do Jogo 93', awayTeamPlaceholder: 'Vencedor do Jogo 94', homeGoals: null, awayGoals: null, dateUTC: '2026-07-10T19:00:00Z', stadiumId: 'sofi', status: 'scheduled', matchNumber: 98 },
+  { id: 'ko-099', stage: 'quarter-final', homeTeamId: null, awayTeamId: null, homeTeamPlaceholder: 'Vencedor do Jogo 91', awayTeamPlaceholder: 'Vencedor do Jogo 92', homeGoals: null, awayGoals: null, dateUTC: '2026-07-11T21:00:00Z', stadiumId: 'hard-rock', status: 'scheduled', matchNumber: 99 },
+  { id: 'ko-100', stage: 'quarter-final', homeTeamId: null, awayTeamId: null, homeTeamPlaceholder: 'Vencedor do Jogo 95', awayTeamPlaceholder: 'Vencedor do Jogo 96', homeGoals: null, awayGoals: null, dateUTC: '2026-07-12T01:00:00Z', stadiumId: 'arrowhead', status: 'scheduled', matchNumber: 100 },
 
   // ─────────────────────────────────────────────────────────────
   // SEMIFINAIS (14–15 jul)
   // ─────────────────────────────────────────────────────────────
-  { id: 'ko-101', stage: 'semi-final', homeTeamId: null, awayTeamId: null, homeGoals: null, awayGoals: null, dateUTC: '2026-07-14T19:00:00Z', stadiumId: 'att', status: 'scheduled', matchNumber: 101 },
-  { id: 'ko-102', stage: 'semi-final', homeTeamId: null, awayTeamId: null, homeGoals: null, awayGoals: null, dateUTC: '2026-07-15T19:00:00Z', stadiumId: 'mercedes-benz', status: 'scheduled', matchNumber: 102 },
+  { id: 'ko-101', stage: 'semi-final', homeTeamId: null, awayTeamId: null, homeTeamPlaceholder: 'Vencedor do Jogo 97', awayTeamPlaceholder: 'Vencedor do Jogo 98', homeGoals: null, awayGoals: null, dateUTC: '2026-07-14T19:00:00Z', stadiumId: 'att', status: 'scheduled', matchNumber: 101 },
+  { id: 'ko-102', stage: 'semi-final', homeTeamId: null, awayTeamId: null, homeTeamPlaceholder: 'Vencedor do Jogo 99', awayTeamPlaceholder: 'Vencedor do Jogo 100', homeGoals: null, awayGoals: null, dateUTC: '2026-07-15T19:00:00Z', stadiumId: 'mercedes-benz', status: 'scheduled', matchNumber: 102 },
 
   // ─────────────────────────────────────────────────────────────
   // DISPUTA DE 3º LUGAR (18 jul) e FINAL (19 jul)
   // ─────────────────────────────────────────────────────────────
-  { id: 'ko-103', stage: 'third-place', homeTeamId: null, awayTeamId: null, homeGoals: null, awayGoals: null, dateUTC: '2026-07-18T21:00:00Z', stadiumId: 'hard-rock', status: 'scheduled', matchNumber: 103 },
-  { id: 'ko-104', stage: 'final', homeTeamId: null, awayTeamId: null, homeGoals: null, awayGoals: null, dateUTC: '2026-07-19T19:00:00Z', stadiumId: 'metlife', status: 'scheduled', matchNumber: 104 },
+  { id: 'ko-103', stage: 'third-place', homeTeamId: null, awayTeamId: null, homeTeamPlaceholder: 'Perdedor do Jogo 101', awayTeamPlaceholder: 'Perdedor do Jogo 102', homeGoals: null, awayGoals: null, dateUTC: '2026-07-18T21:00:00Z', stadiumId: 'hard-rock', status: 'scheduled', matchNumber: 103 },
+  { id: 'ko-104', stage: 'final', homeTeamId: null, awayTeamId: null, homeTeamPlaceholder: 'Vencedor do Jogo 101', awayTeamPlaceholder: 'Vencedor do Jogo 102', homeGoals: null, awayGoals: null, dateUTC: '2026-07-19T19:00:00Z', stadiumId: 'metlife', status: 'scheduled', matchNumber: 104 },
 ];
 
 // ═══════════════════════════════════════════════════════════════
