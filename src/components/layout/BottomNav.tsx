@@ -24,7 +24,7 @@ export function BottomNav() {
         const Icon = tab.icon;
         return (
           <Link key={tab.href} href={tab.href} className={`fnav-item ${active ? 'active' : ''}`}>
-            <Icon size={20} strokeWidth={active ? 2.6 : 2} />
+            <Icon size={24} strokeWidth={active ? 2.6 : 2} />
             <span className="fnav-label">{tab.label}</span>
           </Link>
         );
