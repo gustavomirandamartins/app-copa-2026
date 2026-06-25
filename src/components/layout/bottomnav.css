@@ -2,14 +2,13 @@
    Item ativo expande mostrando o rótulo, no estilo do nav flutuante. */
 .floating-nav {
   position: fixed;
-  bottom: calc(env(safe-area-inset-bottom) + 12px);
+  bottom: calc(env(safe-area-inset-bottom) + 10px);
   left: var(--space-md);
   right: var(--space-md);
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 2px;
-  padding: 7px 10px;
+  padding: 7px 8px;
   border-radius: 999px;
   background: rgba(12, 10, 24, 0.72);
   backdrop-filter: blur(28px) saturate(180%);
@@ -21,10 +20,16 @@
 
 .fnav-item {
   position: relative;
+  /* Inativos dividem o espaço igualmente (centralizando o ícone); o item
+     ativo (com rótulo) usa só a largura necessária. Assim nada estoura a
+     largura da pílula, mesmo com o rótulo mais longo ("Classificação"). */
+  flex: 1 1 0;
+  min-width: 0;
   display: flex;
   align-items: center;
-  gap: 7px;
-  padding: 11px;
+  justify-content: center;
+  gap: 6px;
+  padding: 11px 2px;
   border: none;
   background: transparent;
   border-radius: 999px;
@@ -32,7 +37,6 @@
   cursor: pointer;
   text-decoration: none;
   font-family: inherit;
-  flex-shrink: 0;
   transition: background 0.2s ease, color 0.2s ease, padding 0.2s ease;
   -webkit-tap-highlight-color: transparent;
 }
@@ -42,16 +46,19 @@
 }
 
 .fnav-item.active {
+  flex: 0 1 auto;
   background: rgba(255, 255, 255, 0.16);
   color: #fff;
-  padding: 11px 15px;
+  padding: 11px 14px;
 }
 
 .fnav-label {
   display: none;
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   font-weight: 700;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   letter-spacing: 0.01em;
 }
 

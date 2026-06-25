@@ -556,12 +556,13 @@
     grid-template-columns: 1fr;
   }
 
-  /* Botão "Salvar palpites" flutuante e sempre acessível no mobile. */
+  /* Botão "Salvar palpites" flutuante, acima do footer (considera a
+     safe-area + a altura do footer flutuante) para não ficar escondido. */
   .bolao-savebar {
     position: fixed;
     left: var(--space-md);
     right: var(--space-md);
-    bottom: calc(var(--bottom-nav-height, 64px) + var(--space-md));
+    bottom: calc(env(safe-area-inset-bottom) + 84px);
     justify-content: center;
     flex-wrap: wrap;
     margin-top: 0;
@@ -580,9 +581,9 @@
     text-align: center;
   }
 
-  /* Espaço para o FAB não cobrir os últimos cards. */
+  /* Espaço para o FAB + footer flutuante não cobrirem os últimos cards. */
   .bolao-days {
-    padding-bottom: 84px;
+    padding-bottom: 160px;
   }
 }
 
