@@ -118,14 +118,13 @@ html {
   overflow-x: clip;
 }
 
-/* Mobile: usa a arte vertical dedicada, esticada para preencher EXATAMENTE
-   a viewport (100% × 100%) — a imagem inteira fica sempre visível, sem corte,
-   encolhendo/esticando conforme a resolução da tela. `fixed` prende o
-   dimensionamento à viewport (não à altura total da página rolável). */
+/* Mobile: usa a arte vertical dedicada. `cover` mantém a proporção correta
+   preenchendo toda a viewport (corta só em uma dimensão, nunca distorce) e
+   `fixed` deixa o fundo estático enquanto a página rola. */
 @media (max-width: 767px) {
   html {
     background-image: url('https://sdyilmgixyynnmczsnhc.supabase.co/storage/v1/object/public/backgrounds/bg-worldcup-mobile.avif');
-    background-size: 100% 100%;
+    background-size: cover;
     background-attachment: fixed;
     background-position: center center;
   }
