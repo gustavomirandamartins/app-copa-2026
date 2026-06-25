@@ -11,12 +11,12 @@ import { logout } from '@/app/login/actions';
 
 const navLinks = [
   { href: '/', label: 'Início' },
+  { href: '/bolao', label: 'Bolão' },
+  { href: '/ranking', label: 'Classificação' },
   { href: '/jogos', label: 'Jogos' },
   { href: '/grupos', label: 'Grupos' },
   { href: '/selecoes', label: 'Seleções' },
   { href: '/probabilidades', label: 'Probabilidades' },
-  { href: '/bolao', label: 'Bolão' },
-  { href: '/ranking', label: 'Classificação' },
 ];
 
 export function Header() {
@@ -81,9 +81,9 @@ export function Header() {
         right: 0,
         height: 'calc(var(--header-height) + env(safe-area-inset-top))',
         paddingTop: 'env(safe-area-inset-top)',
-        background: scrolled ? 'rgba(10, 8, 20, 0.85)' : 'transparent',
-        backdropFilter: scrolled ? 'blur(30px) saturate(180%)' : 'none',
-        WebkitBackdropFilter: scrolled ? 'blur(30px) saturate(180%)' : 'none',
+        background: scrolled ? 'rgba(12, 10, 24, 0.72)' : 'transparent',
+        backdropFilter: scrolled ? 'blur(28px) saturate(180%)' : 'none',
+        WebkitBackdropFilter: scrolled ? 'blur(28px) saturate(180%)' : 'none',
         boxShadow: scrolled
           ? '0 4px 32px rgba(0,0,0,0.45), 0 1px 0 rgba(255,255,255,0.06)'
           : 'none',
@@ -231,9 +231,9 @@ export function Header() {
           right: 0,
           bottom: 0,
           width: 'min(80vw, 320px)',
-          background: 'rgba(10, 8, 20, 0.88)',
-          backdropFilter: 'blur(36px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(36px) saturate(180%)',
+          background: 'rgba(12, 10, 24, 0.72)',
+          backdropFilter: 'blur(28px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(28px) saturate(180%)',
           borderLeft: '1px solid rgba(255, 255, 255, 0.10)',
           boxShadow:
             '-28px 0 72px rgba(0,0,0,0.55), -8px 0 24px rgba(0,0,0,0.35)',

@@ -451,11 +451,21 @@
   z-index: 20;
 }
 
-.bolao-save-btn {
+.btn.bolao-save-btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  box-shadow: 0 10px 30px rgba(224, 124, 0, 0.40);
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(12, 10, 24, 0.72);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.50), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.btn.bolao-save-btn:hover {
+  background: rgba(20, 17, 38, 0.82);
 }
 
 .bolao-save-count {
@@ -562,7 +572,7 @@
     justify-content: center;
     height: 52px;
     font-size: 1rem;
-    box-shadow: 0 12px 34px rgba(224, 124, 0, 0.45);
+    box-shadow: 0 12px 34px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.08);
   }
 
   .bolao-message {
