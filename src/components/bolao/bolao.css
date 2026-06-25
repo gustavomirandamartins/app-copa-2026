@@ -17,8 +17,7 @@
   min-width: 0;
   padding: 10px 36px 10px 14px;
   border-radius: var(--radius-md);
-  /* Glassmorphism na caixa de seleção. O Lightning CSS adiciona o -webkit-. */
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(8, 6, 18, 0.72);
   backdrop-filter: blur(18px) saturate(160%);
   border: 1px solid var(--glass-border);
   color: var(--text-primary);

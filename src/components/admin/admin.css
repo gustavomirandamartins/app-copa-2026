@@ -314,8 +314,7 @@
 .admin-mult-select select {
   padding: 6px 10px;
   border-radius: 8px;
-  /* Glassmorphism na caixa de seleção. O Lightning CSS adiciona o -webkit-. */
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(8, 6, 18, 0.72);
   backdrop-filter: blur(18px) saturate(160%);
   border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.12));
   color: var(--text-primary);
