@@ -20,6 +20,7 @@ const outfit = Outfit({
 
 export const viewport: Viewport = {
   themeColor: '#0a0814',
+  viewportFit: 'cover',
 };
 
 export const metadata: Metadata = {
@@ -69,6 +70,7 @@ export default function RootLayout({
     <html lang="pt-BR" className={`${nunitoSans.variable} ${outfit.variable}`}>
       <body>
         <div className="app-bg" aria-hidden="true" />
+        <div className="top-status-scrim" aria-hidden="true" />
         <ParallaxBackground />
         <Header />
         <main className="page-content">

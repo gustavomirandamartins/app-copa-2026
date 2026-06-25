@@ -155,6 +155,33 @@ html {
   }
 }
 
+/* Degradê escuro no topo, atrás da barra de status do aparelho (relógio,
+   sinal, bateria). O conteúdo rola por baixo (viewport-fit: cover) e este
+   scrim garante contraste para os ícones do sistema. Fica abaixo do header
+   (z-index 100) e acima do conteúdo. Só no mobile. */
+.top-status-scrim {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .top-status-scrim {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: calc(env(safe-area-inset-top) + 52px);
+    background: linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.62) 0%,
+      rgba(0, 0, 0, 0.40) 42%,
+      rgba(0, 0, 0, 0) 100%
+    );
+    pointer-events: none;
+    z-index: 99;
+  }
+}
+
 ::selection {
   background: rgba(0, 151, 57, 0.18);
 }
