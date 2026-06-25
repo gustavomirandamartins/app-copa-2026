@@ -99,6 +99,9 @@ export default function SelecaoPage({ params }: { params: Promise<{ teamId: stri
     // Troca o background do html para o time.
     html.style.backgroundImage = `url('${STORAGE_URL}/bg-${teamId}.avif')`;
     html.style.backgroundPositionY = '0%';
+    // Sinaliza que há fundo de seleção ativo: esconde a camada .app-bg
+    // (fundo global do mobile) para o fundo do time aparecer.
+    html.dataset.teamBg = '1';
 
     // Overlay mostra o bg antigo; fade-out revela o novo bg abaixo.
     const cover = makeCover(prevBgImage);
@@ -112,6 +115,7 @@ export default function SelecaoPage({ params }: { params: Promise<{ teamId: stri
       const teamBgImage = window.getComputedStyle(html).backgroundImage;
       const exitCover = makeCover(teamBgImage);
       html.style.backgroundImage = '';
+      delete html.dataset.teamBg;
       requestAnimationFrame(() => requestAnimationFrame(() => {
         exitCover.style.opacity = '0';
       }));

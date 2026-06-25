@@ -118,15 +118,40 @@ html {
   overflow-x: clip;
 }
 
-/* Mobile: usa a arte vertical dedicada. `cover` mantém a proporção correta
-   preenchendo toda a viewport (corta só em uma dimensão, nunca distorce) e
-   `fixed` deixa o fundo estático enquanto a página rola. */
+/* Mobile: camada de fundo dedicada. Um elemento position:fixed do tamanho
+   exato da viewport, com background-size: cover, renderiza o "cover" de forma
+   correta e ESTÁTICA no mobile — sem o bug do background-attachment: fixed,
+   que deixa a imagem com zoom/corte errado em navegadores mobile.
+   Fica atrás de tudo (z-index -2) e abaixo do scrim (-1). No desktop não
+   aparece (display:none), preservando o fundo do <html> que o vidro usa.
+   Nas páginas de seleção (html[data-team-bg]) some, deixando o fundo do
+   time (no <html>) com o parallax. */
+.app-bg {
+  display: none;
+}
+
 @media (max-width: 767px) {
   html {
     background-image: url('https://sdyilmgixyynnmczsnhc.supabase.co/storage/v1/object/public/backgrounds/bg-worldcup-mobile.avif');
     background-size: cover;
     background-attachment: fixed;
     background-position: center center;
+  }
+
+  .app-bg {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    background-image: url('https://sdyilmgixyynnmczsnhc.supabase.co/storage/v1/object/public/backgrounds/bg-worldcup-mobile.avif');
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    pointer-events: none;
+  }
+
+  html[data-team-bg] .app-bg {
+    display: none;
   }
 }
 

@@ -68,6 +68,7 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className={`${nunitoSans.variable} ${outfit.variable}`}>
       <body>
+        <div className="app-bg" aria-hidden="true" />
         <ParallaxBackground />
         <Header />
         <main className="page-content">
