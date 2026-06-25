@@ -806,8 +806,7 @@ a:hover { color: var(--copa-green-deep); }
   display: flex;
   gap: 4px;
   padding: 4px;
-  background: rgba(255,255,255,0.10);
-  /* Glassmorphism. O Lightning CSS adiciona o -webkit-. */
+  background: rgba(8, 6, 18, 0.72);
   backdrop-filter: blur(16px) saturate(160%);
   border-radius: var(--radius-md);
   border: 1px solid rgba(255,255,255,0.15);
@@ -817,7 +816,7 @@ a:hover { color: var(--copa-green-deep); }
 
 .glass-card .tabs,
 .glass-card-static .tabs {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(8, 6, 18, 0.65);
   border-color: rgba(255, 255, 255, 0.12);
 }
 
@@ -837,12 +836,12 @@ a:hover { color: var(--copa-green-deep); }
 
 .tab:hover {
   color: var(--text-primary);
-  background: rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.12);
 }
 
 .glass-card .tab:hover,
 .glass-card-static .tab:hover {
-  background: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.10);
 }
 
 .tab.active {
