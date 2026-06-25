@@ -45,7 +45,9 @@ function httpsGet(url: string): Promise<string> {
         const status = res.statusCode ?? 0;
         if (status < 200 || status >= 300) {
           res.resume();
-          reject(new Error(`respondeu ${status}`));
+          const err = new Error(`respondeu ${status}`) as Error & { status?: number };
+          err.status = status;
+          reject(err);
           return;
         }
         res.setEncoding('utf-8');
@@ -57,6 +59,32 @@ function httpsGet(url: string): Promise<string> {
     req.on('timeout', () => req.destroy(new Error('timeout')));
     req.on('error', reject);
   });
+}
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** Erros transitórios (servidor sobrecarregado / instável) merecem retry. */
+function isRetryable(err: unknown): boolean {
+  const status = (err as { status?: number })?.status;
+  if (status && status >= 500) return true; // 5xx (ex.: 503)
+  const message = err instanceof Error ? err.message : '';
+  return /timeout|ECONNRESET|ETIMEDOUT|EAI_AGAIN|socket hang up/i.test(message);
+}
+
+/** GET com retry + backoff exponencial para erros transitórios. */
+async function httpsGetWithRetry(url: string, attempts = 4): Promise<string> {
+  let lastErr: unknown;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await httpsGet(url);
+    } catch (err) {
+      lastErr = err;
+      if (i === attempts - 1 || !isRetryable(err)) break;
+      // Backoff: 600ms, 1.2s, 2.4s — dá tempo do servidor da UFMG se recuperar.
+      await sleep(600 * 2 ** i);
+    }
+  }
+  throw lastErr;
 }
 
 function decodeEntities(s: string): string {
@@ -97,7 +125,7 @@ function parseStage(html: string): Map<string, number> {
 async function fetchStage(stage: Stage): Promise<Map<string, number>> {
   const url = `${BASE}/${STAGE_SLUGS[stage]}/`;
   try {
-    return parseStage(await httpsGet(url));
+    return parseStage(await httpsGetWithRetry(url));
   } catch (err) {
     const message = err instanceof Error ? err.message : 'erro';
     throw new Error(`UFMG ${stage} ${message}`);
@@ -115,7 +143,16 @@ export interface ScrapedProbability extends UfmgProbability {
  */
 export async function scrapeUfmgProbabilities(): Promise<ScrapedProbability[]> {
   const stages = Object.keys(STAGE_SLUGS) as Stage[];
-  const maps = await Promise.all(stages.map(fetchStage));
+
+  // Busca sequencial (com pequeno intervalo) em vez de Promise.all: o servidor
+  // da UFMG limita rajadas de requisições simultâneas e responde 503. Em série
+  // + retry, evitamos o bloqueio.
+  const maps: Map<string, number>[] = [];
+  for (let i = 0; i < stages.length; i++) {
+    maps.push(await fetchStage(stages[i]));
+    if (i < stages.length - 1) await sleep(350);
+  }
+
   const byStage = Object.fromEntries(stages.map((s, i) => [s, maps[i]])) as Record<
     Stage,
     Map<string, number>
