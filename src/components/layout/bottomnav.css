@@ -1,0 +1,115 @@
+/* Footer flutuante (mobile) — pílula glassmorphism escuro, ícones claros.
+   Item ativo expande mostrando o rótulo, no estilo do nav flutuante. */
+.floating-nav {
+  position: fixed;
+  bottom: calc(env(safe-area-inset-bottom) + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 7px;
+  border-radius: 999px;
+  background: rgba(12, 10, 24, 0.72);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.50), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  z-index: 100;
+  max-width: calc(100vw - 20px);
+}
+
+.fnav-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 11px;
+  border: none;
+  background: transparent;
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.62);
+  cursor: pointer;
+  text-decoration: none;
+  font-family: inherit;
+  transition: background 0.2s ease, color 0.2s ease, padding 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.fnav-item:hover {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.fnav-item.active {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  padding: 11px 16px;
+}
+
+.fnav-label {
+  display: none;
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+}
+
+.fnav-item.active .fnav-label {
+  display: inline;
+}
+
+/* Menu "Copa" (Jogos + Grupos) acima do botão */
+.fnav-pop {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px;
+  min-width: 168px;
+  border-radius: 18px;
+  background: rgba(12, 10, 24, 0.92);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55);
+  animation: fnav-pop-in 0.16s ease-out;
+}
+
+.fnav-pop::after {
+  /* setinha apontando para o botão Copa */
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 7px solid transparent;
+  border-top-color: rgba(12, 10, 24, 0.92);
+}
+
+@keyframes fnav-pop-in {
+  from { opacity: 0; transform: translate(-50%, 6px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.fnav-pop-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.85);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.fnav-pop-item:hover,
+.fnav-pop-item.active {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
