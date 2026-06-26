@@ -224,6 +224,98 @@ export default async function GruposPage() {
           );
         })}
       </div>
+
+      {/* ── Melhores terceiros colocados ───────────────────────────────── */}
+      {(() => {
+        // Coleta o 3º de cada grupo com pelo menos 1 jogo disputado.
+        const thirds: Array<StandingRow & { groupId: GroupId }> = [];
+        for (const g of allGroups) {
+          const rows = standingsByGroup.get(g);
+          if (!rows) continue;
+          const third = rows.find((r) => r.position === 3);
+          if (third && third.played > 0) thirds.push({ ...third, groupId: g });
+        }
+
+        if (thirds.length === 0) return null;
+
+        // Ordena: pontos → SG → GP → GA (critérios FIFA)
+        thirds.sort((a, b) =>
+          b.points - a.points ||
+          b.goal_difference - a.goal_difference ||
+          b.goals_for - a.goals_for ||
+          a.goals_against - b.goals_against,
+        );
+
+        const qualified = thirds.slice(0, 8);
+        const qualifiedTeamIds = new Set(qualified.map((r) => r.team_id));
+
+        return (
+          <section style={{ marginTop: 'var(--space-2xl)' }}>
+            <h2 style={{ fontSize: '1.1rem', marginBottom: 'var(--space-xs)' }}>
+              Melhores terceiros colocados
+            </h2>
+            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: 'var(--space-md)' }}>
+              Os 8 melhores 3ºs colocados avançam para os 16 avos de final. Critérios: pontos → saldo de gols → gols pró → gols contra.
+              {thirds.length < 12 && ` (${12 - thirds.length} grupo${12 - thirds.length > 1 ? 's' : ''} ainda sem 3º colocado)`}
+            </p>
+            <div className="glass-card-static" style={{ padding: 0, overflow: 'hidden' }}>
+              <div style={{ overflowX: 'auto' }}>
+                <table className="standings-table">
+                  <thead>
+                    <tr>
+                      <th style={{ textAlign: 'left' }}>#</th>
+                      <th style={{ textAlign: 'left' }}>Seleção</th>
+                      <th>Grp</th>
+                      <th>P</th>
+                      <th>J</th>
+                      <th>V</th>
+                      <th>E</th>
+                      <th>D</th>
+                      <th>GP</th>
+                      <th>GC</th>
+                      <th>SG</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {thirds.map((row, i) => {
+                      const team = teams.find((t) => t.id === row.team_id);
+                      if (!team) return null;
+                      const isQualified = qualifiedTeamIds.has(row.team_id);
+                      return (
+                        <tr key={row.team_id} className={isQualified ? 'qualified' : ''}>
+                          <td style={{ fontWeight: 700, paddingRight: 4 }}>{i + 1}</td>
+                          <td>
+                            <div className="team-cell">
+                              <TeamFlag name={team.name} flagEmoji={team.flag} size={20} />
+                              <Link href={`/selecoes/${team.id}`} style={{ textDecoration: 'none', color: 'var(--text-primary)', fontWeight: 600 }}>
+                                {team.name}
+                              </Link>
+                              {isQualified && thirds.length === 12 && (
+                                <span style={{ fontSize: '0.68rem', padding: '2px 7px', borderRadius: 999, background: 'rgba(0,200,83,0.15)', color: 'var(--copa-green)', fontWeight: 700, marginLeft: 4 }}>
+                                  Classificado
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td style={{ fontWeight: 700, color: 'var(--gold)' }}>{row.groupId}</td>
+                          <td className="pts">{row.points}</td>
+                          <td>{row.played}</td>
+                          <td>{row.won}</td>
+                          <td>{row.draw}</td>
+                          <td>{row.lost}</td>
+                          <td>{row.goals_for}</td>
+                          <td>{row.goals_against}</td>
+                          <td>{row.goal_difference}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+        );
+      })()}
     </div>
   );
 }

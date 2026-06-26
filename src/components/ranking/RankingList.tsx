@@ -7,6 +7,9 @@ export interface UserBreakdown {
   exact_pts: number;
   diff_pts: number;
   winner_pts: number;
+  exact_count: number;
+  diff_count: number;
+  winner_count: number;
   prediction_pts: number;
   round_bonuses: Array<{ roundKey: string; label: string; pts: number }>;
   referral_bonus: number;
@@ -34,9 +37,9 @@ const normalize = (s: string | null) => (s ?? '').trim().toLowerCase();
 const isAdminUser = (u: RankedUserRow) => u.is_admin || normalize(u.full_name) === normalize(ADMIN_NAME);
 
 function BreakdownPanel({ bd, score, isRound }: { bd: UserBreakdown; score: number; isRound: boolean }) {
-  const exactCount  = bd.exact_pts  > 0 ? Math.round(bd.exact_pts  / 5) : 0;
-  const diffCount   = bd.diff_pts   > 0 ? Math.round(bd.diff_pts   / 3) : 0;
-  const winnerCount = bd.winner_pts;
+  const exactCount  = bd.exact_count;
+  const diffCount   = bd.diff_count;
+  const winnerCount = bd.winner_count;
 
   const hasBonus = !isRound && (bd.round_bonuses.length > 0 || bd.referral_bonus > 0 || bd.score_adjustment !== 0);
 

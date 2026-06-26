@@ -18,6 +18,9 @@ interface Tiebreakers {
   exact_pts: number;
   diff_pts: number;
   winner_pts: number;
+  exact_count: number;
+  diff_count: number;
+  winner_count: number;
   final_pts: number;
   semi_pts: number;
   quarters_pts: number;
@@ -98,7 +101,7 @@ const PRIZES = [
   },
 ];
 
-const EMPTY_TB: Tiebreakers = { prediction_pts: 0, exact_pts: 0, diff_pts: 0, winner_pts: 0, final_pts: 0, semi_pts: 0, quarters_pts: 0, ro16_pts: 0 };
+const EMPTY_TB: Tiebreakers = { prediction_pts: 0, exact_pts: 0, diff_pts: 0, winner_pts: 0, exact_count: 0, diff_count: 0, winner_count: 0, final_pts: 0, semi_pts: 0, quarters_pts: 0, ro16_pts: 0 };
 
 const DEMO_RANKING: RankedUser[] = [
   { id: '1', full_name: 'Ana Souza',    total_score: 87, is_admin: false, referral_bonus: 5,  score_adjustment: 0, tb: { ...EMPTY_TB, prediction_pts: 82, exact_pts: 40, diff_pts: 27, winner_pts: 15 } },
@@ -130,6 +133,9 @@ function toGeneralRow(user: RankedUser, roundBonuses: Array<{ roundKey: string; 
       exact_pts: user.tb.exact_pts,
       diff_pts: user.tb.diff_pts,
       winner_pts: user.tb.winner_pts,
+      exact_count: user.tb.exact_count,
+      diff_count: user.tb.diff_count,
+      winner_count: user.tb.winner_count,
       prediction_pts: user.tb.prediction_pts,
       round_bonuses: roundBonuses,
       referral_bonus: user.referral_bonus,
@@ -150,6 +156,9 @@ function toRoundRow(row: RoundRow): RankedUserRow {
       exact_pts: row.exact_pts,
       diff_pts: row.diff_pts,
       winner_pts: row.winner_pts,
+      exact_count: row.exact_pts > 0 ? Math.round(row.exact_pts / 5) : 0,
+      diff_count:  row.diff_pts  > 0 ? Math.round(row.diff_pts  / 3) : 0,
+      winner_count: row.winner_pts,
       prediction_pts: row.points,
       round_bonuses: [],
       referral_bonus: 0,
@@ -219,17 +228,19 @@ export default async function RankingPage() {
     const ro16Ids     = new Set(staticMatches.filter(m => m.stage === 'round-of-16').map(m => m.id));
 
     // ── Tiebreakers por usuário ──────────────────────────────────────────
-    // Acertos contados pelo ponto-base (antes do multiplicador): cada placar
-    // exato vale 5 e cada saldo vale 3 no desempate, independentemente do turbo.
+    // Acertos: contados pelo tipo (base_points) mas somados com points_earned
+    // (já com o multiplicador de jogos turbinados). Assim o somatório
+    // exact + diff + winner == prediction_pts, sem divergência.
     const tbMap = new Map<string, Tiebreakers>();
     for (const p of preds) {
       const t = tbMap.get(p.user_id) ?? { ...EMPTY_TB };
-      const pts = p.points_earned;
+      const pts  = p.points_earned;
       const base = p.base_points ?? 0;
       t.prediction_pts += pts;
-      if (base === 5) t.exact_pts  += 5;
-      if (base === 3) t.diff_pts   += 3;
-      if (base === 1) t.winner_pts += 1;
+      // Acumula pontos reais (com turbo) em cada categoria
+      if (base === 5) { t.exact_pts  += pts; t.exact_count  += 1; }
+      if (base === 3) { t.diff_pts   += pts; t.diff_count   += 1; }
+      if (base === 1) { t.winner_pts += pts; t.winner_count += 1; }
       if (finalIds.has(p.match_id))    t.final_pts    += pts;
       if (semiIds.has(p.match_id))     t.semi_pts     += pts;
       if (quartersIds.has(p.match_id)) t.quarters_pts += pts;
