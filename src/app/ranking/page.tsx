@@ -21,6 +21,9 @@ interface Tiebreakers {
   exact_count: number;
   diff_count: number;
   winner_count: number;
+  exact_turbo_count: number;
+  diff_turbo_count: number;
+  winner_turbo_count: number;
   final_pts: number;
   semi_pts: number;
   quarters_pts: number;
@@ -101,7 +104,7 @@ const PRIZES = [
   },
 ];
 
-const EMPTY_TB: Tiebreakers = { prediction_pts: 0, exact_pts: 0, diff_pts: 0, winner_pts: 0, exact_count: 0, diff_count: 0, winner_count: 0, final_pts: 0, semi_pts: 0, quarters_pts: 0, ro16_pts: 0 };
+const EMPTY_TB: Tiebreakers = { prediction_pts: 0, exact_pts: 0, diff_pts: 0, winner_pts: 0, exact_count: 0, diff_count: 0, winner_count: 0, exact_turbo_count: 0, diff_turbo_count: 0, winner_turbo_count: 0, final_pts: 0, semi_pts: 0, quarters_pts: 0, ro16_pts: 0 };
 
 const DEMO_RANKING: RankedUser[] = [
   { id: '1', full_name: 'Ana Souza',    total_score: 87, is_admin: false, referral_bonus: 5,  score_adjustment: 0, tb: { ...EMPTY_TB, prediction_pts: 82, exact_pts: 40, diff_pts: 27, winner_pts: 15 } },
@@ -136,6 +139,9 @@ function toGeneralRow(user: RankedUser, roundBonuses: Array<{ roundKey: string; 
       exact_count: user.tb.exact_count,
       diff_count: user.tb.diff_count,
       winner_count: user.tb.winner_count,
+      exact_turbo_count: user.tb.exact_turbo_count,
+      diff_turbo_count: user.tb.diff_turbo_count,
+      winner_turbo_count: user.tb.winner_turbo_count,
       prediction_pts: user.tb.prediction_pts,
       round_bonuses: roundBonuses,
       referral_bonus: user.referral_bonus,
@@ -144,7 +150,27 @@ function toGeneralRow(user: RankedUser, roundBonuses: Array<{ roundKey: string; 
   };
 }
 
-function toRoundRow(row: RoundRow): RankedUserRow {
+type RoundBreakdown = {
+  exact_pts: number;
+  diff_pts: number;
+  winner_pts: number;
+  exact_count: number;
+  diff_count: number;
+  winner_count: number;
+  exact_turbo_count: number;
+  diff_turbo_count: number;
+  winner_turbo_count: number;
+};
+
+function emptyRoundBreakdown(): RoundBreakdown {
+  return {
+    exact_pts: 0, diff_pts: 0, winner_pts: 0,
+    exact_count: 0, diff_count: 0, winner_count: 0,
+    exact_turbo_count: 0, diff_turbo_count: 0, winner_turbo_count: 0,
+  };
+}
+
+function toRoundRow(row: RoundRow, bd: RoundBreakdown): RankedUserRow {
   return {
     id: row.user_id,
     full_name: row.full_name,
@@ -153,12 +179,15 @@ function toRoundRow(row: RoundRow): RankedUserRow {
     is_winner: row.is_winner,
     round_bonus: row.bonus,
     breakdown: {
-      exact_pts: row.exact_pts,
-      diff_pts: row.diff_pts,
-      winner_pts: row.winner_pts,
-      exact_count: row.exact_pts > 0 ? Math.round(row.exact_pts / 5) : 0,
-      diff_count:  row.diff_pts  > 0 ? Math.round(row.diff_pts  / 3) : 0,
-      winner_count: row.winner_pts,
+      exact_pts: bd.exact_pts,
+      diff_pts: bd.diff_pts,
+      winner_pts: bd.winner_pts,
+      exact_count: bd.exact_count,
+      diff_count: bd.diff_count,
+      winner_count: bd.winner_count,
+      exact_turbo_count: bd.exact_turbo_count,
+      diff_turbo_count: bd.diff_turbo_count,
+      winner_turbo_count: bd.winner_turbo_count,
       prediction_pts: row.points,
       round_bonuses: [],
       referral_bonus: 0,
@@ -172,6 +201,7 @@ export default async function RankingPage() {
   let ranking: RankedUser[] = [];
   let roundRows: RoundRow[] = [];
   let roundBonusMap = new Map<string, Array<{ roundKey: string; label: string; pts: number }>>();
+  let roundBreakdownMap = new Map<string, RoundBreakdown>();
 
   if (configured) {
     const admin = createAdminClient();
@@ -238,9 +268,9 @@ export default async function RankingPage() {
       const base = p.base_points ?? 0;
       t.prediction_pts += pts;
       // Acumula pontos reais (com turbo) em cada categoria
-      if (base === 5) { t.exact_pts  += pts; t.exact_count  += 1; }
-      if (base === 3) { t.diff_pts   += pts; t.diff_count   += 1; }
-      if (base === 1) { t.winner_pts += pts; t.winner_count += 1; }
+      if (base === 5) { t.exact_pts  += pts; t.exact_count  += 1; if (pts > 5)  t.exact_turbo_count  += 1; }
+      if (base === 3) { t.diff_pts   += pts; t.diff_count   += 1; if (pts > 3)  t.diff_turbo_count   += 1; }
+      if (base === 1) { t.winner_pts += pts; t.winner_count += 1; if (pts > 1)  t.winner_turbo_count += 1; }
       if (finalIds.has(p.match_id))    t.final_pts    += pts;
       if (semiIds.has(p.match_id))     t.semi_pts     += pts;
       if (quartersIds.has(p.match_id)) t.quarters_pts += pts;
@@ -279,18 +309,25 @@ export default async function RankingPage() {
     const nameMap    = new Map<string, string | null>(profiles.map((p) => [p.id, p.full_name]));
     const isAdminMap = new Map<string, boolean>(profiles.map((p) => [p.id, p.is_admin ?? false]));
 
-    // ── winner_pts por rodada (contagem de base===1, sem multiplicador) ──
-    // Calcula a partir dos palpites brutos, igual à classificação geral,
-    // garantindo que o breakdown de "Apenas vencedor" bata entre as duas.
-    const roundWinnerMap = new Map<string, number>();
+    // ── Breakdown por rodada (pontos COM multiplicador turbinado) ────────
+    // Os campos exact_pts/diff_pts vindos da round_scores servem para
+    // desempate (contagem × base, sem turbo). Para o breakdown de exibição
+    // precisamos dos pontos reais (com turbo), senão a soma por categoria
+    // não bate com prediction_pts. Recalculamos a partir dos palpites brutos,
+    // acumulando points_earned (já com turbo) em cada bucket de base_points.
+    roundBreakdownMap = new Map<string, RoundBreakdown>();
     for (const p of preds) {
       const rk = roundKeyForMatch(p.match_id);
       if (!rk) continue;
+      const pts = p.points_earned ?? 0;
       const base = p.base_points ?? 0;
-      if (base === 1) {
-        const key = `${p.user_id}::${rk}`;
-        roundWinnerMap.set(key, (roundWinnerMap.get(key) ?? 0) + 1);
-      }
+      if (base === 0 && pts === 0) continue; // sem acerto, não entra no breakdown
+      const key = `${p.user_id}::${rk}`;
+      const bd = roundBreakdownMap.get(key) ?? emptyRoundBreakdown();
+      if (base === 5) { bd.exact_pts  += pts; bd.exact_count  += 1; if (pts > 5) bd.exact_turbo_count  += 1; }
+      if (base === 3) { bd.diff_pts   += pts; bd.diff_count   += 1; if (pts > 3) bd.diff_turbo_count   += 1; }
+      if (base === 1) { bd.winner_pts += pts; bd.winner_count += 1; if (pts > 1) bd.winner_turbo_count += 1; }
+      roundBreakdownMap.set(key, bd);
     }
 
     roundRows = rScores
@@ -301,7 +338,7 @@ export default async function RankingPage() {
         points: r.points,
         exact_pts: r.exact_pts,
         diff_pts: r.diff_pts,
-        winner_pts: roundWinnerMap.get(`${r.user_id}::${r.round_key}`) ?? 0,
+        winner_pts: r.exact_pts, // placeholder não usado pelo breakdown agora
         place: r.place,
         bonus: r.bonus,
         complete: r.complete,
@@ -373,7 +410,9 @@ export default async function RankingPage() {
       complete: rows[0]?.complete ?? false,
       endLabel: fmtEnd(key),
       bonusTop: ROUND_BONUS_POINTS,
-      rows: sortRound(rows).map(toRoundRow),
+      rows: sortRound(rows).map((r) =>
+        toRoundRow(r, roundBreakdownMap.get(`${r.user_id}::${key}`) ?? emptyRoundBreakdown()),
+      ),
     };
   });
 

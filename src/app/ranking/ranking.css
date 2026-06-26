@@ -620,6 +620,24 @@ details.champion-card[open] .champion-chevron {
 .breakdown-miss   .breakdown-pts { color: var(--text-tertiary); }
 .breakdown-bonus  .breakdown-pts { color: var(--gold); }
 
+.breakdown-turbo {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 5px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 0.66rem;
+  font-weight: 800;
+  font-style: normal;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--gold);
+  background: rgba(224, 124, 0, 0.16);
+  border: 1px solid rgba(224, 124, 0, 0.30);
+  vertical-align: middle;
+}
+
 .breakdown-subtotal {
   display: flex;
   justify-content: space-between;

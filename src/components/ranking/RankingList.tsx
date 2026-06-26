@@ -10,6 +10,9 @@ export interface UserBreakdown {
   exact_count: number;
   diff_count: number;
   winner_count: number;
+  exact_turbo_count: number;
+  diff_turbo_count: number;
+  winner_turbo_count: number;
   prediction_pts: number;
   round_bonuses: Array<{ roundKey: string; label: string; pts: number }>;
   referral_bonus: number;
@@ -43,6 +46,10 @@ function BreakdownPanel({ bd, score, isRound }: { bd: UserBreakdown; score: numb
 
   const hasBonus = !isRound && (bd.round_bonuses.length > 0 || bd.referral_bonus > 0 || bd.score_adjustment !== 0);
 
+  /** Label inline quando há acertos turbinados na categoria. */
+  const turboTag = (n: number) =>
+    n > 0 ? <span className="breakdown-turbo">{n} turbinado{n > 1 ? 's' : ''}!</span> : null;
+
   return (
     <div className="ranking-breakdown">
 
@@ -54,6 +61,7 @@ function BreakdownPanel({ bd, score, isRound }: { bd: UserBreakdown; score: numb
               <span className="breakdown-cat">
                 Placar exato
                 <em> · {exactCount} acerto{exactCount !== 1 ? 's' : ''}</em>
+                {turboTag(bd.exact_turbo_count)}
               </span>
               <span className="breakdown-pts">+{bd.exact_pts} pts</span>
             </div>
@@ -63,6 +71,7 @@ function BreakdownPanel({ bd, score, isRound }: { bd: UserBreakdown; score: numb
               <span className="breakdown-cat">
                 Vencedor + diferença de gols
                 <em> · {diffCount} acerto{diffCount !== 1 ? 's' : ''}</em>
+                {turboTag(bd.diff_turbo_count)}
               </span>
               <span className="breakdown-pts">+{bd.diff_pts} pts</span>
             </div>
@@ -72,6 +81,7 @@ function BreakdownPanel({ bd, score, isRound }: { bd: UserBreakdown; score: numb
               <span className="breakdown-cat">
                 Apenas vencedor
                 <em> · {winnerCount} acerto{winnerCount !== 1 ? 's' : ''}</em>
+                {turboTag(bd.winner_turbo_count)}
               </span>
               <span className="breakdown-pts">+{bd.winner_pts} pts</span>
             </div>
