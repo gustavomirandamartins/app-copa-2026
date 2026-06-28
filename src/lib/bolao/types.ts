@@ -37,6 +37,7 @@ export interface PredictionRow {
   match_id: string;
   home_score_guess: number;
   away_score_guess: number;
+  penalty_winner_id: string | null;
   points_earned: number;
   is_autofilled: boolean;
 }
@@ -46,6 +47,7 @@ export interface PredictionInput {
   match_id: string;
   home_score_guess: number;
   away_score_guess: number;
+  penalty_winner_id?: string | null;
   is_autofilled: boolean;
 }
 

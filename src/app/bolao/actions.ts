@@ -73,6 +73,7 @@ export async function savePredictions(
     match_id: p.match_id,
     home_score_guess: p.home_score_guess,
     away_score_guess: p.away_score_guess,
+    penalty_winner_id: p.penalty_winner_id ?? null,
     is_autofilled: p.is_autofilled,
   }));
 

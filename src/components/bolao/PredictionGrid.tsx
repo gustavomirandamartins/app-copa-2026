@@ -65,13 +65,14 @@ function vigenteTab(results: Record<string, MatchResult>): TabKey {
 export interface PredictionValue {
   home: number | null;
   away: number | null;
+  penaltyWinnerId?: string | null;
   autofilled: boolean;
 }
 
 interface Props {
   values: Map<string, PredictionValue>;
   canEdit: boolean;
-  onScore: (matchId: string, side: 'home' | 'away', value: number | null) => void;
+  onScore: (matchId: string, side: 'home' | 'away' | 'penaltyWinner', value: number | string | null) => void;
   onAutofill: () => void;
   multipliers?: Record<string, number>;
   results?: Record<string, MatchResult>;
@@ -362,6 +363,30 @@ export function PredictionGrid({
                           </div>
                           <TeamCell teamId={match.awayTeamId} align="right" placeholder={match.awayTeamPlaceholder} />
                         </div>
+
+                        {/* Pênaltis: Só mostra se for mata-mata e o palpite for empate e válido */}
+                        {match.stage !== 'group' && value?.home != null && value?.away != null && value.home === value.away && (
+                          <div className="bolao-penalties" style={{ marginTop: '0.5rem', textAlign: 'center' }}>
+                            <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Vencedor dos pênaltis:</p>
+                            <select
+                              className="bolao-score-input"
+                              style={{ width: 'auto', padding: '4px 8px' }}
+                              value={value?.penaltyWinnerId ?? ''}
+                              disabled={locked}
+                              onChange={(e) =>
+                                onScore(
+                                  match.id,
+                                  'penaltyWinner',
+                                  e.target.value === '' ? null : e.target.value,
+                                )
+                              }
+                            >
+                              <option value="">Selecione...</option>
+                              <option value={match.homeTeamId ?? 'home'}>{match.homeTeamId ? getTeamById(match.homeTeamId)?.name : 'Mandante'}</option>
+                              <option value={match.awayTeamId ?? 'away'}>{match.awayTeamId ? getTeamById(match.awayTeamId)?.name : 'Visitante'}</option>
+                            </select>
+                          </div>
+                        )}
 
                         {/* Status: contagem regressiva ou horário */}
                         <div className="bolao-card-status">

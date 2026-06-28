@@ -33,6 +33,7 @@ export interface FdScore {
   winner: 'HOME_TEAM' | 'AWAY_TEAM' | 'DRAW' | null;
   fullTime: { home: number | null; away: number | null };
   halfTime: { home: number | null; away: number | null };
+  penalties: { home: number | null; away: number | null };
 }
 
 export interface FdMatch {

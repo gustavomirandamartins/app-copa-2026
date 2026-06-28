@@ -16,6 +16,7 @@ interface PredRow {
   match_id: string;
   home_score_guess: number | null;
   away_score_guess: number | null;
+  penalty_winner_id: string | null;
   points_earned: number | null;
   base_points: number | null;
 }
@@ -31,7 +32,7 @@ async function fetchAllPredictions(admin: Admin): Promise<PredRow[]> {
   for (let from = 0; ; from += pageSize) {
     const { data, error } = await admin
       .from('predictions')
-      .select('id, user_id, match_id, home_score_guess, away_score_guess, points_earned, base_points')
+      .select('id, user_id, match_id, home_score_guess, away_score_guess, penalty_winner_id, points_earned, base_points')
       .order('id', { ascending: true })
       .range(from, from + pageSize - 1);
     if (error) throw new Error(`scoring: ler predictions: ${error.message}`);
@@ -66,15 +67,19 @@ export async function applyScoring(admin: Admin): Promise<{ updatedPredictions: 
   // encerrou, não só das finalizadas).
   const { data: allMatches, error: matchesErr } = await admin
     .from('matches')
-    .select('id, status, home_score, away_score');
+    .select('id, status, home_score, away_score, home_penalties, away_penalties, home_team_id, away_team_id');
   if (matchesErr) throw new Error(`scoring: ler matches: ${matchesErr.message}`);
 
   const statusById = new Map<string, string>();
-  const finishedScore = new Map<string, { home: number; away: number }>();
+  const finishedScore = new Map<string, { home: number; away: number; penaltyWinnerId: string | null }>();
   for (const m of allMatches ?? []) {
     statusById.set(m.id, m.status);
     if (m.status === 'finished' && m.home_score != null && m.away_score != null) {
-      finishedScore.set(m.id, { home: m.home_score, away: m.away_score });
+      let penaltyWinnerId: string | null = null;
+      if (m.home_score === m.away_score && m.home_penalties != null && m.away_penalties != null) {
+        penaltyWinnerId = m.home_penalties > m.away_penalties ? m.home_team_id : m.away_team_id;
+      }
+      finishedScore.set(m.id, { home: m.home_score, away: m.away_score, penaltyWinnerId });
     }
   }
 
@@ -108,7 +113,7 @@ export async function applyScoring(admin: Admin): Promise<{ updatedPredictions: 
     affectedUsers.add(p.user_id);
     const finished = finishedScore.get(p.match_id);
     const multiplier = multiplierByMatch.get(p.match_id) ?? 1;
-    const base = finished
+    let base = finished
       ? calculateMatchPoints(
           p.home_score_guess,
           p.away_score_guess,
@@ -116,6 +121,21 @@ export async function applyScoring(admin: Admin): Promise<{ updatedPredictions: 
           finished.away,
         )
       : 0;
+      
+    // Bônus de 1 ponto se acertar o vencedor dos pênaltis
+    if (
+      finished &&
+      finished.home === finished.away &&
+      p.home_score_guess != null &&
+      p.away_score_guess != null &&
+      p.home_score_guess === p.away_score_guess &&
+      p.penalty_winner_id != null &&
+      finished.penaltyWinnerId != null &&
+      p.penalty_winner_id === finished.penaltyWinnerId
+    ) {
+      base += 1;
+    }
+
     const points = base * multiplier;
 
     // Só grava se mudou (evita writes desnecessários no re-sync).

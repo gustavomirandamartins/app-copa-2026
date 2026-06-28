@@ -37,6 +37,7 @@ function seedValues(existing: PredictionInput[]): Map<string, PredictionValue> {
     map.set(p.match_id, {
       home: p.home_score_guess,
       away: p.away_score_guess,
+      penaltyWinnerId: p.penalty_winner_id,
       autofilled: p.is_autofilled,
     });
   }
@@ -85,11 +86,25 @@ export function BolaoClient({
     return () => clearTimeout(t);
   }, [waitingWebhook, router]);
 
-  function setScore(matchId: string, side: 'home' | 'away', value: number | null) {
+  function setScore(matchId: string, side: 'home' | 'away' | 'penaltyWinner', value: number | string | null) {
     setValues((prev) => {
       const next = new Map(prev);
-      const current = next.get(matchId) ?? { home: null, away: null, autofilled: false };
-      next.set(matchId, { ...current, [side]: value, autofilled: false });
+      const current = next.get(matchId) ?? { home: null, away: null, penaltyWinnerId: null, autofilled: false };
+      
+      const newValues = { ...current, autofilled: false };
+      
+      if (side === 'penaltyWinner') {
+        newValues.penaltyWinnerId = value as string | null;
+      } else {
+        newValues[side] = value as number | null;
+      }
+      
+      // Limpa o vencedor dos pênaltis se o palpite não for mais de empate
+      if (side !== 'penaltyWinner' && newValues.home !== newValues.away) {
+        newValues.penaltyWinnerId = null;
+      }
+      
+      next.set(matchId, newValues);
       return next;
     });
   }
@@ -121,6 +136,7 @@ export function BolaoClient({
         match_id: matchId,
         home_score_guess: v.home,
         away_score_guess: v.away,
+        penalty_winner_id: v.penaltyWinnerId,
         is_autofilled: v.autofilled,
       });
     }
@@ -129,6 +145,17 @@ export function BolaoClient({
 
   function handleSave() {
     setMessage(null);
+    
+    // Validate penalty winner requirement for knockouts
+    for (const [matchId, v] of values) {
+      if (v.home === null || v.away === null) continue;
+      const match = allMatches.find(m => m.id === matchId);
+      if (match && match.stage !== 'group' && v.home === v.away && !v.penaltyWinnerId) {
+        setMessage('Por favor, selecione o vencedor dos pênaltis para as partidas de mata-mata empatadas.');
+        return;
+      }
+    }
+
     startTransition(async () => {
       const res = await savePredictions(payload);
       setMessage(
