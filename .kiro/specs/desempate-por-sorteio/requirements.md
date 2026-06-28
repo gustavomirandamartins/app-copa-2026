@@ -118,8 +118,8 @@ O escopo cobre a Classificação Geral (parcial durante a Copa e final ao térmi
 2. O sistema SHALL manter o comportamento atual para participantes não envolvidos em empate (sem alterações de ordem ou destaque).
 3. QUANDO há múltiplos grupos de empate distintos na mesma classificação, o sistema SHALL tratá-los de forma independente.
 
-## Questões em aberto (a confirmar)
+## Decisões confirmadas
 
-1. **Abrangência do destaque/sorteio**: estes requisitos assumem que o sorteio só é exigido quando o empate ocupa as **5 primeiras posições** (faixa de prêmio na Geral / faixa de bônus na Rodada). Empates fora dessa faixa não disparam sorteio. Confirmar se essa restrição é desejada ou se todo e qualquer empate absoluto deve disparar sorteio.
-2. **Granularidade do sorteio**: assume-se que o admin define a **ordem completa** do grupo (não apenas "escolhe um vencedor"), pois posições diferentes têm prêmios/bônus diferentes. Confirmar.
-3. **Notificação**: é necessário notificar os participantes empatados (ex.: e-mail) sobre o sorteio? Assume-se que não nesta primeira versão.
+1. **Abrangência**: o sorteio só é exigido quando o empate absoluto ocupa as **5 primeiras posições** (faixa de prêmio na Geral / faixa de bônus na Rodada). Empates fora dessa faixa NÃO disparam sorteio nem destaque.
+2. **Granularidade**: o admin define a **ordem completa** do grupo empatado (do 1º ao último), pois posições diferentes têm prêmios/bônus distintos.
+3. **Notificação**: NÃO há notificação aos participantes nesta versão.
