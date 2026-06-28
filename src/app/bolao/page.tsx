@@ -63,7 +63,7 @@ export default async function BolaoPage({
 
       const { data: preds } = await supabase
         .from('predictions')
-        .select('match_id, home_score_guess, away_score_guess, is_autofilled, points_earned')
+        .select('match_id, home_score_guess, away_score_guess, penalty_winner_id, is_autofilled, points_earned')
         .eq('user_id', user.id);
       existingPredictions = (preds as PredictionInput[]) ?? [];
 
