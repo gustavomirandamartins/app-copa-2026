@@ -37,6 +37,11 @@ export async function runFootballSync(): Promise<SyncResult> {
   // UPDATE em vez de upsert: matches já existem no banco (seed com ids
   // como 'gs-001') mas sem external_id ainda. A primeira execução liga o
   // external_id via team pair; as subsequentes usam external_id diretamente.
+  //
+  // Jogos de mata-mata: o seed os criou com home_team_id/away_team_id = NULL
+  // (os times ainda não eram conhecidos). Como não existe external_id nem
+  // par de times para casar, usamos match_time_utc como fallback para o
+  // primeiro sync de cada jogo de mata-mata.
   let matchesUpdated = 0;
   for (const m of matches) {
     const homeId = resolveTeamId(m.homeTeam);
@@ -58,17 +63,24 @@ export async function runFootballSync(): Promise<SyncResult> {
           }
         : {};
 
-    const fields = {
+    const fields: Record<string, unknown> = {
       external_id: m.id,
       match_time_utc: m.utcDate,
       status: mapStatus(m.status),
       ...scoreFields,
     };
 
+    // Preenche os team IDs no banco (essencial para mata-mata cujo seed
+    // tinha home_team_id/away_team_id NULL).
+    if (homeId) fields.home_team_id = homeId;
+    if (awayId) fields.away_team_id = awayId;
+
+    // Estratégia de matching em 3 etapas:
+    //  1. external_id (já linkado de um sync anterior)
+    //  2. par home_team_id + away_team_id (grupo — times fixos desde o seed)
+    //  3. match_time_utc (mata-mata — times NULL no seed, external_id NULL)
     let q = admin.from('matches').update(fields);
     if (homeId && awayId) {
-      // Primeiro sync (external_id ainda null) → casa por time;
-      // syncs seguintes → casa por external_id. OR cobre os dois casos.
       q = q.or(
         `external_id.eq.${m.id},and(home_team_id.eq.${homeId},away_team_id.eq.${awayId})`,
       );
@@ -78,6 +90,27 @@ export async function runFootballSync(): Promise<SyncResult> {
 
     const { error: matchErr } = await q;
     if (matchErr) throw new Error(`update match ${m.id}: ${matchErr.message}`);
+
+    // Verifica se o external_id foi linkado. Se não, significa que nenhuma
+    // linha casou (mata-mata com home/away NULL e sem external_id).
+    const { data: linked } = await admin
+      .from('matches')
+      .select('id')
+      .eq('external_id', m.id)
+      .limit(1);
+
+    if (!linked || linked.length === 0) {
+      // Fallback: casar pelo horário UTC (o seed preencheu match_time_utc).
+      const { error: fallbackErr } = await admin
+        .from('matches')
+        .update(fields)
+        .is('external_id', null)
+        .eq('match_time_utc', m.utcDate);
+      if (fallbackErr) {
+        console.warn(`[sync] fallback por data falhou para match ${m.id}:`, fallbackErr.message);
+      }
+    }
+
     matchesUpdated++;
   }
 
