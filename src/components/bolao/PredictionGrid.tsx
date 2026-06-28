@@ -35,18 +35,25 @@ const stageTabs: { key: TabKey; label: string }[] = [
 ];
 
 function matchesForTab(tab: TabKey): Match[] {
-  if (tab === 'group-1') return allMatches.filter((m) => m.stage === 'group' && m.matchday === 1);
-  if (tab === 'group-2') return allMatches.filter((m) => m.stage === 'group' && m.matchday === 2);
-  if (tab === 'group-3') return allMatches.filter((m) => m.stage === 'group' && m.matchday === 3);
-  return allMatches.filter((m) => m.stage === (tab as MatchStage));
+  let list: Match[];
+  if (tab === 'group-1') list = allMatches.filter((m) => m.stage === 'group' && m.matchday === 1);
+  else if (tab === 'group-2') list = allMatches.filter((m) => m.stage === 'group' && m.matchday === 2);
+  else if (tab === 'group-3') list = allMatches.filter((m) => m.stage === 'group' && m.matchday === 3);
+  else list = allMatches.filter((m) => m.stage === (tab as MatchStage));
+  // Ordena por horário (a ordem do array pode não ser cronológica).
+  return [...list].sort(
+    (a, b) => new Date(a.dateUTC).getTime() - new Date(b.dateUTC).getTime(),
+  );
 }
 
 /**
- * Aba inicial = rodada vigente: a primeira aba cujas partidas ainda não
- * estão todas encerradas. Determinístico (sem Date.now) — seguro p/ hidratar.
+ * Aba inicial = rodada vigente. Como a fase de grupos já se encerrou, a varredura
+ * começa nos 16 avos e avança para a primeira fase ainda não concluída.
+ * Determinístico (sem Date.now) — seguro p/ hidratar.
  */
 function vigenteTab(results: Record<string, MatchResult>): TabKey {
-  for (const tab of stageTabs) {
+  const knockoutStart = stageTabs.findIndex((t) => t.key === 'round-of-32');
+  for (const tab of stageTabs.slice(knockoutStart)) {
     const ms = matchesForTab(tab.key);
     if (ms.length === 0) continue;
     const allFinished = ms.every((m) => (results[m.id]?.status ?? m.status) === 'finished');

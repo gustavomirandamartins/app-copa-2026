@@ -27,11 +27,14 @@ function MatchTimeChip({ dateUTC }: { dateUTC: string }) {
 }
 
 export function JogosClient({ matches }: { matches: Match[] }) {
-  const [activeStage, setActiveStage] = useState<MatchStage | 'all'>('group');
+  const [activeStage, setActiveStage] = useState<MatchStage | 'all'>('round-of-32');
 
   const filteredMatches = useMemo(() => {
-    if (activeStage === 'all') return matches;
-    return matches.filter((m) => m.stage === activeStage);
+    const list = activeStage === 'all' ? matches : matches.filter((m) => m.stage === activeStage);
+    // Ordena por horário de início (a ordem do array pode não ser cronológica).
+    return [...list].sort(
+      (a, b) => new Date(a.dateUTC).getTime() - new Date(b.dateUTC).getTime(),
+    );
   }, [activeStage, matches]);
 
   const [groupedByDate, setGroupedByDate] = useState<Map<string, Match[]>>(new Map());
