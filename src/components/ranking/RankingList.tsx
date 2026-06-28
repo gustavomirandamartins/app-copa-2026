@@ -27,6 +27,10 @@ export interface RankedUserRow {
   is_winner?: boolean;
   /** Bônus escalonado da rodada (só na classificação por rodada). */
   round_bonus?: number;
+  /** Posição ainda indefinida — aguardando sorteio ao vivo. */
+  pendingDraw?: boolean;
+  /** Posição definida pelo sorteio ao vivo. */
+  decidedByDraw?: boolean;
   breakdown: UserBreakdown;
 }
 
@@ -159,7 +163,7 @@ export function RankingList({ users, isRound = false }: Props) {
         return (
           <div key={`${user.id}-${i}`} className="ranking-row-wrapper">
             <div
-              className={`glass-card-static ranking-row ranking-row-clickable${isTop ? ' top5' : ''}${isAdmin ? ' admin' : ''}${isExpanded ? ' row-open' : ''}`}
+              className={`glass-card-static ranking-row ranking-row-clickable${isTop ? ' top5' : ''}${isAdmin ? ' admin' : ''}${isExpanded ? ' row-open' : ''}${user.pendingDraw ? ' tie-pending' : ''}`}
               onClick={toggle}
               role="button"
               tabIndex={0}
@@ -180,6 +184,12 @@ export function RankingList({ users, isRound = false }: Props) {
                 {isAdmin && <span className="ranking-tag">fora de competição</span>}
                 {isRound && !isAdmin && (user.round_bonus ?? 0) > 0 && (
                   <span className="ranking-tag tag-bonus">+{user.round_bonus} bônus</span>
+                )}
+                {user.decidedByDraw && (
+                  <span className="ranking-tag tag-draw">Definido por sorteio</span>
+                )}
+                {user.pendingDraw && (
+                  <span className="ranking-tag tag-tie">⚖️ Aguardando sorteio</span>
                 )}
               </div>
               <div className="ranking-row-end">

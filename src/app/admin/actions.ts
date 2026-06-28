@@ -6,6 +6,8 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { runFootballSync } from '@/lib/football-data/sync';
 import { creditReferralOnPremium } from '@/lib/bolao/referral';
 import { scrapeUfmgProbabilities } from '@/lib/ufmg/scrape';
+import { validateDrawOrder } from '@/lib/bolao/tiebreak';
+import type { TieGroup } from '@/lib/bolao/tiebreak';
 import type { Profile } from '@/lib/bolao/types';
 
 export interface AdminActionResult {
@@ -341,6 +343,84 @@ export async function setPremium(
     return { ok: false, error: 'Não foi possível atualizar o acesso.' };
   }
 
+  revalidatePath('/admin');
+  return { ok: true };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Desempate por sorteio
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface TiebreakDrawActionResult {
+  ok: boolean;
+  error?: string;
+}
+
+/**
+ * Registra (ou substitui) o resultado de um sorteio ao vivo.
+ *
+ * @param group   Grupo de empate detectado no momento da submissão (calculado
+ *                no client e re-validado aqui no servidor antes de gravar).
+ * @param orderedUserIds  user_ids na ordem sorteada (1º → último).
+ */
+export async function recordTiebreakDraw(
+  group: TieGroup,
+  orderedUserIds: string[],
+): Promise<TiebreakDrawActionResult> {
+  const auth = await requireAdmin();
+  if ('error' in auth) return { ok: false, error: auth.error };
+
+  // Valida que a ordering é uma permutação exata dos membros do grupo.
+  const validationError = validateDrawOrder(group, orderedUserIds);
+  if (validationError) return { ok: false, error: validationError };
+
+  const admin = createAdminClient();
+
+  const { error } = await admin.from('tiebreak_draws').upsert(
+    {
+      scope: group.scope,
+      signature: group.signature,
+      ordering: orderedUserIds,
+      created_by: auth.userId,
+      created_at: new Date().toISOString(),
+    },
+    { onConflict: 'scope,signature' },
+  );
+
+  if (error) {
+    console.error('[admin] recordTiebreakDraw falhou:', error);
+    return { ok: false, error: 'Não foi possível salvar o sorteio.' };
+  }
+
+  revalidatePath('/ranking');
+  revalidatePath('/admin');
+  return { ok: true };
+}
+
+/**
+ * Remove um sorteio registrado (para refazê-lo).
+ */
+export async function clearTiebreakDraw(
+  scope: string,
+  signature: string,
+): Promise<TiebreakDrawActionResult> {
+  const auth = await requireAdmin();
+  if ('error' in auth) return { ok: false, error: auth.error };
+
+  const admin = createAdminClient();
+
+  const { error } = await admin
+    .from('tiebreak_draws')
+    .delete()
+    .eq('scope', scope)
+    .eq('signature', signature);
+
+  if (error) {
+    console.error('[admin] clearTiebreakDraw falhou:', error);
+    return { ok: false, error: 'Não foi possível remover o sorteio.' };
+  }
+
+  revalidatePath('/ranking');
   revalidatePath('/admin');
   return { ok: true };
 }

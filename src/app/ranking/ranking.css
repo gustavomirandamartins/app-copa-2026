@@ -367,6 +367,87 @@ details.champion-card[open] .champion-chevron {
   background: rgba(224, 124, 0, 0.14);
 }
 
+/* ── Desempate por sorteio ──────────────────────────────────────── */
+
+/* Tag "Definido por sorteio" */
+.ranking-tag.tag-draw {
+  color: #7ee787;
+  background: rgba(0, 200, 83, 0.12);
+  border: 1px solid rgba(0, 200, 83, 0.25);
+}
+
+/* Tag "Aguardando sorteio" */
+.ranking-tag.tag-tie {
+  color: #e3c27a;
+  background: rgba(224, 160, 0, 0.12);
+  border: 1px solid rgba(224, 160, 0, 0.3);
+}
+
+/* Destaque de linha para empatados aguardando sorteio */
+.ranking-row.tie-pending {
+  border-left: 3px solid rgba(224, 160, 0, 0.55);
+}
+
+/* ── Painel de sorteio (admin) ──────────────────────────────────── */
+.tiebreak-panel {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  padding: var(--space-md) var(--space-lg);
+  margin-bottom: var(--space-sm);
+}
+.tiebreak-panel--resolved {
+  border-color: rgba(0, 200, 83, 0.25);
+}
+.tiebreak-scope {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  margin-bottom: var(--space-xs);
+}
+.tiebreak-order-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: var(--space-sm);
+}
+.tiebreak-order-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.tiebreak-order-pos {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--gold);
+  min-width: 26px;
+}
+.tiebreak-select {
+  flex: 1;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--glass-border);
+  border-radius: 6px;
+  color: var(--text-primary);
+  padding: 6px 10px;
+  font-size: 0.85rem;
+}
+.tiebreak-select:focus { border-color: var(--gold); outline: none; }
+.tiebreak-result-list {
+  list-style: none;
+  padding: 0;
+  margin: var(--space-xs) 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.tiebreak-result-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+}
+
 @media (max-width: 720px) {
   .prizes-grid {
     grid-template-columns: 1fr;

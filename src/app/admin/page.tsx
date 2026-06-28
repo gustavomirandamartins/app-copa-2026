@@ -13,9 +13,18 @@ import {
   type MatrixColumn,
   type MatrixCell,
 } from '@/components/admin/AdminPredictionsMatrix';
+import { AdminTiebreakDraws, type TiebreakEntry } from '@/components/admin/AdminTiebreakDraws';
 import { matches } from '@/data/matches';
 import { teams } from '@/data/teams';
+import { ROUND_ORDER, ROUND_LABELS } from '@/lib/bolao/rounds';
+import type { RoundKey } from '@/lib/bolao/rounds';
 import type { MatchStage } from '@/lib/types';
+import {
+  detectGeneralTieGroups,
+  detectRoundTieGroups,
+  type GeneralRow,
+  type DrawRecord,
+} from '@/lib/bolao/tiebreak';
 
 export const revalidate = 0;
 
@@ -181,6 +190,116 @@ export default async function AdminPage() {
     }))
     .sort((a, b) => b.total - a.total);
 
+  // ── Sorteios de desempate ─────────────────────────────────────────────────
+  // Lê palpites agrupados por usuário para montar os tiebreakers (igual ao
+  // ranking/page.tsx, mas de forma simplificada — só o necessário para detecção).
+  type TbMap = Map<string, { prediction_pts: number; exact_pts: number; diff_pts: number; final_pts: number; semi_pts: number; quarters_pts: number; ro16_pts: number }>;
+  const { matches: staticMatches } = await import('@/data/matches');
+  const finalIds    = new Set(staticMatches.filter(m => m.stage === 'final').map(m => m.id));
+  const semiIds     = new Set(staticMatches.filter(m => m.stage === 'semi-final').map(m => m.id));
+  const quartersIds = new Set(staticMatches.filter(m => m.stage === 'quarter-final').map(m => m.id));
+  const ro16Ids     = new Set(staticMatches.filter(m => m.stage === 'round-of-16').map(m => m.id));
+
+  const tbMap: TbMap = new Map();
+  const tbPreds: Array<{ user_id: string; match_id: string; points_earned: number; base_points: number | null }> = [];
+  for (let from = 0; ; from += 1000) {
+    const { data } = await admin
+      .from('predictions')
+      .select('user_id, match_id, points_earned, base_points')
+      .not('points_earned', 'is', null)
+      .order('id', { ascending: true })
+      .range(from, from + 999);
+    const rows = (data ?? []) as typeof tbPreds;
+    tbPreds.push(...rows);
+    if (rows.length < 1000) break;
+  }
+  for (const p of tbPreds) {
+    const t = tbMap.get(p.user_id) ?? { prediction_pts: 0, exact_pts: 0, diff_pts: 0, final_pts: 0, semi_pts: 0, quarters_pts: 0, ro16_pts: 0 };
+    const pts = p.points_earned;
+    const base = p.base_points ?? 0;
+    t.prediction_pts += pts;
+    if (base === 5) t.exact_pts += pts;
+    if (base === 3) t.diff_pts  += pts;
+    if (finalIds.has(p.match_id))    t.final_pts    += pts;
+    if (semiIds.has(p.match_id))     t.semi_pts     += pts;
+    if (quartersIds.has(p.match_id)) t.quarters_pts += pts;
+    if (ro16Ids.has(p.match_id))     t.ro16_pts     += pts;
+    tbMap.set(p.user_id, t);
+  }
+
+  // Classificação geral ordenada (igual ao ranking/page)
+  const generalRanking = profiles
+    .map(p => ({
+      id: p.id,
+      is_admin: p.is_admin ?? false,
+      tb: {
+        total_score: p.total_score ?? 0,
+        ...tbMap.get(p.id) ?? { prediction_pts: 0, exact_pts: 0, diff_pts: 0, final_pts: 0, semi_pts: 0, quarters_pts: 0, ro16_pts: 0 },
+      },
+    }))
+    .sort((a, b) => {
+      if (b.tb.total_score !== a.tb.total_score) return b.tb.total_score - a.tb.total_score;
+      if (b.tb.prediction_pts !== a.tb.prediction_pts) return b.tb.prediction_pts - a.tb.prediction_pts;
+      if (b.tb.exact_pts !== a.tb.exact_pts) return b.tb.exact_pts - a.tb.exact_pts;
+      if (b.tb.diff_pts !== a.tb.diff_pts) return b.tb.diff_pts - a.tb.diff_pts;
+      if (b.tb.final_pts !== a.tb.final_pts) return b.tb.final_pts - a.tb.final_pts;
+      if (b.tb.semi_pts !== a.tb.semi_pts) return b.tb.semi_pts - a.tb.semi_pts;
+      if (b.tb.quarters_pts !== a.tb.quarters_pts) return b.tb.quarters_pts - a.tb.quarters_pts;
+      if (b.tb.ro16_pts !== a.tb.ro16_pts) return b.tb.ro16_pts - a.tb.ro16_pts;
+      return 0;
+    }) satisfies GeneralRow[];
+
+  const generalTieGroups = detectGeneralTieGroups(generalRanking);
+
+  // Round_scores já calculados pelo sync
+  const { data: roundScoresData } = await admin
+    .from('round_scores')
+    .select('user_id, round_key, points, exact_pts, diff_pts, complete, is_winner');
+  const rScores = (roundScoresData ?? []) as { user_id: string; round_key: string; points: number; exact_pts: number; diff_pts: number; complete: boolean; is_winner: boolean }[];
+
+  const roundTieGroups: Array<{ roundKey: RoundKey; groups: ReturnType<typeof detectRoundTieGroups> }> = [];
+  for (const rk of ROUND_ORDER) {
+    const rows = rScores.filter(r => r.round_key === rk);
+    if (!rows.length || !rows[0]?.complete) continue;
+    const isAdminById = new Map(profiles.map(p => [p.id, p.is_admin ?? false]));
+    const sorted = rows
+      .map(r => ({ user_id: r.user_id, is_admin: isAdminById.get(r.user_id) ?? false, points: r.points, exact_pts: r.exact_pts, diff_pts: r.diff_pts }))
+      .sort((a, b) => {
+        if (b.points !== a.points) return b.points - a.points;
+        if (b.exact_pts !== a.exact_pts) return b.exact_pts - a.exact_pts;
+        if (b.diff_pts !== a.diff_pts) return b.diff_pts - a.diff_pts;
+        return a.user_id < b.user_id ? -1 : 1;
+      });
+    const groups = detectRoundTieGroups(sorted, rk);
+    if (groups.length) roundTieGroups.push({ roundKey: rk, groups });
+  }
+
+  // Lê sorteios já registrados
+  const { data: drawsData } = await admin.from('tiebreak_draws').select('scope, signature, ordering');
+  const drawsByKey = new Map<string, DrawRecord>();
+  for (const d of (drawsData ?? []) as Array<{ scope: string; signature: string; ordering: string[] }>) {
+    drawsByKey.set(`${d.scope}|${d.signature}`, { scope: d.scope as DrawRecord['scope'], signature: d.signature, ordering: d.ordering });
+  }
+
+  const nameById = new Map(profiles.map(p => [p.id, p.full_name]));
+
+  const tiebreakEntries: TiebreakEntry[] = [
+    ...generalTieGroups.map(g => ({
+      group: g,
+      memberNames: g.memberIds.map(id => nameById.get(id) ?? null),
+      draw: drawsByKey.get(`${g.scope}|${g.signature}`),
+      scopeLabel: 'Classificação Geral',
+    })),
+    ...roundTieGroups.flatMap(({ roundKey, groups }) =>
+      groups.map(g => ({
+        group: g,
+        memberNames: g.memberIds.map(id => nameById.get(id) ?? null),
+        draw: drawsByKey.get(`${g.scope}|${g.signature}`),
+        scopeLabel: ROUND_LABELS[roundKey],
+      }))
+    ),
+  ];
+
   return (
     <div className="container">
       <section style={{ marginBottom: 'var(--space-lg)' }}>
@@ -212,6 +331,10 @@ export default async function AdminPage() {
 
       <div style={{ marginTop: 'var(--space-2xl)' }}>
         <AdminUserList users={users} />
+      </div>
+
+      <div style={{ marginTop: 'var(--space-2xl)' }}>
+        <AdminTiebreakDraws entries={tiebreakEntries} />
       </div>
     </div>
   );

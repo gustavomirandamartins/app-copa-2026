@@ -5,6 +5,13 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { ROUND_ORDER, ROUND_LABELS, ROUND_BONUS_POINTS, ROUND_END_DATES, roundKeyForMatch, type RoundKey } from '@/lib/bolao/rounds';
 import { RankingList, type RankedUserRow } from '@/components/ranking/RankingList';
 import { RoundClassification, type RoundOption } from '@/components/ranking/RoundClassification';
+import {
+  detectGeneralTieGroups,
+  detectRoundTieGroups,
+  applyDraw,
+  type GeneralRow,
+  type DrawRecord,
+} from '@/lib/bolao/tiebreak';
 import './ranking.css';
 
 export const revalidate = 0;
@@ -350,7 +357,59 @@ export default async function RankingPage() {
     ranking = DEMO_RANKING;
   }
 
-  // ── Agrupa round_rows por rodada ────────────────────────────────────
+  // ── Sorteios de desempate ────────────────────────────────────────────────
+  // Lê sorteios do banco (degrada graciosamente se a tabela não existir ainda).
+  const drawsByKey = new Map<string, DrawRecord>();
+  if (configured) {
+    try {
+      const adminForDraws = createAdminClient();
+      const { data: drawsData } = await adminForDraws
+        .from('tiebreak_draws')
+        .select('scope, signature, ordering');
+      for (const d of (drawsData ?? []) as Array<{ scope: string; signature: string; ordering: string[] }>) {
+        drawsByKey.set(`${d.scope}|${d.signature}`, {
+          scope: d.scope as DrawRecord['scope'],
+          signature: d.signature,
+          ordering: d.ordering,
+        });
+      }
+    } catch {
+      // Tabela pode não existir ainda (antes da migração); não quebra a página.
+    }
+  }
+
+  // Flags de empate na Geral
+  const generalPendingIds = new Set<string>();
+  const generalDecidedIds = new Set<string>();
+
+  if (configured) {
+    const generalRowsForTie: GeneralRow[] = ranking.map((u) => ({
+      id: u.id,
+      is_admin: u.is_admin,
+      tb: {
+        total_score: u.total_score,
+        prediction_pts: u.tb.prediction_pts,
+        exact_pts: u.tb.exact_pts,
+        diff_pts: u.tb.diff_pts,
+        final_pts: u.tb.final_pts,
+        semi_pts: u.tb.semi_pts,
+        quarters_pts: u.tb.quarters_pts,
+        ro16_pts: u.tb.ro16_pts,
+      },
+    }));
+    const generalTieGroups = detectGeneralTieGroups(generalRowsForTie);
+    for (const group of generalTieGroups) {
+      const draw = drawsByKey.get(`${group.scope}|${group.signature}`);
+      const result = applyDraw(group, draw);
+      if (result.pending) group.memberIds.forEach((id) => generalPendingIds.add(id));
+      else result.decidedIds.forEach((id) => generalDecidedIds.add(id));
+    }
+  }
+
+  // Flags de empate por rodada
+  const roundPendingIds = new Map<RoundKey, Set<string>>();
+  const roundDecidedIds = new Map<RoundKey, Set<string>>();
+
   const byRound = new Map<RoundKey, RoundRow[]>();
   for (const r of roundRows) {
     const key = r.round_key as RoundKey;
@@ -395,24 +454,54 @@ export default async function RankingPage() {
   };
 
   // ── Converte para o formato do componente cliente ───────────────────
-  const generalRows: RankedUserRow[] = ranking.map((u) =>
-    toGeneralRow(u, roundBonusMap.get(u.id) ?? [])
-  );
+  const generalRows: RankedUserRow[] = ranking.map((u) => {
+    const row = toGeneralRow(u, roundBonusMap.get(u.id) ?? []);
+    if (!u.is_admin) {
+      row.pendingDraw   = generalPendingIds.has(u.id);
+      row.decidedByDraw = generalDecidedIds.has(u.id);
+    }
+    return row;
+  });
 
   // Opções do seletor de rodada: rodadas com dados + a rodada vigente.
   const roundOptions: RoundOption[] = ROUND_ORDER.filter(
     (key) => byRound.has(key) || key === vigenteKey
   ).map((key) => {
     const rows = byRound.get(key) ?? [];
+    const sortedRows = sortRound(rows);
+
+    // Detecção de empates da rodada (só para rodadas encerradas).
+    if (rows[0]?.complete && configured) {
+      const pending = roundPendingIds.get(key) ?? new Set<string>();
+      const decided = roundDecidedIds.get(key) ?? new Set<string>();
+      const roundRowsForTie = sortedRows
+        .filter((r) => !r.is_admin)
+        .map((r) => ({ user_id: r.user_id, is_admin: false, points: r.points, exact_pts: r.exact_pts, diff_pts: r.diff_pts }));
+      const tieGroups = detectRoundTieGroups(roundRowsForTie, key);
+      for (const group of tieGroups) {
+        const draw = drawsByKey.get(`${group.scope}|${group.signature}`);
+        const result = applyDraw(group, draw);
+        if (result.pending) group.memberIds.forEach((id) => pending.add(id));
+        else result.decidedIds.forEach((id) => decided.add(id));
+      }
+      roundPendingIds.set(key, pending);
+      roundDecidedIds.set(key, decided);
+    }
+
     return {
       key,
       label: ROUND_LABELS[key],
       complete: rows[0]?.complete ?? false,
       endLabel: fmtEnd(key),
       bonusTop: ROUND_BONUS_POINTS,
-      rows: sortRound(rows).map((r) =>
-        toRoundRow(r, roundBreakdownMap.get(`${r.user_id}::${key}`) ?? emptyRoundBreakdown()),
-      ),
+      rows: sortedRows.map((r) => {
+        const row = toRoundRow(r, roundBreakdownMap.get(`${r.user_id}::${key}`) ?? emptyRoundBreakdown());
+        if (!r.is_admin) {
+          row.pendingDraw   = roundPendingIds.get(key)?.has(r.user_id) ?? false;
+          row.decidedByDraw = roundDecidedIds.get(key)?.has(r.user_id) ?? false;
+        }
+        return row;
+      }),
     };
   });
 
