@@ -113,7 +113,7 @@ export async function applyScoring(admin: Admin): Promise<{ updatedPredictions: 
     affectedUsers.add(p.user_id);
     const finished = finishedScore.get(p.match_id);
     const multiplier = multiplierByMatch.get(p.match_id) ?? 1;
-    let base = finished
+    const baseWithoutPenalty = finished
       ? calculateMatchPoints(
           p.home_score_guess,
           p.away_score_guess,
@@ -121,6 +121,8 @@ export async function applyScoring(admin: Admin): Promise<{ updatedPredictions: 
           finished.away,
         )
       : 0;
+      
+    let base = baseWithoutPenalty;
       
     // Bônus de 1 ponto se acertar o vencedor dos pênaltis
     if (
@@ -157,8 +159,8 @@ export async function applyScoring(admin: Admin): Promise<{ updatedPredictions: 
       cur.points += points;
       // Desempate por contagem de acertos (5 cada / 3 cada), independente do
       // multiplicador — o turbo entra só no total de pontos, não no desempate.
-      if (base === 5) cur.exact += 5; // acerto de placar exato
-      if (base === 3) cur.diff += 3; // acerto de saldo de gols
+      if (baseWithoutPenalty === 5) cur.exact += 5; // acerto de placar exato
+      if (baseWithoutPenalty === 3) cur.diff += 3; // acerto de saldo de gols
       stats.set(p.user_id, cur);
     }
   }

@@ -297,6 +297,11 @@ export function PredictionGrid({
                           </div>
                           <TeamCell teamId={match.awayTeamId} align="right" placeholder={match.awayTeamPlaceholder} />
                         </div>
+                        {result?.homePenalties != null && result?.awayPenalties != null && (
+                          <div style={{ textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+                            Pênaltis: {result.homePenalties} × {result.awayPenalties}
+                          </div>
+                        )}
 
                         {/* Palpite sempre visível depois que o jogo começa
                             (ao vivo ou encerrado), junto do placar real.

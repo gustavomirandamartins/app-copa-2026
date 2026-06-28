@@ -19,6 +19,8 @@ export interface MatchResult {
   status: MatchStatus;
   homeScore: number | null;
   awayScore: number | null;
+  homePenalties?: number | null;
+  awayPenalties?: number | null;
 }
 
 interface Props {

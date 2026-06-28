@@ -76,12 +76,14 @@ export default async function BolaoPage({
     // Resultados reais (status + placar) — fonte da verdade para travar/exibir.
     const { data: live } = await supabase
       .from('matches')
-      .select('id, status, home_score, away_score');
+      .select('id, status, home_score, away_score, home_penalties, away_penalties');
     for (const m of live ?? []) {
       results[m.id] = {
         status: m.status as MatchResult['status'],
         homeScore: m.home_score as number | null,
         awayScore: m.away_score as number | null,
+        homePenalties: m.home_penalties as number | null,
+        awayPenalties: m.away_penalties as number | null,
       };
     }
   }
