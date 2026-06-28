@@ -25,8 +25,88 @@ type StandingRow = {
 };
 
 /** Calcula a classificação de cada grupo a partir dos jogos finalizados. */
+type FinishedMatch = { home_team_id: string; away_team_id: string; home_score: number; away_score: number };
+
+/**
+ * Critérios de desempate oficiais da FIFA (Copa 2026), nesta ordem:
+ *  1. Pontos          2. Saldo de gols       3. Gols pró   (todos os jogos do grupo)
+ *  4. Pontos no confronto direto entre os times empatados
+ *  5. Saldo de gols no confronto direto
+ *  6. Gols pró no confronto direto
+ *  7. Pontuação de fair play (cartões)        8. Sorteio da FIFA
+ *
+ * Os critérios 7–8 dependem de dados disciplinares que não estão neste
+ * dataset (o sync da football-data.org já os aplica na tabela `standings`,
+ * que é a fonte primária). Este cálculo de fallback resolve até o critério 6;
+ * persistindo o empate, usa o id do time apenas para manter ordem estável.
+ */
+
+/** Mini-tabela de confronto direto restrita ao subconjunto de times empatados. */
+function headToHead(teamIds: string[], matches: FinishedMatch[]) {
+  const set = new Set(teamIds);
+  const h2h = new Map(teamIds.map((id) => [id, { pts: 0, gf: 0, ga: 0 }]));
+  for (const m of matches) {
+    if (!set.has(m.home_team_id) || !set.has(m.away_team_id)) continue;
+    const h = h2h.get(m.home_team_id)!;
+    const a = h2h.get(m.away_team_id)!;
+    h.gf += m.home_score; h.ga += m.away_score;
+    a.gf += m.away_score; a.ga += m.home_score;
+    if (m.home_score > m.away_score) h.pts += 3;
+    else if (m.home_score < m.away_score) a.pts += 3;
+    else { h.pts++; a.pts++; }
+  }
+  return h2h;
+}
+
+/**
+ * Ordena as linhas de um grupo pelos critérios FIFA. Aplica pts → SG → GP em
+ * todos os jogos; para times ainda empatados nos três, aplica confronto direto
+ * (pts → SG → GP entre eles).
+ */
+function rankByFifaCriteria(rows: StandingRow[], matches: FinishedMatch[]): StandingRow[] {
+  const tiedOverall = (a: StandingRow, b: StandingRow) =>
+    a.points === b.points &&
+    a.goal_difference === b.goal_difference &&
+    a.goals_for === b.goals_for;
+
+  // 1ª passada: critérios gerais (pts → SG → GP).
+  const sorted = [...rows].sort((a, b) =>
+    b.points - a.points ||
+    b.goal_difference - a.goal_difference ||
+    b.goals_for - a.goals_for ||
+    0,
+  );
+
+  // 2ª passada: desempata blocos de empate por confronto direto.
+  const result: StandingRow[] = [];
+  let i = 0;
+  while (i < sorted.length) {
+    let j = i + 1;
+    while (j < sorted.length && tiedOverall(sorted[i], sorted[j])) j++;
+    const cluster = sorted.slice(i, j);
+
+    if (cluster.length > 1) {
+      const h2h = headToHead(cluster.map((r) => r.team_id), matches);
+      cluster.sort((a, b) => {
+        const ha = h2h.get(a.team_id)!;
+        const hb = h2h.get(b.team_id)!;
+        return (
+          hb.pts - ha.pts ||
+          (hb.gf - hb.ga) - (ha.gf - ha.ga) ||
+          hb.gf - ha.gf ||
+          a.team_id.localeCompare(b.team_id)
+        );
+      });
+    }
+    result.push(...cluster);
+    i = j;
+  }
+
+  return result;
+}
+
 function computeStandings(
-  finishedMatches: { home_team_id: string; away_team_id: string; home_score: number; away_score: number }[],
+  finishedMatches: FinishedMatch[],
 ): Map<GroupId, StandingRow[]> {
   // Acumula estatísticas por time
   const stats = new Map<string, { played: number; won: number; draw: number; lost: number; gf: number; ga: number; pts: number }>();
@@ -47,7 +127,7 @@ function computeStandings(
     else { h.draw++; h.pts++; a.draw++; a.pts++; }
   }
 
-  // Agrupa por grupo e ordena: pts desc → sg desc → gf desc → nome asc
+  // Agrupa por grupo e ordena pelos critérios oficiais FIFA (com confronto direto)
   const byGroup = new Map<GroupId, StandingRow[]>();
   for (const group of allGroups) {
     const groupTeams = teams.filter((t) => t.group === group);
@@ -61,14 +141,9 @@ function computeStandings(
       };
     });
 
-    rows.sort((a, b) =>
-      b.points - a.points ||
-      b.goal_difference - a.goal_difference ||
-      b.goals_for - a.goals_for ||
-      a.team_id.localeCompare(b.team_id),
-    );
-    rows.forEach((r, i) => { r.position = i + 1; });
-    byGroup.set(group, rows);
+    const ranked = rankByFifaCriteria(rows, finishedMatches);
+    ranked.forEach((r, i) => { r.position = i + 1; });
+    byGroup.set(group, ranked);
   }
 
   return byGroup;
@@ -238,12 +313,15 @@ export default async function GruposPage() {
 
         if (thirds.length === 0) return null;
 
-        // Ordena: pontos → SG → GP → GA (critérios FIFA)
+        // Ordena pelos critérios FIFA para 3ºs colocados (grupos distintos, sem
+        // confronto direto): pontos → saldo → gols pró → fair play → sorteio.
+        // Fair play/sorteio não são calculáveis aqui (sem dados de cartões);
+        // o id do time mantém a ordem estável em empates remanescentes.
         thirds.sort((a, b) =>
           b.points - a.points ||
           b.goal_difference - a.goal_difference ||
           b.goals_for - a.goals_for ||
-          a.goals_against - b.goals_against,
+          a.team_id.localeCompare(b.team_id),
         );
 
         const qualified = thirds.slice(0, 8);
@@ -255,7 +333,7 @@ export default async function GruposPage() {
               Melhores terceiros colocados
             </h2>
             <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: 'var(--space-md)' }}>
-              Os 8 melhores 3ºs colocados avançam para os 16 avos de final. Critérios: pontos → saldo de gols → gols pró → gols contra.
+              Os 8 melhores 3ºs colocados avançam para os 16 avos de final. Critérios: pontos → saldo de gols → gols pró → fair play.
               {thirds.length < 12 && ` (${12 - thirds.length} grupo${12 - thirds.length > 1 ? 's' : ''} ainda sem 3º colocado)`}
             </p>
             <div className="glass-card-static" style={{ padding: 0, overflow: 'hidden' }}>
