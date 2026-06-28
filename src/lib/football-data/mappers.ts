@@ -18,7 +18,8 @@ const byNameEn = new Map(
 /** tla/nome da football-data → nosso id de time. Preencher se necessário. */
 const OVERRIDES: Record<string, string> = {
   // exemplos prováveis (confirmar com resposta real):
-  // KSA: 'ksa', SAU: 'ksa', IRN: 'irn', IRI: 'irn', CIV: 'civ',
+  KSA: 'ksa', SAU: 'ksa', IRN: 'irn', IRI: 'irn', CIV: 'civ',
+  ZAF: 'rsa', // ISO code for South Africa
 };
 
 export function resolveTeamId(fd: FdTeam): string | null {

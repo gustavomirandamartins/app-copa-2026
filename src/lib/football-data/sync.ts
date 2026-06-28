@@ -45,7 +45,7 @@ export async function runFootballSync(): Promise<SyncResult> {
     // Se a partida acabou de ser marcada como FINISHED mas o placar ainda
     // não chegou (fullTime null), não sobrescrevemos o que já está no banco.
     const scoreFields =
-      m.score.fullTime.home != null && m.score.fullTime.away != null
+      m.score?.fullTime?.home != null && m.score?.fullTime?.away != null
         ? {
             home_score: m.score.fullTime.home,
             away_score: m.score.fullTime.away,
