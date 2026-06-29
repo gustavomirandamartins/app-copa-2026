@@ -1,287 +1,217 @@
 .bracket-container {
-  margin-top: var(--space-xl);
+  width: 100%;
+  position: relative;
+  margin-top: var(--space-md);
+  /* Animation for the whole bracket fading in */
+  animation: fade-in-bracket 0.6s var(--ease) forwards;
 }
 
-.bracket-stage-title {
-  font-family: var(--font-heading);
-  font-size: clamp(1.25rem, 3vw, 1.75rem);
-  font-weight: 700;
-  color: var(--text-primary);
-  text-align: center;
-  margin-bottom: var(--space-xl);
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+@keyframes fade-in-bracket {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.bracket-single-column {
+.bracket-scroll-area {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  /* Hide scrollbar */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding-bottom: var(--space-lg);
+}
+
+.bracket-scroll-area::-webkit-scrollbar {
+  display: none;
+}
+
+.bracket-canvas {
+  display: inline-block; /* allows it to stretch wider than container */
+  min-width: max-content;
+  padding: var(--space-md) var(--space-xl);
+}
+
+.bracket-columns {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-lg);
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-.bracket-two-columns {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--space-xl);
-}
-
-@media (min-width: 768px) {
-  .bracket-two-columns {
-    grid-template-columns: 1fr 1fr;
-    gap: var(--space-2xl);
-  }
+  gap: 60px; /* space between rounds */
 }
 
 .bracket-column {
   display: flex;
   flex-direction: column;
-  gap: var(--space-lg);
+  justify-content: space-around;
+  min-width: 200px;
 }
 
-.bracket-round {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
-}
-
-.bracket-round-title {
-  font-family: var(--font-heading);
-  font-size: 0.875rem;
+.bracket-column-title {
+  text-align: center;
   font-weight: 600;
-  color: var(--gold);
+  font-size: 0.9rem;
+  color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  padding-bottom: var(--space-sm);
-  border-bottom: 1px solid var(--glass-border);
-  margin-bottom: var(--space-sm);
+  margin-bottom: var(--space-xl);
+  position: relative;
 }
 
-.bracket-round-matches {
+.bracket-column-matches {
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
+  justify-content: space-around;
+  flex-grow: 1;
 }
 
-.bracket-match {
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur)) saturate(180%);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-md);
-  padding: var(--space-md);
-  transition: all var(--transition-base);
+.bracket-match-wrapper {
   position: relative;
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex-grow: 1;
+  padding: var(--space-sm) 0;
 }
 
-.bracket-match::before {
+/* Bracket connection lines (CSS approach) */
+/* We draw a right border and top/bottom border on the wrapper */
+.bracket-column:not(:last-child) .bracket-match-wrapper::after {
   content: '';
   position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    105deg,
-    transparent 40%,
-    rgba(255, 255, 255, 0.08) 50%,
-    transparent 60%
-  );
-  transform: translateX(-140%) skewX(-20deg);
-  transition: transform 0.6s var(--ease);
-  pointer-events: none;
+  right: -30px; /* half of column gap */
+  width: 30px;
+  border-right: 2px solid var(--glass-border);
+  border-top: 2px solid var(--glass-border);
+  border-radius: 0 8px 0 0;
+  opacity: 0.3;
+  transition: opacity var(--transition-base), border-color var(--transition-base);
 }
 
-.bracket-match:hover::before {
-  transform: translateX(140%) skewX(-20deg);
+/* Top half of a pair connects down */
+.bracket-column:not(:last-child) .bracket-match-wrapper:nth-child(odd)::after {
+  top: 50%;
+  bottom: -50%;
+  border-top: 2px solid var(--glass-border);
+  border-bottom: none;
+  border-radius: 0 8px 0 0;
 }
 
-.bracket-match:hover {
+/* Bottom half of a pair connects up */
+.bracket-column:not(:last-child) .bracket-match-wrapper:nth-child(even)::after {
+  top: -50%;
+  bottom: 50%;
+  border-bottom: 2px solid var(--glass-border);
+  border-top: none;
+  border-radius: 0 0 8px 0;
+}
+
+/* Connect to the next column's card */
+.bracket-column:not(:first-child) .bracket-match-wrapper::before {
+  content: '';
+  position: absolute;
+  left: -30px;
+  width: 30px;
+  top: 50%;
+  border-top: 2px solid var(--glass-border);
+  opacity: 0.3;
+  transition: opacity var(--transition-base), border-color var(--transition-base);
+}
+
+/* The card itself */
+.bracket-card {
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  position: relative;
+  z-index: 2;
+  transition: transform var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast), opacity var(--transition-fast);
+  cursor: default;
+  /* Staggered animation */
+  animation: slide-in-card 0.5s var(--ease) backwards;
+}
+
+/* Add a slight stagger based on DOM order for a waterfall effect */
+.bracket-card:nth-child(1) { animation-delay: 0.05s; }
+.bracket-card:nth-child(2) { animation-delay: 0.1s; }
+.bracket-card:nth-child(3) { animation-delay: 0.15s; }
+.bracket-card:nth-child(4) { animation-delay: 0.2s; }
+.bracket-card:nth-child(5) { animation-delay: 0.25s; }
+
+@keyframes slide-in-card {
+  from { opacity: 0; transform: translateX(-15px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.bracket-card:hover {
+  transform: translateY(-2px) scale(1.02);
   border-color: var(--glass-border-hover);
-  box-shadow: var(--shadow-md);
+  background: var(--glass-bg-hover);
+  z-index: 3;
 }
 
-.bracket-match.is-live {
+/* Hover effect highlights */
+.bracket-card.active {
   border-color: var(--copa-green);
-  box-shadow: 0 0 20px rgba(0, 151, 57, 0.3);
+  box-shadow: var(--shadow-glow-green);
 }
 
-.bracket-match.is-finished {
-  opacity: 0.85;
+.bracket-card.muted {
+  opacity: 0.4;
+  filter: grayscale(80%);
 }
 
-.bracket-match-header {
+.bracket-card-header {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: var(--space-sm);
-  margin-bottom: var(--space-sm);
-  padding-bottom: var(--space-xs);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.bracket-match-number {
+  margin-bottom: 6px;
   font-size: 0.75rem;
-  font-weight: 600;
   color: var(--text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
 }
 
-.bracket-live-badge {
-  font-size: 0.65rem;
-  font-weight: 700;
-  color: #fff;
-  background: var(--copa-green);
-  padding: 2px 8px;
-  border-radius: var(--radius-full);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  animation: pulse-live 2s ease-in-out infinite;
+.match-num {
+  font-weight: 600;
+}
+
+.match-live {
+  color: var(--red);
+  animation: pulse-live 1.5s infinite;
 }
 
 @keyframes pulse-live {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
 }
 
-.bracket-finished-badge {
-  font-size: 0.65rem;
+.bracket-card-team {
+  display: flex;
+  align-items: center;
+  padding: 4px 0;
+  gap: 8px;
+}
+
+.bracket-card-team .team-name {
+  flex-grow: 1;
   font-weight: 600;
-  color: var(--text-tertiary);
-  background: rgba(255, 255, 255, 0.08);
-  padding: 2px 8px;
-  border-radius: var(--radius-full);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-.bracket-teams {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-}
-
-.bracket-team {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-sm) var(--space-md);
-  border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.03);
-  transition: background var(--transition-fast);
-}
-
-.bracket-team:hover {
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.bracket-team.is-winner {
-  background: rgba(0, 151, 57, 0.12);
-}
-
-.bracket-team-info {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  flex: 1;
-  min-width: 0;
-}
-
-.bracket-team-link {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  text-decoration: none;
-  color: inherit;
-  flex: 1;
-  min-width: 0;
-}
-
-.bracket-team-link:hover {
-  color: var(--copa-green);
-}
-
-.bracket-flag-placeholder {
-  font-size: 1.25rem;
-  line-height: 1;
-  flex-shrink: 0;
-}
-
-.bracket-team-name {
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.bracket-team-name.bracket-placeholder {
+.bracket-card-team .team-name.placeholder {
+  font-weight: 400;
   color: var(--text-tertiary);
-  font-style: italic;
   font-size: 0.8rem;
 }
 
-.bracket-team.is-winner .bracket-team-name {
-  color: var(--copa-green);
-  font-weight: 600;
+.team-flag-placeholder {
+  opacity: 0.3;
+  filter: grayscale(1);
 }
 
-.bracket-score {
-  font-size: 1rem;
+.team-score {
   font-weight: 700;
-  color: var(--text-secondary);
-  min-width: 24px;
-  text-align: center;
-  padding: 2px 8px;
-  background: rgba(255, 255, 255, 0.06);
-  border-radius: var(--radius-sm);
-}
-
-.bracket-score.winner {
-  color: var(--copa-green);
-  background: rgba(0, 151, 57, 0.15);
-}
-
-.bracket-match-footer {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  margin-top: var(--space-sm);
-  padding-top: var(--space-sm);
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  font-size: 0.7rem;
-  color: var(--text-tertiary);
-}
-
-.bracket-match-footer svg {
-  opacity: 0.6;
-}
-
-.bracket-match-date,
-.bracket-match-time {
-  font-weight: 500;
-}
-
-.bracket-match-time {
-  margin-left: auto;
-  color: var(--gold);
-  font-weight: 600;
-}
-
-@media (max-width: 480px) {
-  .bracket-match {
-    padding: var(--space-sm);
-  }
-
-  .bracket-team {
-    padding: var(--space-xs) var(--space-sm);
-  }
-
-  .bracket-team-name {
-    font-size: 0.8rem;
-  }
-
-  .bracket-score {
-    font-size: 0.9rem;
-    min-width: 20px;
-    padding: 2px 6px;
-  }
+  font-family: monospace;
+  background: rgba(0,0,0,0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
 }
