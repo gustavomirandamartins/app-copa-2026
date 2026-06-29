@@ -76,7 +76,7 @@ export default async function BolaoPage({
     // Resultados reais (status + placar) — fonte da verdade para travar/exibir.
     const { data: live } = await supabase
       .from('matches')
-      .select('id, status, home_score, away_score, home_penalties, away_penalties');
+      .select('id, status, home_score, away_score, home_penalties, away_penalties, home_team_id, away_team_id');
     for (const m of live ?? []) {
       results[m.id] = {
         status: m.status as MatchResult['status'],
@@ -84,6 +84,8 @@ export default async function BolaoPage({
         awayScore: m.away_score as number | null,
         homePenalties: m.home_penalties as number | null,
         awayPenalties: m.away_penalties as number | null,
+        homeTeamId: m.home_team_id as string | null,
+        awayTeamId: m.away_team_id as string | null,
       };
     }
   }

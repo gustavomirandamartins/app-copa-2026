@@ -21,6 +21,8 @@ export interface MatchResult {
   awayScore: number | null;
   homePenalties?: number | null;
   awayPenalties?: number | null;
+  homeTeamId?: string | null;
+  awayTeamId?: string | null;
 }
 
 interface Props {

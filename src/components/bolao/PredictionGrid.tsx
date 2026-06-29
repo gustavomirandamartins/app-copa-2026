@@ -254,8 +254,11 @@ export function PredictionGrid({
                 const value = values.get(match.id);
                 const multiplier = multipliers[match.id] ?? 1;
                 const boosted = multiplier > 1;
-                const isBrazil =
-                  match.homeTeamId === BRAZIL_ID || match.awayTeamId === BRAZIL_ID;
+                const homeTeamId = result?.homeTeamId ?? match.homeTeamId;
+                const awayTeamId = result?.awayTeamId ?? match.awayTeamId;
+                const teamA = homeTeamId ? getTeamById(homeTeamId) : null;
+                const teamB = awayTeamId ? getTeamById(awayTeamId) : null;
+                const isBrazil = homeTeamId === BRAZIL_ID || awayTeamId === BRAZIL_ID;
                 const points = pointsByMatch[match.id];
                 const hasGuess = value?.home != null && value?.away != null;
 
@@ -289,13 +292,13 @@ export function PredictionGrid({
                     {(finished || live) ? (
                       <>
                         <div className="bolao-card-match">
-                          <TeamCell teamId={match.homeTeamId} align="left" placeholder={match.homeTeamPlaceholder} />
+                          <TeamCell teamId={homeTeamId} align="left" placeholder={match.homeTeamPlaceholder} />
                           <div className="bolao-realscores">
                             <span className="bolao-realscore">{result?.homeScore ?? 0}</span>
                             <span className="bolao-x">×</span>
                             <span className="bolao-realscore">{result?.awayScore ?? 0}</span>
                           </div>
-                          <TeamCell teamId={match.awayTeamId} align="right" placeholder={match.awayTeamPlaceholder} />
+                          <TeamCell teamId={awayTeamId} align="right" placeholder={match.awayTeamPlaceholder} />
                         </div>
                         {result?.homePenalties != null && result?.awayPenalties != null && (
                           <div style={{ textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
@@ -328,7 +331,7 @@ export function PredictionGrid({
                       <>
                         {/* Confronto editável (agendado) */}
                         <div className="bolao-card-match">
-                          <TeamCell teamId={match.homeTeamId} align="left" placeholder={match.homeTeamPlaceholder} />
+                          <TeamCell teamId={homeTeamId} align="left" placeholder={match.homeTeamPlaceholder} />
                           <div className="bolao-scores">
                             <input
                               type="number"
@@ -366,7 +369,7 @@ export function PredictionGrid({
                               }
                             />
                           </div>
-                          <TeamCell teamId={match.awayTeamId} align="right" placeholder={match.awayTeamPlaceholder} />
+                          <TeamCell teamId={awayTeamId} align="right" placeholder={match.awayTeamPlaceholder} />
                         </div>
 
                         {/* Pênaltis: Só mostra se for mata-mata e o palpite for empate e válido */}
@@ -387,8 +390,8 @@ export function PredictionGrid({
                               }
                             >
                               <option value="">Selecione...</option>
-                              <option value={match.homeTeamId ?? 'home'}>{match.homeTeamId ? getTeamById(match.homeTeamId)?.name : 'Mandante'}</option>
-                              <option value={match.awayTeamId ?? 'away'}>{match.awayTeamId ? getTeamById(match.awayTeamId)?.name : 'Visitante'}</option>
+                              <option value={homeTeamId ?? 'home'}>{homeTeamId ? getTeamById(homeTeamId)?.name : 'Mandante'}</option>
+                              <option value={awayTeamId ?? 'away'}>{awayTeamId ? getTeamById(awayTeamId)?.name : 'Visitante'}</option>
                             </select>
                           </div>
                         )}
