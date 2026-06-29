@@ -78,10 +78,11 @@
   position: absolute;
   right: -30px; /* half of column gap */
   width: 30px;
-  border-right: 3px solid var(--glass-border);
-  border-top: 3px solid var(--glass-border);
+  border-right: 5px solid var(--glass-border);
+  border-top: 5px solid var(--glass-border);
   border-radius: 0 8px 0 0;
-  opacity: 0.3;
+  opacity: 1;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
   transition: opacity var(--transition-base), border-color var(--transition-base);
 }
 
@@ -89,7 +90,7 @@
 .bracket-column:not(:last-child) .bracket-match-wrapper:nth-child(odd)::after {
   top: 50%;
   bottom: -50%;
-  border-top: 3px solid var(--glass-border);
+  border-top: 5px solid var(--glass-border);
   border-bottom: none;
   border-radius: 0 8px 0 0;
 }
@@ -98,7 +99,7 @@
 .bracket-column:not(:last-child) .bracket-match-wrapper:nth-child(even)::after {
   top: -50%;
   bottom: 50%;
-  border-bottom: 3px solid var(--glass-border);
+  border-bottom: 5px solid var(--glass-border);
   border-top: none;
   border-radius: 0 0 8px 0;
 }
@@ -110,8 +111,9 @@
   left: -30px;
   width: 30px;
   top: 50%;
-  border-top: 3px solid var(--glass-border);
-  opacity: 0.3;
+  border-top: 5px solid var(--glass-border);
+  opacity: 1;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
   transition: opacity var(--transition-base), border-color var(--transition-base);
 }
 
