@@ -12,12 +12,13 @@ import { Bracket } from './Bracket';
 
 const stageTabs: { key: MatchStage | 'all' | 'bracket'; label: string }[] = [
   { key: 'group', label: 'Fase de Grupos' },
+  { key: 'bracket', label: 'Eliminatórias' },
   { key: 'round-of-32', label: '16 Avos' },
   { key: 'round-of-16', label: 'Oitavas' },
   { key: 'quarter-final', label: 'Quartas' },
   { key: 'semi-final', label: 'Semifinais' },
+  { key: 'third-place', label: '3º Lugar' },
   { key: 'final', label: 'Final' },
-  { key: 'bracket', label: 'Chaveamento' },
 ];
 
 function MatchTimeChip({ dateUTC }: { dateUTC: string }) {
@@ -76,7 +77,7 @@ export function JogosClient({ matches }: { matches: Match[] }) {
       </div>
 
       {activeStage === 'bracket' ? (
-        <Bracket matches={matches} />
+        <Bracket matches={matches} onMatchClick={(stage) => setActiveStage(stage)} />
       ) : (
         <>
           {Array.from(groupedByDate.entries()).map(([dateLabel, dayMatches]) => (

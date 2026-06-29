@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { getTeamById } from '@/data/teams';
 import { TeamFlag } from '@/components/ui/TeamFlag';
-import type { Match } from '@/lib/types';
+import type { Match, MatchStage } from '@/lib/types';
 import './bracket.css';
 
-export function Bracket({ matches }: { matches: Match[] }) {
+export function Bracket({ matches, onMatchClick }: { matches: Match[], onMatchClick?: (stage: MatchStage) => void }) {
   const [hoveredPath, setHoveredPath] = useState<string | null>(null);
 
   // Filter and sort matches by stage and match number
@@ -13,13 +13,14 @@ export function Bracket({ matches }: { matches: Match[] }) {
   const quarters = matches.filter(m => m.stage === 'quarter-final').sort((a, b) => a.matchNumber - b.matchNumber);
   const semis = matches.filter(m => m.stage === 'semi-final').sort((a, b) => a.matchNumber - b.matchNumber);
   const final = matches.filter(m => m.stage === 'final').sort((a, b) => a.matchNumber - b.matchNumber);
+  const thirdPlace = matches.filter(m => m.stage === 'third-place').sort((a, b) => a.matchNumber - b.matchNumber);
 
   const columns = [
     { title: '16 Avos', matches: roundOf32 },
     { title: 'Oitavas', matches: roundOf16 },
     { title: 'Quartas', matches: quarters },
     { title: 'Semifinais', matches: semis },
-    { title: 'Final', matches: final },
+    { title: 'Final / 3º Lugar', matches: [...final, ...thirdPlace] },
   ];
 
   return (
@@ -38,12 +39,14 @@ export function Bracket({ matches }: { matches: Match[] }) {
                     const isMuted = hoveredPath !== null && hoveredPath !== match.id;
 
                     return (
-                      <div className="bracket-match-wrapper" key={match.id}>
+                      <div className={`bracket-match-wrapper stage-${match.stage}`} key={match.id}>
                         {/* CSS-based connecting lines drawn from here */}
                         <div 
                           className={`bracket-card glass-card ${isActive ? 'active' : ''} ${isMuted ? 'muted' : ''}`}
                           onMouseEnter={() => setHoveredPath(match.id)}
                           onMouseLeave={() => setHoveredPath(null)}
+                          onClick={() => onMatchClick?.(match.stage)}
+                          style={{ cursor: onMatchClick ? 'pointer' : 'default' }}
                         >
                           <div className="bracket-card-header">
                             <span className="match-num">#{match.matchNumber}</span>

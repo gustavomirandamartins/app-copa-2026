@@ -78,8 +78,8 @@
   position: absolute;
   right: -30px; /* half of column gap */
   width: 30px;
-  border-right: 2px solid var(--glass-border);
-  border-top: 2px solid var(--glass-border);
+  border-right: 3px solid var(--glass-border);
+  border-top: 3px solid var(--glass-border);
   border-radius: 0 8px 0 0;
   opacity: 0.3;
   transition: opacity var(--transition-base), border-color var(--transition-base);
@@ -89,7 +89,7 @@
 .bracket-column:not(:last-child) .bracket-match-wrapper:nth-child(odd)::after {
   top: 50%;
   bottom: -50%;
-  border-top: 2px solid var(--glass-border);
+  border-top: 3px solid var(--glass-border);
   border-bottom: none;
   border-radius: 0 8px 0 0;
 }
@@ -98,7 +98,7 @@
 .bracket-column:not(:last-child) .bracket-match-wrapper:nth-child(even)::after {
   top: -50%;
   bottom: 50%;
-  border-bottom: 2px solid var(--glass-border);
+  border-bottom: 3px solid var(--glass-border);
   border-top: none;
   border-radius: 0 0 8px 0;
 }
@@ -110,9 +110,15 @@
   left: -30px;
   width: 30px;
   top: 50%;
-  border-top: 2px solid var(--glass-border);
+  border-top: 3px solid var(--glass-border);
   opacity: 0.3;
   transition: opacity var(--transition-base), border-color var(--transition-base);
+}
+
+/* 3rd place has no incoming line */
+.bracket-match-wrapper.stage-third-place::before,
+.bracket-match-wrapper.stage-third-place::after {
+  display: none !important;
 }
 
 /* The card itself */
