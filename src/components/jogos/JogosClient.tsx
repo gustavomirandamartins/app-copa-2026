@@ -30,7 +30,7 @@ function MatchTimeChip({ dateUTC }: { dateUTC: string }) {
 }
 
 export function JogosClient({ matches }: { matches: Match[] }) {
-  const [activeStage, setActiveStage] = useState<MatchStage | 'all' | 'bracket'>('round-of-32');
+  const [activeStage, setActiveStage] = useState<MatchStage | 'all' | 'bracket'>('bracket');
 
   const filteredMatches = useMemo(() => {
     if (activeStage === 'bracket') return []; // Bracket handles its own filtering

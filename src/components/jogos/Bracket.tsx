@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { getTeamById } from '@/data/teams';
 import { TeamFlag } from '@/components/ui/TeamFlag';
+import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 import type { Match, MatchStage } from '@/lib/types';
 import './bracket.css';
 
@@ -25,10 +26,18 @@ export function Bracket({ matches, onMatchClick }: { matches: Match[], onMatchCl
 
   return (
     <div className="bracket-container">
-      <div className="bracket-scroll-area">
-        <div className="bracket-canvas">
-          <div className="bracket-columns">
-            {columns.map((col, colIdx) => (
+      <TransformWrapper
+        initialScale={1}
+        minScale={0.3}
+        maxScale={2}
+        centerOnInit={false}
+        wheel={{ step: 0.1 }}
+        panning={{ velocityDisabled: true }}
+      >
+        <TransformComponent wrapperClass="bracket-scroll-area">
+          <div className="bracket-canvas">
+            <div className="bracket-columns">
+              {columns.map((col, colIdx) => (
               <div key={col.title} className="bracket-column">
                 <div className="bracket-column-title">{col.title}</div>
                 <div className="bracket-column-matches">
@@ -90,8 +99,9 @@ export function Bracket({ matches, onMatchClick }: { matches: Match[], onMatchCl
               </div>
             ))}
           </div>
-        </div>
-      </div>
+          </div>
+        </TransformComponent>
+      </TransformWrapper>
     </div>
   );
 }
