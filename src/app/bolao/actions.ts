@@ -69,14 +69,31 @@ export async function savePredictions(
     return { ok: false, error: 'É preciso aceitar o termo do ranking.' };
   }
 
-  const rows = predictions.map((p) => ({
-    user_id: user.id,
-    match_id: p.match_id,
-    home_score_guess: p.home_score_guess,
-    away_score_guess: p.away_score_guess,
-    penalty_winner_id: p.penalty_winner_id ?? null,
-    is_autofilled: p.is_autofilled,
-  }));
+  const rows = predictions.map((p) => {
+    // Garante que penalty_winner_id é explicitamente null se não vier.
+    const penaltyWinner = (typeof p.penalty_winner_id === 'string' && p.penalty_winner_id.length > 0)
+      ? p.penalty_winner_id
+      : null;
+
+    return {
+      user_id: user.id,
+      match_id: p.match_id,
+      home_score_guess: p.home_score_guess,
+      away_score_guess: p.away_score_guess,
+      penalty_winner_id: penaltyWinner,
+      is_autofilled: p.is_autofilled,
+    };
+  });
+
+  // Log para diagnóstico — visível no Vercel Function Logs.
+  const withPenalty = rows.filter(r => r.penalty_winner_id != null);
+  if (withPenalty.length > 0) {
+    console.log('[savePredictions] Palpites com pênaltis:', JSON.stringify(withPenalty.map(r => ({
+      match_id: r.match_id,
+      score: `${r.home_score_guess}x${r.away_score_guess}`,
+      penalty_winner_id: r.penalty_winner_id,
+    }))));
+  }
 
   // Usa admin client para o upsert: o client autenticado tem column-level
   // grants restritos e pode ignorar silenciosamente colunas novas como
@@ -86,7 +103,21 @@ export async function savePredictions(
     .from('predictions')
     .upsert(rows, { onConflict: 'user_id,match_id' });
 
-  if (error) return { ok: false, error: error.message };
+  if (error) {
+    console.error('[savePredictions] Erro no upsert:', error.message);
+    return { ok: false, error: error.message };
+  }
+
+  // Verificação: ler de volta os palpites com pênaltis para confirmar persistência.
+  if (withPenalty.length > 0) {
+    const matchIds = withPenalty.map(r => r.match_id);
+    const { data: check } = await admin
+      .from('predictions')
+      .select('match_id, penalty_winner_id')
+      .eq('user_id', user.id)
+      .in('match_id', matchIds);
+    console.log('[savePredictions] Verificação pós-save:', JSON.stringify(check));
+  }
 
   revalidatePath('/bolao');
   return { ok: true };
