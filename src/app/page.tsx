@@ -98,7 +98,7 @@ export default async function HomePage() {
           .select('full_name, total_score')
           .order('total_score', { ascending: false }),
         supabase.from('match_settings').select('match_id, score_multiplier').gt('score_multiplier', 1),
-        supabase.from('matches').select('id, status, home_score, away_score'),
+        supabase.from('matches').select('id, status, home_score, away_score, home_penalties, away_penalties'),
       ]);
 
     rankRows = (top as RankRow[]) ?? [];
@@ -110,6 +110,8 @@ export default async function HomePage() {
         status: m.status as MatchResult['status'],
         homeScore: m.home_score as number | null,
         awayScore: m.away_score as number | null,
+        homePenalties: m.home_penalties as number | null,
+        awayPenalties: m.away_penalties as number | null,
       };
     }
 
@@ -120,7 +122,7 @@ export default async function HomePage() {
         supabase.from('profiles').select('*').eq('id', user.id).single(),
         supabase
           .from('predictions')
-          .select('match_id, home_score_guess, away_score_guess, is_autofilled, points_earned')
+          .select('match_id, home_score_guess, away_score_guess, penalty_winner_id, is_autofilled, points_earned')
           .eq('user_id', user.id),
       ]);
       profile = (prof as Profile) ?? null;
@@ -225,7 +227,6 @@ export default async function HomePage() {
                 <Link href="/jogos" className="home-explore-link"><Calendar size={15} /> Jogos</Link>
                 <Link href="/grupos" className="home-explore-link"><BarChart3 size={15} /> Grupos</Link>
                 <Link href="/selecoes" className="home-explore-link"><Flag size={15} /> Seleções</Link>
-                <Link href="/probabilidades" className="home-explore-link"><Trophy size={15} /> Probabilidades</Link>
               </div>
             </div>
           </div>
@@ -394,7 +395,6 @@ export default async function HomePage() {
           <Link href="/jogos" className="home-explore-link"><Calendar size={15} /> Jogos</Link>
           <Link href="/grupos" className="home-explore-link"><BarChart3 size={15} /> Grupos</Link>
           <Link href="/selecoes" className="home-explore-link"><Flag size={15} /> Seleções</Link>
-          <Link href="/probabilidades" className="home-explore-link"><Trophy size={15} /> Probabilidades</Link>
         </div>
       </section>
     </div>

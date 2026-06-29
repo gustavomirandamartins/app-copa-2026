@@ -3,7 +3,7 @@ import { BarChart3 } from 'lucide-react';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
 import { teams } from '@/data/teams';
-import { getTeamProbability } from '@/data/ufmg-probabilities';
+
 import { TeamFlag } from '@/components/ui/TeamFlag';
 import type { GroupId } from '@/lib/types';
 
@@ -276,25 +276,6 @@ export default async function GruposPage() {
                   </tbody>
                 </table>
               </div>
-
-              <div style={{
-                padding: 'var(--space-sm) var(--space-lg)',
-                borderTop: '1px solid var(--glass-border)',
-                display: 'flex', justifyContent: 'space-between',
-                fontSize: '0.7rem', color: 'var(--text-tertiary)',
-              }}>
-                {groupTeams.map((t) => {
-                  const p = getTeamProbability(t.id);
-                  return (
-                    <span key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <TeamFlag name={t.name} flagEmoji={t.flag} size={16} style={{ borderRadius: 2 }} />
-                      <span style={{ color: 'var(--gold)', fontWeight: 700 }}>
-                        {p?.roundOf32.toFixed(0)}%
-                      </span>
-                    </span>
-                  );
-                })}
-              </div>
             </div>
           );
         })}
@@ -314,13 +295,16 @@ export default async function GruposPage() {
         if (thirds.length === 0) return null;
 
         // Ordena pelos critérios FIFA para 3ºs colocados (grupos distintos, sem
-        // confronto direto): pontos → saldo → gols pró → fair play → sorteio.
+        // confronto direto): pontos → saldo → gols pró → vitórias → menos
+        // derrotas → fair play → sorteio.
         // Fair play/sorteio não são calculáveis aqui (sem dados de cartões);
         // o id do time mantém a ordem estável em empates remanescentes.
         thirds.sort((a, b) =>
           b.points - a.points ||
           b.goal_difference - a.goal_difference ||
           b.goals_for - a.goals_for ||
+          b.won - a.won ||
+          a.lost - b.lost ||
           a.team_id.localeCompare(b.team_id),
         );
 

@@ -16,7 +16,6 @@ const navLinks = [
   { href: '/jogos', label: 'Jogos' },
   { href: '/grupos', label: 'Grupos' },
   { href: '/selecoes', label: 'Seleções' },
-  { href: '/probabilidades', label: 'Probabilidades' },
 ];
 
 export function Header() {
