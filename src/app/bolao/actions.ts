@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
 import type { PredictionInput } from '@/lib/bolao/types';
 
@@ -77,7 +78,11 @@ export async function savePredictions(
     is_autofilled: p.is_autofilled,
   }));
 
-  const { error } = await supabase
+  // Usa admin client para o upsert: o client autenticado tem column-level
+  // grants restritos e pode ignorar silenciosamente colunas novas como
+  // penalty_winner_id. A validação de auth e regras já foi feita acima.
+  const admin = createAdminClient();
+  const { error } = await admin
     .from('predictions')
     .upsert(rows, { onConflict: 'user_id,match_id' });
 
