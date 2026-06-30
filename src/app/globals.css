@@ -107,10 +107,10 @@ html {
      Chrome. background-attachment: fixed keeps it viewport-pinned (parallax).
      JS in ParallaxBackground.tsx pans backgroundPositionY on scroll. */
   background-color: var(--bg-light);
-  background-image: url('https://sdyilmgixyynnmczsnhc.supabase.co/storage/v1/object/public/backgrounds/fifa-background.webp');
+  background-image: url('https://sdyilmgixyynnmczsnhc.supabase.co/storage/v1/object/public/backgrounds/bg-bolao-elim-16x9.avif');
   background-size: cover;
   background-attachment: fixed;
-  background-position: center top;
+  background-position: center;
   background-repeat: no-repeat;
   /* Clip horizontal overflow at the viewport level. Keeping this on <html>
      (not body) avoids a WebKit edge-case where overflow:clip on <body>
@@ -132,7 +132,7 @@ html {
 
 @media (max-width: 767px) {
   html {
-    background-image: url('https://sdyilmgixyynnmczsnhc.supabase.co/storage/v1/object/public/backgrounds/bg-worldcup-mobile.avif');
+    background-image: url('https://sdyilmgixyynnmczsnhc.supabase.co/storage/v1/object/public/backgrounds/bg-bolao-elim-9x16.avif');
     background-size: cover;
     background-attachment: fixed;
     background-position: center center;
@@ -143,7 +143,7 @@ html {
     position: fixed;
     inset: 0;
     z-index: -2;
-    background-image: url('https://sdyilmgixyynnmczsnhc.supabase.co/storage/v1/object/public/backgrounds/bg-worldcup-mobile.avif');
+    background-image: url('https://sdyilmgixyynnmczsnhc.supabase.co/storage/v1/object/public/backgrounds/bg-bolao-elim-9x16.avif');
     background-size: cover;
     background-position: center center;
     background-repeat: no-repeat;
