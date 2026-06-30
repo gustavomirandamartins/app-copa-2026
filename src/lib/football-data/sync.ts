@@ -123,7 +123,16 @@ export async function runFootballSync(): Promise<SyncResult> {
 
   // Propaga as seleções classificadas para a próxima fase do mata-mata assim
   // que um confronto é decidido (não esperamos a API ligar a próxima partida).
-  const { advanced } = await applyKnockoutAdvancement(admin);
+  // CRÍTICO: a pontuação (applyScoring, mais abaixo) NÃO pode ser bloqueada por
+  // uma falha aqui. Se a propagação falhar, registramos e seguimos — senão os
+  // participantes ficam sem pontos (jogo fica "finalizado" e não pontua).
+  let advanced = 0;
+  try {
+    ({ advanced } = await applyKnockoutAdvancement(admin));
+  } catch (err) {
+    console.error('[sync] applyKnockoutAdvancement falhou (seguindo p/ scoring):',
+      err instanceof Error ? err.message : err);
+  }
 
   const standingRows = standings
     .filter((s) => s.type === 'TOTAL')
@@ -153,9 +162,11 @@ export async function runFootballSync(): Promise<SyncResult> {
     const { error: stdErr } = await admin
       .from('standings')
       .upsert(standingRows, { onConflict: 'group_letter,team_id' });
-    if (stdErr) throw new Error(`upsert standings: ${stdErr.message}`);
+    // Não bloqueia o scoring: registra e segue.
+    if (stdErr) console.error('[sync] upsert standings falhou (seguindo p/ scoring):', stdErr.message);
   }
 
+  // Passo CRÍTICO — roda sempre, independente das etapas acima.
   const { updatedPredictions } = await applyScoring(admin);
 
   return {
