@@ -37,6 +37,51 @@ async function requireAdmin(): Promise<{ userId: string } | { error: string }> {
   return { userId: user.id };
 }
 
+/** Linha de probabilidade já normalizada (vinda do parse da planilha). */
+export interface ProbUploadRow {
+  teamId: string;
+  roundOf32: number;
+  roundOf16: number;
+  quarterFinal: number;
+  semiFinal: number;
+  final: number;
+  champion: number;
+}
+
+/**
+ * Substitui as probabilidades por seleção na tabela `team_probabilities`,
+ * a partir das linhas já parseadas da planilha (Seleção · 16avos · Oitavas ·
+ * Quartas · Semi · Final · Campeão). Só admin.
+ */
+export async function uploadTeamProbabilities(
+  rows: ProbUploadRow[],
+): Promise<AdminActionResult & { count?: number }> {
+  const auth = await requireAdmin();
+  if ('error' in auth) return { ok: false, error: auth.error };
+  if (!rows.length) return { ok: false, error: 'Nenhuma linha válida na planilha.' };
+
+  const admin = createAdminClient();
+  const now = new Date().toISOString();
+  const payload = rows.map((r) => ({
+    team_id: r.teamId,
+    round_of_32: r.roundOf32,
+    round_of_16: r.roundOf16,
+    quarter_final: r.quarterFinal,
+    semi_final: r.semiFinal,
+    final: r.final,
+    champion: r.champion,
+    updated_at: now,
+  }));
+
+  const { error } = await admin
+    .from('team_probabilities')
+    .upsert(payload, { onConflict: 'team_id' });
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath('/');
+  return { ok: true, count: payload.length };
+}
+
 export interface SyncActionResult {
   ok: boolean;
   matches?: number;

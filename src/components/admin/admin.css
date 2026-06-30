@@ -517,3 +517,32 @@
 .pm-pts-1 { background: #6aa84f; }
 .pm-pts-3 { background: #2f9e44; }
 .pm-pts-5 { background: var(--copa-green); }
+
+/* ── Upload de probabilidades (planilha) ─────────────────────── */
+.admin-prob-upload { display: flex; flex-direction: column; gap: 14px; }
+.admin-prob-hint { margin: 0; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6; }
+.admin-prob-hint strong { color: #fff; }
+.admin-prob-drop {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 18px; border-radius: 16px;
+  border: 1.5px dashed var(--glass-border);
+  background: rgba(8, 6, 18, 0.35);
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 600; font-size: 0.9rem; cursor: pointer;
+  transition: border-color 180ms ease, background 180ms ease;
+}
+.admin-prob-drop:hover { border-color: rgba(224, 124, 0, 0.5); background: rgba(8, 6, 18, 0.5); }
+.admin-prob-drop svg { color: var(--gold); flex-shrink: 0; }
+.admin-prob-preview { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.admin-prob-ok, .admin-prob-warn {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 0.82rem; font-weight: 700;
+}
+.admin-prob-ok { color: var(--copa-green); }
+.admin-prob-warn { color: #e0a000; cursor: help; }
+.admin-prob-msg {
+  display: inline-flex; align-items: center; gap: 8px;
+  margin: 0; font-size: 0.85rem; font-weight: 600;
+}
+.admin-prob-msg-ok { color: var(--copa-green); }
+.admin-prob-msg-err { color: #e35d4f; }

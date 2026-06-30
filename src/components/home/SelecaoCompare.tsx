@@ -3,28 +3,27 @@
 import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { Trophy, Medal, History, Globe2, Star, ArrowUpRight } from 'lucide-react';
-import { getTeamProbability } from '@/data/ufmg-probabilities';
 import { getKeyPlayer } from '@/data/key-players';
 import { TeamFlag } from '@/components/ui/TeamFlag';
-import type { Team } from '@/lib/types';
+import type { Team, UfmgProbability } from '@/lib/types';
 
-function stages(teamId: string) {
-  const p = getTeamProbability(teamId);
-  if (!p) return [];
+type ProbMap = Record<string, UfmgProbability>;
+
+function stages(prob: UfmgProbability | undefined) {
+  if (!prob) return [];
   return [
-    { label: 'Campeão', value: p.champion },
-    { label: 'Final', value: p.final },
-    { label: 'Semi', value: p.semifinal },
-    { label: 'Quartas', value: p.quarterFinal },
-    { label: 'Oitavas', value: p.roundOf16 },
-    { label: '16 avos', value: p.roundOf32 },
+    { label: 'Campeão', value: prob.champion },
+    { label: 'Final', value: prob.final },
+    { label: 'Semi', value: prob.semifinal },
+    { label: 'Quartas', value: prob.quarterFinal },
+    { label: 'Oitavas', value: prob.roundOf16 },
+    { label: '16 avos', value: prob.roundOf32 },
   ];
 }
 
-function TeamPanel({ team }: { team: Team }) {
-  const prob = getTeamProbability(team.id);
+function TeamPanel({ team, prob }: { team: Team; prob: UfmgProbability | undefined }) {
   const player = getKeyPlayer(team.id);
-  const st = stages(team.id);
+  const st = stages(prob);
   return (
     <article className="nx-sel-panel">
       <header className="nx-sel-head">
@@ -69,7 +68,7 @@ function TeamPanel({ team }: { team: Team }) {
   );
 }
 
-export function SelecaoCompare({ home, away }: { home: Team; away: Team }) {
+export function SelecaoCompare({ home, away, probabilities }: { home: Team; away: Team; probabilities: ProbMap }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(0);
   const teams = [home, away];
@@ -107,8 +106,8 @@ export function SelecaoCompare({ home, away }: { home: Team; away: Team }) {
       </div>
 
       <div className="nx-sel-track" ref={trackRef} onScroll={onScroll}>
-        <TeamPanel team={home} />
-        <TeamPanel team={away} />
+        <TeamPanel team={home} prob={probabilities[home.id]} />
+        <TeamPanel team={away} prob={probabilities[away.id]} />
       </div>
 
       <div className="nx-sel-dots" aria-hidden="true">

@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { ShieldCheck, Zap } from 'lucide-react';
+import { ShieldCheck, Zap, BarChart3 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
@@ -14,6 +14,7 @@ import {
   type MatrixCell,
 } from '@/components/admin/AdminPredictionsMatrix';
 import { AdminTiebreakDraws, type TiebreakEntry } from '@/components/admin/AdminTiebreakDraws';
+import { AdminProbabilitiesUpload } from '@/components/admin/AdminProbabilitiesUpload';
 import { matches } from '@/data/matches';
 import { teams } from '@/data/teams';
 import { ROUND_ORDER, ROUND_LABELS } from '@/lib/bolao/rounds';
@@ -336,6 +337,13 @@ export default async function AdminPage() {
       <div style={{ marginTop: 'var(--space-2xl)' }}>
         <AdminTiebreakDraws entries={tiebreakEntries} />
       </div>
+
+      <section className="glass-card-static" style={{ marginTop: 'var(--space-2xl)', padding: 'var(--space-lg)' }}>
+        <h2 style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 'var(--space-md)' }}>
+          <BarChart3 size={20} style={{ color: 'var(--gold)' }} /> Probabilidades das seleções
+        </h2>
+        <AdminProbabilitiesUpload />
+      </section>
     </div>
   );
 }

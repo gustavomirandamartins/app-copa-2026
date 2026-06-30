@@ -11,7 +11,7 @@ import { winDrawWin, toPercentParts } from '@/lib/bolao/winProbability';
 import { TeamFlag } from '@/components/ui/TeamFlag';
 import { SelecaoCompare } from '@/components/home/SelecaoCompare';
 import { RankingConsentModal } from '@/components/bolao/RankingConsentModal';
-import type { Match } from '@/lib/types';
+import type { Match, UfmgProbability } from '@/lib/types';
 import type { Profile, PredictionInput } from '@/lib/bolao/types';
 import type { MatchResult } from '@/components/bolao/BolaoClient';
 
@@ -29,6 +29,8 @@ interface Props {
   existingPredictions: PredictionInput[];
   multipliers: Record<string, number>;
   results: Record<string, MatchResult>;
+  /** Probabilidades por seleção (tabela + fallback estático). */
+  probabilities: Record<string, UfmgProbability>;
   /** Quantos jogos mostrar na lista "Próximos jogos" (fora o destaque). */
   upcomingCount?: number;
 }
@@ -72,6 +74,7 @@ export function DashboardClient({
   existingPredictions,
   multipliers,
   results,
+  probabilities,
   upcomingCount = 6,
 }: Props) {
   const [values, setValues] = useState<Map<string, Value>>(() => seed(existingPredictions));
@@ -241,7 +244,7 @@ export function DashboardClient({
       {fHome && fAway && (
         <section className="nx-section" aria-label="Seleções do próximo jogo">
           <h2 className="nx-h2"><Sparkles size={18} /> Conheça as seleções</h2>
-          <SelecaoCompare home={fHome} away={fAway} />
+          <SelecaoCompare home={fHome} away={fAway} probabilities={probabilities} />
         </section>
       )}
 
