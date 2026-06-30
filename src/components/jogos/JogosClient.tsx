@@ -151,6 +151,20 @@ export function JogosClient({ matches }: { matches: Match[] }) {
                       )}
                     </div>
                   </div>
+                  {match.status === 'finished' &&
+                    match.homePenalties != null &&
+                    match.awayPenalties != null && (
+                      <div
+                        style={{
+                          textAlign: 'center',
+                          fontSize: '0.75rem',
+                          color: 'var(--text-tertiary)',
+                          marginTop: 'var(--space-xs)',
+                        }}
+                      >
+                        Pênaltis: {match.homePenalties} × {match.awayPenalties}
+                      </div>
+                    )}
                   {stadium && (
                     <div className="match-card-footer">
                       <MapPin size={12} />

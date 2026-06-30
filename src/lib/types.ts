@@ -53,6 +53,10 @@ export interface Match {
   awayTeamPlaceholder?: string;
   homeGoals: number | null;
   awayGoals: number | null;
+  // Placar da disputa de pênaltis (mata-mata). Derivado de fullTime − regularTime
+  // no sync; null quando não houve disputa.
+  homePenalties?: number | null;
+  awayPenalties?: number | null;
   dateUTC: string;
   stadiumId: string;
   status: MatchStatus;

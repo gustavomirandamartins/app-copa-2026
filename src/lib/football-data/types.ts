@@ -31,8 +31,14 @@ export interface FdTeam {
 
 export interface FdScore {
   winner: 'HOME_TEAM' | 'AWAY_TEAM' | 'DRAW' | null;
+  duration?: 'REGULAR' | 'EXTRA_TIME' | 'PENALTY_SHOOTOUT';
+  // ATENÇÃO: em jogos decididos nos pênaltis, `fullTime` é o AGREGADO já
+  // somando os gols da disputa (ex.: um 1x1 vira 5x6). O placar real da
+  // partida fica em `regularTime` (+ `extraTime`). Use extractScore().
   fullTime: { home: number | null; away: number | null };
   halfTime: { home: number | null; away: number | null };
+  regularTime?: { home: number | null; away: number | null };
+  extraTime?: { home: number | null; away: number | null };
   penalties: { home: number | null; away: number | null };
 }
 

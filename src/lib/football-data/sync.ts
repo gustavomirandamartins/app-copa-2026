@@ -3,14 +3,16 @@ import {
   getWorldCupStandings,
   isFootballDataConfigured,
 } from './client';
-import { resolveTeamId, mapStatus } from './mappers';
+import { resolveTeamId, mapStatus, extractScore } from './mappers';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { applyScoring } from '@/lib/bolao/scoring-sync';
+import { applyKnockoutAdvancement } from '@/lib/bolao/advancement';
 
 export interface SyncResult {
   ok: boolean;
   matches?: number;
+  advanced?: number;
   standings?: number;
   scoredPredictions?: number;
   syncedAt?: string;
@@ -49,15 +51,20 @@ export async function runFootballSync(): Promise<SyncResult> {
     // Só inclui home_score/away_score quando a API retorna valores válidos.
     // Se a partida acabou de ser marcada como FINISHED mas o placar ainda
     // não chegou (fullTime null), não sobrescrevemos o que já está no banco.
+    //
+    // extractScore() trata o caso dos pênaltis: o placar de campo vem de
+    // regularTime+extraTime (e NÃO de fullTime, que já soma o shootout) e o
+    // placar de pênaltis é derivado de fullTime − placar de campo.
+    const sc = extractScore(m.score);
     const scoreFields =
-      m.score?.fullTime?.home != null && m.score?.fullTime?.away != null
+      sc.home != null && sc.away != null
         ? {
-            home_score: m.score.fullTime.home,
-            away_score: m.score.fullTime.away,
-            ...(m.score.penalties?.home != null && m.score.penalties?.away != null
+            home_score: sc.home,
+            away_score: sc.away,
+            ...(sc.homePenalties != null && sc.awayPenalties != null
               ? {
-                  home_penalties: m.score.penalties.home,
-                  away_penalties: m.score.penalties.away,
+                  home_penalties: sc.homePenalties,
+                  away_penalties: sc.awayPenalties,
                 }
               : {}),
           }
@@ -114,6 +121,10 @@ export async function runFootballSync(): Promise<SyncResult> {
     matchesUpdated++;
   }
 
+  // Propaga as seleções classificadas para a próxima fase do mata-mata assim
+  // que um confronto é decidido (não esperamos a API ligar a próxima partida).
+  const { advanced } = await applyKnockoutAdvancement(admin);
+
   const standingRows = standings
     .filter((s) => s.type === 'TOTAL')
     .flatMap((s) =>
@@ -150,6 +161,7 @@ export async function runFootballSync(): Promise<SyncResult> {
   return {
     ok: true,
     matches: matchesUpdated,
+    advanced,
     standings: standingRows.length,
     scoredPredictions: updatedPredictions,
     syncedAt: new Date().toISOString(),

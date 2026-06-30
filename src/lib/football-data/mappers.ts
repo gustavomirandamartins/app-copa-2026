@@ -1,6 +1,6 @@
 import { teams } from '@/data/teams';
 import type { MatchStatus } from '@/lib/types';
-import type { FdStatus, FdTeam } from './types';
+import type { FdScore, FdStatus, FdTeam } from './types';
 
 /**
  * De-para entre football-data e o nosso modelo.
@@ -31,6 +31,69 @@ export function resolveTeamId(fd: FdTeam): string | null {
   const name = fd.name?.toLowerCase().trim();
   if (name && byNameEn.has(name)) return byNameEn.get(name)!;
   return null; // não resolvido → o sync registra e ignora
+}
+
+export interface ExtractedScore {
+  /** Placar de campo (tempo normal + prorrogação). */
+  home: number | null;
+  away: number | null;
+  /** Placar da disputa de pênaltis (null quando não houve). */
+  homePenalties: number | null;
+  awayPenalties: number | null;
+}
+
+/**
+ * Extrai o placar correto do objeto `score` da football-data v4.
+ *
+ * Cuidado com a semântica da API em jogos de mata-mata decididos nos pênaltis:
+ *  - `fullTime` é o AGREGADO já somando os gols da disputa (1x1 vira 5x6);
+ *  - o placar real da partida fica em `regularTime` (+ `extraTime`);
+ *  - o campo `penalties` é pouco confiável (chega a vir empatado, ex.: 5x5).
+ *
+ * Por isso, quando há disputa de pênaltis, usamos `regularTime + extraTime`
+ * como placar de campo e o shootout é, por definição do projeto,
+ * `fullTime − regularTime` (o `fullTime` da API = regularTime + pênaltis).
+ */
+export function extractScore(score: FdScore | undefined): ExtractedScore {
+  const empty: ExtractedScore = {
+    home: null,
+    away: null,
+    homePenalties: null,
+    awayPenalties: null,
+  };
+  if (!score) return empty;
+
+  const sum = (a: number | null | undefined, b: number | null | undefined) =>
+    a == null && b == null ? null : (a ?? 0) + (b ?? 0);
+
+  // Placar de campo = tempo normal + prorrogação. Quando a API detalha
+  // `regularTime` (mata-mata), usamos ele; senão `fullTime` é o placar de campo
+  // (jogos regulares e de prorrogação sem pênaltis têm fullTime == regular+extra).
+  const home =
+    score.regularTime != null
+      ? sum(score.regularTime.home, score.extraTime?.home)
+      : score.fullTime?.home ?? null;
+  const away =
+    score.regularTime != null
+      ? sum(score.regularTime.away, score.extraTime?.away)
+      : score.fullTime?.away ?? null;
+
+  // Pênaltis apenas quando houve disputa. Regra do projeto: o placar do
+  // shootout é `fullTime − regularTime` (ignoramos o campo `penalties` da API,
+  // que é pouco confiável). Calculamos contra `regularTime`, não contra o
+  // placar de campo.
+  if (score.duration !== 'PENALTY_SHOOTOUT') {
+    return { home, away, homePenalties: null, awayPenalties: null };
+  }
+
+  const ftHome = score.fullTime?.home;
+  const ftAway = score.fullTime?.away;
+  const rtHome = score.regularTime?.home;
+  const rtAway = score.regularTime?.away;
+  const homePenalties = ftHome != null && rtHome != null ? ftHome - rtHome : null;
+  const awayPenalties = ftAway != null && rtAway != null ? ftAway - rtAway : null;
+
+  return { home, away, homePenalties, awayPenalties };
 }
 
 /** Status da football-data → nosso MatchStatus. */

@@ -40,6 +40,7 @@ async function requireAdmin(): Promise<{ userId: string } | { error: string }> {
 export interface SyncActionResult {
   ok: boolean;
   matches?: number;
+  advanced?: number;
   standings?: number;
   scoredPredictions?: number;
   syncedAt?: string;
