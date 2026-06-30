@@ -82,43 +82,53 @@ export async function runFootballSync(): Promise<SyncResult> {
     if (homeId) fields.home_team_id = homeId;
     if (awayId) fields.away_team_id = awayId;
 
-    // Estratégia de matching em 3 etapas:
+    // Estratégia de matching em 3 etapas, resolvendo para NO MÁXIMO uma linha
+    // ANTES de fazer o UPDATE. Um .or() que casasse 2 linhas ao mesmo tempo
+    // (ex.: par de times já usado por um confronto antigo de outra fase) faz
+    // o UPDATE tentar gravar o mesmo external_id em ambas, violando
+    // "matches_external_id_key" — foi o que causou o erro de duplicate key.
     //  1. external_id (já linkado de um sync anterior)
-    //  2. par home_team_id + away_team_id (grupo — times fixos desde o seed)
-    //  3. match_time_utc (mata-mata — times NULL no seed, external_id NULL)
-    let q = admin.from('matches').update(fields);
-    if (homeId && awayId) {
-      q = q.or(
-        `external_id.eq.${m.id},and(home_team_id.eq.${homeId},away_team_id.eq.${awayId})`,
-      );
-    } else {
-      q = q.eq('external_id', m.id);
-    }
+    //  2. par home_team_id + away_team_id, só entre linhas ainda não linkadas
+    //     (grupo — times fixos desde o seed)
+    //  3. match_time_utc, só entre linhas ainda não linkadas (mata-mata —
+    //     times NULL no seed, external_id NULL)
+    let targetId: string | null = null;
 
-    const { error: matchErr } = await q;
-    if (matchErr) throw new Error(`update match ${m.id}: ${matchErr.message}`);
-
-    // Verifica se o external_id foi linkado. Se não, significa que nenhuma
-    // linha casou (mata-mata com home/away NULL e sem external_id).
-    const { data: linked } = await admin
+    const { data: byExternal } = await admin
       .from('matches')
       .select('id')
       .eq('external_id', m.id)
       .limit(1);
+    if (byExternal && byExternal.length > 0) targetId = byExternal[0].id;
 
-    if (!linked || linked.length === 0) {
-      // Fallback: casar pelo horário UTC (o seed preencheu match_time_utc).
-      const { error: fallbackErr } = await admin
+    if (!targetId && homeId && awayId) {
+      const { data: byTeams } = await admin
         .from('matches')
-        .update(fields)
+        .select('id')
         .is('external_id', null)
-        .eq('match_time_utc', m.utcDate);
-      if (fallbackErr) {
-        console.warn(`[sync] fallback por data falhou para match ${m.id}:`, fallbackErr.message);
-      }
+        .eq('home_team_id', homeId)
+        .eq('away_team_id', awayId)
+        .limit(1);
+      if (byTeams && byTeams.length > 0) targetId = byTeams[0].id;
     }
 
-    matchesUpdated++;
+    if (!targetId) {
+      const { data: byDate } = await admin
+        .from('matches')
+        .select('id')
+        .is('external_id', null)
+        .eq('match_time_utc', m.utcDate)
+        .limit(1);
+      if (byDate && byDate.length > 0) targetId = byDate[0].id;
+    }
+
+    if (targetId) {
+      const { error: matchErr } = await admin.from('matches').update(fields).eq('id', targetId);
+      if (matchErr) throw new Error(`update match ${m.id}: ${matchErr.message}`);
+      matchesUpdated++;
+    } else {
+      console.warn(`[sync] nenhuma linha encontrada para match ${m.id} (sem external_id, par de times ou data correspondente).`);
+    }
   }
 
   // Propaga as seleções classificadas para a próxima fase do mata-mata assim
