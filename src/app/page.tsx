@@ -230,9 +230,6 @@ export default async function HomePage() {
       <div className="container home nx-dash">
         {/* ── Olá, usuário ───────────────────────────────────── */}
         <section className="nx-hello">
-          <span className="home-eyebrow">
-            <Sparkles size={14} /> Bolão da Mindu · Copa 2026
-          </span>
           <h1 className="nx-hello-title">
             Olá, <span className="home-title-accent">{firstName}</span>!
           </h1>
@@ -289,10 +286,6 @@ export default async function HomePage() {
       {/* ── HERO ───────────────────────────────────────────── */}
       <section className="home-hero">
         <div className="home-hero-glow" aria-hidden="true" />
-
-        <span className="home-eyebrow animate-fade-in">
-          <Sparkles size={14} /> Bolão da Mindu · Copa do Mundo 2026
-        </span>
 
         <h1 className="home-title home-title-xl animate-fade-in">
           Dá tempo de<br /><span className="home-title-accent">virar o jogo!</span>

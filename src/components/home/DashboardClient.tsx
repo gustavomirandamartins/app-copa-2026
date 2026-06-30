@@ -211,6 +211,24 @@ export function DashboardClient({
           </div>
         </div>
 
+        {/* Pênaltis: Só mostra se for mata-mata e o palpite for empate */}
+        {featured.stage !== 'group' && fVal?.home != null && fVal?.away != null && fVal.home === fVal.away && (
+          <div className="bolao-penalties" style={{ marginTop: '0.5rem', textAlign: 'center' }}>
+            <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Vencedor dos pênaltis:</p>
+            <select
+              className="nx-score-input"
+              style={{ width: 'auto', height: 'auto', padding: '6px 12px', fontSize: '1rem', background: 'rgba(8, 6, 18, 0.45)' }}
+              value={fVal?.penaltyWinnerId ?? ''}
+              disabled={!canEdit}
+              onChange={(e) => setScore(featured.id, 'pen', e.target.value)}
+            >
+              <option value="">Selecione...</option>
+              {fHome && <option value={fHome.id}>{fHome.name}</option>}
+              {fAway && <option value={fAway.id}>{fAway.name}</option>}
+            </select>
+          </div>
+        )}
+
         <p className="nx-match-meta">
           {mounted ? formatKickoffDate(featured.dateUTC) : ''} · {mounted ? formatKickoffTime(featured.dateUTC) : '--:--'}
           {fStadium && <> · {fStadium.name}, {fStadium.city}</>}
@@ -293,34 +311,40 @@ function UpcomingRow({
 }) {
   const home = getTeamById(match.homeTeamId!);
   const away = getTeamById(match.awayTeamId!);
+  const stadium = getStadiumById(match.stadiumId);
   const cd = useCountdown(match.dateUTC);
   return (
-    <div className="nx-up-row">
-      <span className="nx-up-team nx-up-home">
-        <span className="nx-up-name">{home?.name}</span>
-        {home && <TeamFlag name={home.name} flagEmoji={home.flag} size={22} />}
-      </span>
-      <span className="nx-up-scores">
-        <input
-          type="number" min={0} max={20} inputMode="numeric" className="nx-up-input"
-          aria-label={`Gols ${home?.name}`} disabled={!canEdit}
-          value={value?.home ?? ''} onChange={(e) => onScore(match.id, 'home', e.target.value)}
-        />
-        <span className="nx-up-x">×</span>
-        <input
-          type="number" min={0} max={20} inputMode="numeric" className="nx-up-input"
-          aria-label={`Gols ${away?.name}`} disabled={!canEdit}
-          value={value?.away ?? ''} onChange={(e) => onScore(match.id, 'away', e.target.value)}
-        />
-      </span>
-      <span className="nx-up-team nx-up-away">
-        {away && <TeamFlag name={away.name} flagEmoji={away.flag} size={22} />}
-        <span className="nx-up-name">{away?.name}</span>
-      </span>
-      <span className="nx-up-cd">
-        {multiplier > 1 && <em className="nx-up-boost">{multiplier}×</em>}
-        {mounted && cd ? cd : '—'}
-      </span>
+    <div className="nx-up-card" style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px 16px', borderRadius: '18px', background: 'rgba(8, 6, 18, 0.30)', border: '1px solid var(--glass-border)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.72)', fontWeight: 600 }}>
+        <span>Começa em {mounted && cd ? cd : '—'}</span>
+        <span>{mounted ? formatKickoffDate(match.dateUTC) : ''} · {mounted ? formatKickoffTime(match.dateUTC) : ''}{stadium ? ` · ${stadium.name}, ${stadium.city}` : ''}</span>
+      </div>
+      <div className="nx-up-row" style={{ padding: 0, border: 'none', background: 'none', backdropFilter: 'none' }}>
+        <span className="nx-up-team nx-up-home">
+          <span className="nx-up-name">{home?.name}</span>
+          {home && <TeamFlag name={home.name} flagEmoji={home.flag} size={22} />}
+        </span>
+        <span className="nx-up-scores">
+          <input
+            type="number" min={0} max={20} inputMode="numeric" className="nx-up-input"
+            aria-label={`Gols ${home?.name}`} disabled={!canEdit}
+            value={value?.home ?? ''} onChange={(e) => onScore(match.id, 'home', e.target.value)}
+          />
+          <span className="nx-up-x">×</span>
+          <input
+            type="number" min={0} max={20} inputMode="numeric" className="nx-up-input"
+            aria-label={`Gols ${away?.name}`} disabled={!canEdit}
+            value={value?.away ?? ''} onChange={(e) => onScore(match.id, 'away', e.target.value)}
+          />
+        </span>
+        <span className="nx-up-team nx-up-away">
+          {away && <TeamFlag name={away.name} flagEmoji={away.flag} size={22} />}
+          <span className="nx-up-name">{away?.name}</span>
+        </span>
+        <span className="nx-up-cd">
+          {multiplier > 1 && <em className="nx-up-boost">{multiplier}×</em>}
+        </span>
+      </div>
     </div>
   );
 }

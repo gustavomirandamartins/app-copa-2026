@@ -17,6 +17,8 @@
   flex-direction: column;
   gap: 8px;
   padding-top: 8px;
+  align-items: center;
+  text-align: center;
 }
 .nx-hello-title {
   font-size: clamp(2rem, 6vw, 3.25rem);
@@ -85,13 +87,13 @@
   pointer-events: none;
 }
 
-.nx-feature-head { display: flex; flex-direction: column; gap: 12px; position: relative; }
+.nx-feature-head { display: flex; flex-direction: column; gap: 12px; position: relative; align-items: center; text-align: center; }
 
 .nx-pill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  align-self: flex-start;
+  align-self: center;
   padding: 6px 14px;
   border-radius: 999px;
   background: rgba(224, 124, 0, 0.16);

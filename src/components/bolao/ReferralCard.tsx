@@ -42,12 +42,8 @@ export function ReferralCard({ code, bonus }: Props) {
   }
 
   return (
-    <section className="glass-card-static referral-card animate-slide-up">
-      <div className="referral-head">
-        <Gift size={18} style={{ color: 'var(--gold)' }} />
-        <h3 className="referral-title">Indique e ganhe pontos</h3>
-      </div>
-      <p className="referral-text">
+    <section className="nx-card animate-slide-up" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <p className="referral-text" style={{ margin: 0, fontSize: '0.95rem', color: 'rgba(255, 255, 255, 0.9)', lineHeight: 1.5 }}>
         Compartilhe seu cupom. Para cada amigo que se cadastrar e pagar usando
         ele, você ganha <strong>+{POINTS_PER_REFERRAL} pontos</strong> — sem limite!
       </p>
