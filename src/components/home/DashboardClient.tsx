@@ -217,7 +217,7 @@ export function DashboardClient({
             <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Vencedor dos pênaltis:</p>
             <select
               className="nx-score-input"
-              style={{ width: 'auto', height: 'auto', padding: '6px 12px', fontSize: '1rem', background: 'rgba(8, 6, 18, 0.45)' }}
+              style={{ width: 'auto', height: 'auto', padding: '6px 12px', fontSize: '1rem', background: '#fff', color: '#000' }}
               value={fVal?.penaltyWinnerId ?? ''}
               disabled={!canEdit}
               onChange={(e) => setScore(featured.id, 'pen', e.target.value)}
@@ -344,6 +344,21 @@ function UpcomingRow({
           {multiplier > 1 && <em className="nx-up-boost">{multiplier}×</em>}
         </span>
       </div>
+      {match.stage !== 'group' && value?.home != null && value?.away != null && value.home === value.away && (
+        <div className="bolao-penalties" style={{ marginTop: '2px', textAlign: 'center' }}>
+          <select
+            className="nx-up-input"
+            style={{ width: 'auto', height: 'auto', padding: '4px 10px', fontSize: '0.85rem', background: '#fff', color: '#000' }}
+            value={value?.penaltyWinnerId ?? ''}
+            disabled={!canEdit}
+            onChange={(e) => onScore(match.id, 'pen', e.target.value)}
+          >
+            <option value="">Vencedor dos Pênaltis...</option>
+            {home && <option value={home.id}>{home.name}</option>}
+            {away && <option value={away.id}>{away.name}</option>}
+          </select>
+        </div>
+      )}
     </div>
   );
 }
