@@ -13,7 +13,6 @@ import {
   BarChart3,
   Flag,
   CheckCircle2,
-  ListChecks,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -28,9 +27,13 @@ import { JoinThermometer } from '@/components/home/JoinThermometer';
 import { RankingSnapshot } from '@/components/home/RankingSnapshot';
 import { AuthPanel } from '@/components/auth/AuthPanel';
 import { ReferralCard } from '@/components/bolao/ReferralCard';
-import { InstallAppCard } from '@/components/home/InstallAppCard';
-import { BolaoClient, type MatchResult } from '@/components/bolao/BolaoClient';
+import { type MatchResult } from '@/components/bolao/BolaoClient';
+import { DashboardClient } from '@/components/home/DashboardClient';
+import { BracketCard } from '@/components/home/BracketCard';
+import { matches as staticMatches } from '@/data/matches';
+import type { Match } from '@/lib/types';
 import './home.css';
+import './dashboard.css';
 
 export const revalidate = 0;
 
@@ -190,21 +193,64 @@ export default async function HomePage() {
         .map((r) => ({ full_name: nameMap.get(r.user_id) ?? null, points: r.points }));
     }
 
+    // Bracket precisa dos times já classificados (mesma fonte da página Jogos).
+    const enrichedMatches: Match[] = [...staticMatches];
+    if (configured) {
+      const adminM = createAdminClient();
+      const { data: mData } = await adminM
+        .from('matches')
+        .select('id, status, home_score, away_score, home_penalties, away_penalties, home_team_id, away_team_id');
+      if (mData && mData.length > 0) {
+        const byId = new Map(
+          mData.map((r) => {
+            const live: any = {
+              status: r.status as MatchResult['status'],
+              homeGoals: r.home_score as number | null,
+              awayGoals: r.away_score as number | null,
+              homePenalties: r.home_penalties as number | null,
+              awayPenalties: r.away_penalties as number | null,
+            };
+            if (r.home_team_id) live.homeTeamId = r.home_team_id;
+            if (r.away_team_id) live.awayTeamId = r.away_team_id;
+            return [r.id, live] as const;
+          }),
+        );
+        for (let i = 0; i < enrichedMatches.length; i++) {
+          const live = byId.get(enrichedMatches[i].id);
+          if (live) enrichedMatches[i] = { ...enrichedMatches[i], ...live };
+        }
+      }
+    }
+
     return (
-      <div className="container home">
-        <section className="dash-hero">
+      <div className="container home nx-dash">
+        {/* ── Olá, usuário ───────────────────────────────────── */}
+        <section className="nx-hello">
           <span className="home-eyebrow">
             <Sparkles size={14} /> Bolão da Mindu · Copa 2026
           </span>
-          <h1 className="dash-hello">
-            Salve, <span className="home-title-accent">{firstName}</span>!
+          <h1 className="nx-hello-title">
+            Olá, <span className="home-title-accent">{firstName}</span>!
           </h1>
-          <p className="dash-hello-sub">
-            Seja bem-vindo de volta!
-          </p>
         </section>
 
-        <div className="dash-grid">
+        {/* ── Card principal + seleções + próximos jogos ─────── */}
+        <DashboardClient
+          profile={profile}
+          existingPredictions={existingPredictions}
+          multipliers={multipliers}
+          results={results}
+        />
+
+        {/* ── Chaveamento das eliminatórias ──────────────────── */}
+        <section className="nx-section">
+          <h2 className="nx-h2"><Trophy size={18} /> Chaveamento das Eliminatórias</h2>
+          <BracketCard matches={enrichedMatches} />
+        </section>
+
+        {/* ── Classificação ──────────────────────────────────── */}
+        <section className="nx-section">
+          <h2 className="nx-h2"><Crown size={18} /> Classificação</h2>
           <RankingSnapshot
             rows={rankRows}
             meName={profile.full_name}
@@ -213,40 +259,15 @@ export default async function HomePage() {
             currentRoundLabel={currentRoundLabel}
             meRoundPoints={meRoundPoints}
           />
-
-          <div className="dash-side">
-            {profile.referral_code && (
-              <ReferralCard code={profile.referral_code} bonus={profile.referral_bonus ?? 0} />
-            )}
-            <InstallAppCard />
-            <div className="dash-links glass-card-static">
-              <span className="dash-card-title">
-                <Sparkles size={16} /> Explore
-              </span>
-              <div className="dash-links-row">
-                <Link href="/jogos" className="home-explore-link"><Calendar size={15} /> Jogos</Link>
-                <Link href="/grupos" className="home-explore-link"><BarChart3 size={15} /> Grupos</Link>
-                <Link href="/selecoes" className="home-explore-link"><Flag size={15} /> Seleções</Link>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <section className="dash-predictions">
-          <div className="dash-pred-head">
-            <h2 className="home-h2"><ListChecks size={20} /> Seus palpites</h2>
-            <p className="home-sub">Registre os placares antes de cada partida começar.</p>
-          </div>
-          <BolaoClient
-            configured={configured}
-            authenticated={authenticated}
-            profile={profile}
-            existingPredictions={existingPredictions}
-            multipliers={multipliers}
-            results={results}
-            pointsByMatch={pointsByMatch}
-          />
         </section>
+
+        {/* ── Indique e ganhe pontos ─────────────────────────── */}
+        {profile.referral_code && (
+          <section className="nx-section">
+            <h2 className="nx-h2"><Users size={18} /> Indique e ganhe pontos</h2>
+            <ReferralCard code={profile.referral_code} bonus={profile.referral_bonus ?? 0} />
+          </section>
+        )}
       </div>
     );
   }
