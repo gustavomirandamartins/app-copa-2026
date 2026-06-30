@@ -183,7 +183,7 @@ export function DashboardClient({
 
         <div className="nx-match">
           <div className="nx-team nx-team-home">
-            {fHome && <TeamFlag name={fHome.name} flagEmoji={fHome.flag} size={48} />}
+            {fHome && <TeamFlag name={fHome.name} flagEmoji={fHome.flag} size={72} />}
             <span className="nx-team-name">{fHome?.name}</span>
           </div>
 
@@ -206,7 +206,7 @@ export function DashboardClient({
           </div>
 
           <div className="nx-team nx-team-away">
-            {fAway && <TeamFlag name={fAway.name} flagEmoji={fAway.flag} size={48} />}
+            {fAway && <TeamFlag name={fAway.name} flagEmoji={fAway.flag} size={72} />}
             <span className="nx-team-name">{fAway?.name}</span>
           </div>
         </div>
@@ -253,7 +253,6 @@ export function DashboardClient({
               <span><i className="nx-dot nx-dot-draw" /> Empate</span>
               <span><i className="nx-dot nx-dot-away" /> Vitória {fAway?.name}</span>
             </div>
-            <span className="nx-wdw-note">Estimativa do modelo a partir da força das seleções.</span>
           </div>
         )}
       </section>
@@ -314,7 +313,7 @@ function UpcomingRow({
   const stadium = getStadiumById(match.stadiumId);
   const cd = useCountdown(match.dateUTC);
   return (
-    <div className="nx-up-card" style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px 16px', borderRadius: '18px', background: 'rgba(8, 6, 18, 0.30)', border: '1px solid var(--glass-border)' }}>
+    <div className="nx-up-card" style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px 16px', borderRadius: '18px', background: 'rgba(8, 6, 18, 0.30)', border: '1px solid var(--glass-border)', backdropFilter: 'blur(16px)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.72)', fontWeight: 600 }}>
         <span>Começa em {mounted && cd ? cd : '—'}</span>
         <span>{mounted ? formatKickoffDate(match.dateUTC) : ''} · {mounted ? formatKickoffTime(match.dateUTC) : ''}{stadium ? ` · ${stadium.name}, ${stadium.city}` : ''}</span>
