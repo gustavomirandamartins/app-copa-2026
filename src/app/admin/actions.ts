@@ -82,6 +82,45 @@ export async function uploadTeamProbabilities(
   return { ok: true, count: payload.length };
 }
 
+/** Linha de probabilidade de jogo já normalizada (vinda do parse da planilha). */
+export interface MatchProbUploadRow {
+  matchNumber: number;
+  homeWin: number;
+  draw: number;
+  awayWin: number;
+}
+
+/**
+ * Substitui as probabilidades por jogo na tabela `match_probabilities`, a
+ * partir das linhas já parseadas da planilha (Jogo · Mandante · Visitante ·
+ * % Mandante · % Empate · % Visitante). Só admin.
+ */
+export async function uploadMatchProbabilities(
+  rows: MatchProbUploadRow[],
+): Promise<AdminActionResult & { count?: number }> {
+  const auth = await requireAdmin();
+  if ('error' in auth) return { ok: false, error: auth.error };
+  if (!rows.length) return { ok: false, error: 'Nenhuma linha válida na planilha.' };
+
+  const admin = createAdminClient();
+  const now = new Date().toISOString();
+  const payload = rows.map((r) => ({
+    match_number: r.matchNumber,
+    home_win: r.homeWin,
+    draw: r.draw,
+    away_win: r.awayWin,
+    updated_at: now,
+  }));
+
+  const { error } = await admin
+    .from('match_probabilities')
+    .upsert(payload, { onConflict: 'match_number' });
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath('/');
+  return { ok: true, count: payload.length };
+}
+
 export interface SyncActionResult {
   ok: boolean;
   matches?: number;
@@ -106,6 +145,7 @@ export async function triggerSync(): Promise<SyncActionResult> {
     const result = await runFootballSync();
     revalidatePath('/bolao');
     revalidatePath('/jogos');
+    revalidatePath('/eliminatorias');
     revalidatePath('/grupos');
     revalidatePath('/ranking');
     revalidatePath('/admin');

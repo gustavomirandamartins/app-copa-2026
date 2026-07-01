@@ -94,6 +94,23 @@ export function TrophyCupIcon({ size = 24, ...props }: IconProps) {
   );
 }
 
+/** Eliminatórias — chaveamento (linha). */
+export function BracketIcon({ size = 24, ...props }: IconProps) {
+  return (
+    <svg
+      {...base(size)}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.7}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <path d="M3 4h4M3 9h4M3 15h4M3 20h4M7 4v5M7 15v5M7 6.5h4M7 17.5h4M11 6.5v11M11 12h5" />
+    </svg>
+  );
+}
+
 /** Seleções — escudo. */
 export function ShieldIcon({ size = 24, ...props }: IconProps) {
   return (

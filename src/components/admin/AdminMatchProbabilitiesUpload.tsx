@@ -2,11 +2,11 @@
 
 import { useRef, useState, useTransition } from 'react';
 import { FileUp, Download, Loader2, CheckCircle2, AlertTriangle } from 'lucide-react';
-import { teams } from '@/data/teams';
-import { UFMG_NAME_TO_TEAM_ID } from '@/data/ufmg-probabilities';
-import { uploadTeamProbabilities, type ProbUploadRow } from '@/app/admin/actions';
+import { matches } from '@/data/matches';
+import { getTeamById } from '@/data/teams';
+import { uploadMatchProbabilities, type MatchProbUploadRow } from '@/app/admin/actions';
 
-/** Normaliza para casar nomes: sem acentos, maiúsculas, trim. */
+/** Normaliza para casar cabeçalhos: sem acentos, maiúsculas, trim. */
 function norm(s: unknown): string {
   return String(s ?? '')
     .normalize('NFD')
@@ -15,23 +15,19 @@ function norm(s: unknown): string {
     .trim();
 }
 
-/** name(normalizado) → teamId, combinando o mapa UFMG e os nomes das seleções. */
-const NAME_TO_ID: Record<string, string> = (() => {
-  const m: Record<string, string> = {};
-  for (const [name, id] of Object.entries(UFMG_NAME_TO_TEAM_ID)) m[norm(name)] = id;
-  for (const t of teams) m[norm(t.name)] = t.id;
-  return m;
-})();
-
 /** "85,5%" / "4.5" / "12,3" → número. */
 function toNum(v: unknown): number {
   const n = parseFloat(String(v ?? '').replace('%', '').replace(',', '.').trim());
   return Number.isFinite(n) ? n : 0;
 }
 
+const TEMPLATE_HEADERS = ['Jogo', 'Mandante', 'Visitante', 'Vitória Mandante (%)', 'Empate (%)', 'Vitória Visitante (%)'];
+
+const VALID_MATCH_NUMBERS = new Set(matches.map((m) => m.matchNumber));
+
 type ParseResult = {
-  rows: ProbUploadRow[];
-  matched: string[];
+  rows: MatchProbUploadRow[];
+  matched: number[];
   unmatched: string[];
   missingColumns: string[];
 };
@@ -41,60 +37,51 @@ function colIndex(headers: string[], test: (h: string) => boolean): number {
   return headers.findIndex((h) => test(norm(h)));
 }
 
-const TEMPLATE_HEADERS = ['Seleção', '16avos', 'Oitavas', 'Quartas', 'Semi', 'Final', 'Campeão'];
-
 function parseSheet(aoa: unknown[][]): ParseResult {
   const headerRow = (aoa[0] ?? []).map((c) => String(c ?? ''));
-  const idxName = colIndex(headerRow, (h) => /SELE|TIME|EQUIPE|PAIS/.test(h));
-  const idx32 = colIndex(headerRow, (h) => h.includes('16'));
-  const idx16 = colIndex(headerRow, (h) => h.includes('OITAVA'));
-  const idxQ = colIndex(headerRow, (h) => h.includes('QUARTA'));
-  const idxS = colIndex(headerRow, (h) => h.startsWith('SEMI'));
-  const idxF = colIndex(headerRow, (h) => h === 'FINAL' || h.endsWith(' FINAL'));
-  const idxC = colIndex(headerRow, (h) => h.includes('CAMPE') || h.includes('TITUL'));
+  const idxJogo = colIndex(headerRow, (h) => h.includes('JOGO') || h.includes('NUMERO') || h.includes('PARTIDA'));
+  const idxHomeWin = colIndex(headerRow, (h) => h.includes('VITORIA') && h.includes('MANDANTE'));
+  const idxDraw = colIndex(headerRow, (h) => h.includes('EMPATE'));
+  const idxAwayWin = colIndex(headerRow, (h) => h.includes('VITORIA') && h.includes('VISITANTE'));
 
-  // Coluna ausente vira índice -1: sem essa checagem, r[-1] é `undefined` e
-  // toNum(undefined) vira 0 — sobrescreveria a probabilidade real por zero
-  // silenciosamente. Em vez disso, reporta a coluna faltante e não salva nada.
   const missingColumns: string[] = [];
-  if (idxName === -1) missingColumns.push(TEMPLATE_HEADERS[0]);
-  if (idx32 === -1) missingColumns.push(TEMPLATE_HEADERS[1]);
-  if (idx16 === -1) missingColumns.push(TEMPLATE_HEADERS[2]);
-  if (idxQ === -1) missingColumns.push(TEMPLATE_HEADERS[3]);
-  if (idxS === -1) missingColumns.push(TEMPLATE_HEADERS[4]);
-  if (idxF === -1) missingColumns.push(TEMPLATE_HEADERS[5]);
-  if (idxC === -1) missingColumns.push(TEMPLATE_HEADERS[6]);
+  if (idxJogo === -1) missingColumns.push(TEMPLATE_HEADERS[0]);
+  if (idxHomeWin === -1) missingColumns.push(TEMPLATE_HEADERS[3]);
+  if (idxDraw === -1) missingColumns.push(TEMPLATE_HEADERS[4]);
+  if (idxAwayWin === -1) missingColumns.push(TEMPLATE_HEADERS[5]);
 
-  const rows: ProbUploadRow[] = [];
-  const matched: string[] = [];
+  const rows: MatchProbUploadRow[] = [];
+  const matched: number[] = [];
   const unmatched: string[] = [];
 
   if (missingColumns.length === 0) {
     for (let i = 1; i < aoa.length; i++) {
       const r = aoa[i] ?? [];
-      const rawName = r[idxName];
-      if (rawName == null || String(rawName).trim() === '') continue;
-      const teamId = NAME_TO_ID[norm(rawName)];
-      if (!teamId) {
-        unmatched.push(String(rawName));
+      const rawJogo = r[idxJogo];
+      if (rawJogo == null || String(rawJogo).trim() === '') continue;
+      const matchNumber = parseInt(String(rawJogo).replace(/\D/g, ''), 10);
+      if (!Number.isFinite(matchNumber) || !VALID_MATCH_NUMBERS.has(matchNumber)) {
+        unmatched.push(String(rawJogo));
         continue;
       }
       rows.push({
-        teamId,
-        roundOf32: toNum(r[idx32]),
-        roundOf16: toNum(r[idx16]),
-        quarterFinal: toNum(r[idxQ]),
-        semiFinal: toNum(r[idxS]),
-        final: toNum(r[idxF]),
-        champion: toNum(r[idxC]),
+        matchNumber,
+        homeWin: toNum(r[idxHomeWin]),
+        draw: toNum(r[idxDraw]),
+        awayWin: toNum(r[idxAwayWin]),
       });
-      matched.push(String(rawName));
+      matched.push(matchNumber);
     }
   }
   return { rows, matched, unmatched, missingColumns };
 }
 
-export function AdminProbabilitiesUpload() {
+function teamLabel(id: string | null, placeholder?: string): string {
+  if (id) return getTeamById(id)?.name ?? id;
+  return placeholder || 'A definir';
+}
+
+export function AdminMatchProbabilitiesUpload() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [parsed, setParsed] = useState<ParseResult | null>(null);
   const [fileName, setFileName] = useState<string>('');
@@ -121,7 +108,7 @@ export function AdminProbabilitiesUpload() {
         return;
       }
       if (res.rows.length === 0) {
-        setError('Nenhuma seleção reconhecida. Confira os nomes na coluna "Seleção".');
+        setError('Nenhum jogo reconhecido. Confira os números na coluna "Jogo".');
         return;
       }
       setParsed(res);
@@ -133,11 +120,19 @@ export function AdminProbabilitiesUpload() {
 
   async function downloadTemplate() {
     const XLSX = await import('xlsx');
-    const rows = teams.map((t) => [t.name, '', '', '', '', '', '']);
+    const sorted = [...matches].sort((a, b) => a.matchNumber - b.matchNumber);
+    const rows = sorted.map((m) => [
+      m.matchNumber,
+      teamLabel(m.homeTeamId, m.homeTeamPlaceholder),
+      teamLabel(m.awayTeamId, m.awayTeamPlaceholder),
+      '',
+      '',
+      '',
+    ]);
     const ws = XLSX.utils.aoa_to_sheet([TEMPLATE_HEADERS, ...rows]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Probabilidades');
-    XLSX.writeFile(wb, 'probabilidades-selecoes-template.xlsx');
+    XLSX.writeFile(wb, 'probabilidades-jogos-template.xlsx');
   }
 
   function onSubmit() {
@@ -145,9 +140,9 @@ export function AdminProbabilitiesUpload() {
     setError(null);
     setResult(null);
     startTransition(async () => {
-      const res = await uploadTeamProbabilities(parsed.rows);
+      const res = await uploadMatchProbabilities(parsed.rows);
       if (res.ok) {
-        setResult(`Probabilidades atualizadas: ${res.count} seleções.`);
+        setResult(`Probabilidades atualizadas: ${res.count} jogos.`);
         setParsed(null);
         setFileName('');
         if (inputRef.current) inputRef.current.value = '';
@@ -160,8 +155,8 @@ export function AdminProbabilitiesUpload() {
   return (
     <div className="admin-prob-upload">
       <p className="admin-prob-hint">
-        Planilha com 7 colunas: <strong>Seleção · 16avos · Oitavas · Quartas · Semi · Final · Campeão</strong>.
-        Os valores podem estar em % ou número. Sobrescreve as probabilidades exibidas no dashboard.
+        Planilha com 6 colunas: <strong>Jogo · Mandante · Visitante · Vitória Mandante (%) · Empate (%) · Vitória Visitante (%)</strong>.
+        As colunas Mandante/Visitante são só referência — a linha é identificada pelo número do jogo.
       </p>
 
       <div className="admin-prob-actions">
@@ -185,11 +180,11 @@ export function AdminProbabilitiesUpload() {
       {parsed && (
         <div className="admin-prob-preview">
           <span className="admin-prob-ok">
-            <CheckCircle2 size={15} /> {parsed.matched.length} seleções reconhecidas
+            <CheckCircle2 size={15} /> {parsed.matched.length} jogos reconhecidos
           </span>
           {parsed.unmatched.length > 0 && (
             <span className="admin-prob-warn" title={parsed.unmatched.join(', ')}>
-              <AlertTriangle size={15} /> {parsed.unmatched.length} não reconhecidas
+              <AlertTriangle size={15} /> {parsed.unmatched.length} não reconhecidos
             </span>
           )}
           <button className="btn btn-gold btn-sm" onClick={onSubmit} disabled={pending}>

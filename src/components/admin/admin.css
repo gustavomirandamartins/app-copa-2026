@@ -522,6 +522,7 @@
 .admin-prob-upload { display: flex; flex-direction: column; gap: 14px; }
 .admin-prob-hint { margin: 0; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6; }
 .admin-prob-hint strong { color: #fff; }
+.admin-prob-actions { display: flex; flex-wrap: wrap; align-items: stretch; gap: 10px; }
 .admin-prob-drop {
   display: flex; align-items: center; gap: 10px;
   padding: 14px 18px; border-radius: 16px;
@@ -529,6 +530,7 @@
   background: rgba(8, 6, 18, 0.35);
   color: rgba(255, 255, 255, 0.85);
   font-weight: 600; font-size: 0.9rem; cursor: pointer;
+  flex: 1;
   transition: border-color 180ms ease, background 180ms ease;
 }
 .admin-prob-drop:hover { border-color: rgba(224, 124, 0, 0.5); background: rgba(8, 6, 18, 0.5); }

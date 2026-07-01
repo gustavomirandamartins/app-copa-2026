@@ -8,11 +8,9 @@ import { getStadiumById } from '@/data/stadiums';
 import { TeamFlag } from '@/components/ui/TeamFlag';
 import type { Match, MatchStage } from '@/lib/types';
 import { formatKickoffTime, formatKickoffDate } from '@/lib/datetime';
-import { Bracket } from './Bracket';
 
-const stageTabs: { key: MatchStage | 'all' | 'bracket'; label: string }[] = [
+const stageTabs: { key: MatchStage | 'all'; label: string }[] = [
   { key: 'group', label: 'Fase de Grupos' },
-  { key: 'bracket', label: 'Eliminatórias' },
   { key: 'round-of-32', label: '16 Avos' },
   { key: 'round-of-16', label: 'Oitavas' },
   { key: 'quarter-final', label: 'Quartas' },
@@ -30,10 +28,9 @@ function MatchTimeChip({ dateUTC }: { dateUTC: string }) {
 }
 
 export function JogosClient({ matches }: { matches: Match[] }) {
-  const [activeStage, setActiveStage] = useState<MatchStage | 'all' | 'bracket'>('bracket');
+  const [activeStage, setActiveStage] = useState<MatchStage | 'all'>('group');
 
   const filteredMatches = useMemo(() => {
-    if (activeStage === 'bracket') return []; // Bracket handles its own filtering
     const list = activeStage === 'all' ? matches : matches.filter((m) => m.stage === activeStage);
     // Ordena por horário de início (a ordem do array pode não ser cronológica).
     return [...list].sort(
@@ -76,11 +73,8 @@ export function JogosClient({ matches }: { matches: Match[] }) {
         ))}
       </div>
 
-      {activeStage === 'bracket' ? (
-        <Bracket matches={matches} onMatchClick={(stage) => setActiveStage(stage)} />
-      ) : (
-        <>
-          {Array.from(groupedByDate.entries()).map(([dateLabel, dayMatches]) => (
+      <>
+        {Array.from(groupedByDate.entries()).map(([dateLabel, dayMatches]) => (
         <section key={dateLabel} className="animate-slide-up" style={{ marginBottom: 'var(--space-xl)' }}>
           <h3 style={{
             fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-tertiary)',
@@ -184,8 +178,7 @@ export function JogosClient({ matches }: { matches: Match[] }) {
             <p>Nenhum jogo nesta fase ainda.</p>
           </div>
         )}
-        </>
-      )}
+      </>
     </div>
   );
 }

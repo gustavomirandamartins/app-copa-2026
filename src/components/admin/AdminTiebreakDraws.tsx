@@ -172,15 +172,6 @@ export function AdminTiebreakDraws({ entries }: Props) {
     () => new Set(entries.filter((e) => e.draw).map((e) => e.group.signature)),
   );
 
-  if (entries.length === 0) {
-    return (
-      <div className="glass-card-static" style={{ padding: 'var(--space-md)', display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
-        <CheckCircle size={16} style={{ color: 'var(--copa-green, #00c853)', flexShrink: 0 }} />
-        <p style={{ margin: 0, fontSize: '0.9rem' }}>Nenhum sorteio pendente no momento.</p>
-      </div>
-    );
-  }
-
   const pending = entries.filter((e) => !resolvedSigs.has(e.group.signature));
   const resolved = entries.filter((e) => resolvedSigs.has(e.group.signature));
 
@@ -190,6 +181,13 @@ export function AdminTiebreakDraws({ entries }: Props) {
         <Shuffle size={20} style={{ color: 'var(--gold)', flexShrink: 0 }} />
         Sorteios de desempate
       </h3>
+
+      {entries.length === 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+          <CheckCircle size={16} style={{ color: 'var(--copa-green, #00c853)', flexShrink: 0 }} />
+          <p style={{ margin: 0, fontSize: '0.9rem' }}>Nenhum sorteio pendente no momento.</p>
+        </div>
+      )}
 
       {pending.length > 0 && (
         <div style={{ marginBottom: 'var(--space-lg)' }}>

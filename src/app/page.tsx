@@ -13,6 +13,7 @@ import {
   BarChart3,
   Flag,
   CheckCircle2,
+  Network,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -415,6 +416,7 @@ export default async function HomePage() {
         <div className="home-explore-links">
           <Link href="/jogos" className="home-explore-link"><Calendar size={15} /> Jogos</Link>
           <Link href="/grupos" className="home-explore-link"><BarChart3 size={15} /> Grupos</Link>
+          <Link href="/eliminatorias" className="home-explore-link"><Network size={15} /> Eliminatórias</Link>
           <Link href="/selecoes" className="home-explore-link"><Flag size={15} /> Seleções</Link>
         </div>
       </section>

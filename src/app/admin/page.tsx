@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
 import type { Profile, PaymentRequest } from '@/lib/bolao/types';
-import { AdminPaymentList } from '@/components/admin/AdminPaymentList';
+import { AdminPendingPayments, AdminPaymentHistory } from '@/components/admin/AdminPaymentList';
 import { AdminUserList, type AdminUser } from '@/components/admin/AdminUserList';
 import {
   AdminPredictionsMatrix,
@@ -15,6 +15,7 @@ import {
 } from '@/components/admin/AdminPredictionsMatrix';
 import { AdminTiebreakDraws, type TiebreakEntry } from '@/components/admin/AdminTiebreakDraws';
 import { AdminProbabilitiesUpload } from '@/components/admin/AdminProbabilitiesUpload';
+import { AdminMatchProbabilitiesUpload } from '@/components/admin/AdminMatchProbabilitiesUpload';
 import { matches } from '@/data/matches';
 import { teams } from '@/data/teams';
 import { ROUND_ORDER, ROUND_LABELS } from '@/lib/bolao/rounds';
@@ -324,20 +325,24 @@ export default async function AdminPage() {
         </div>
       </section>
 
-      <AdminPaymentList pending={pending} reviewed={reviewed} />
-
-      <AdminPredictionsMatrix
-        users={matrixUsers}
-        columns={matrixColumns}
-        cells={cells}
-      />
+      <AdminPendingPayments pending={pending}>
+        <AdminTiebreakDraws entries={tiebreakEntries} />
+      </AdminPendingPayments>
 
       <div style={{ marginTop: 'var(--space-2xl)' }}>
-        <AdminUserList users={users} />
+        <AdminPredictionsMatrix
+          users={matrixUsers}
+          columns={matrixColumns}
+          cells={cells}
+        />
       </div>
 
       <div style={{ marginTop: 'var(--space-2xl)' }}>
-        <AdminTiebreakDraws entries={tiebreakEntries} />
+        <AdminPaymentHistory reviewed={reviewed} />
+      </div>
+
+      <div style={{ marginTop: 'var(--space-2xl)' }}>
+        <AdminUserList users={users} />
       </div>
 
       <section className="glass-card-static" style={{ marginTop: 'var(--space-2xl)', padding: 'var(--space-lg)' }}>
@@ -345,6 +350,13 @@ export default async function AdminPage() {
           <BarChart3 size={20} style={{ color: 'var(--gold)' }} /> Probabilidades das seleções
         </h2>
         <AdminProbabilitiesUpload />
+      </section>
+
+      <section className="glass-card-static" style={{ marginTop: 'var(--space-2xl)', padding: 'var(--space-lg)' }}>
+        <h2 style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 'var(--space-md)' }}>
+          <BarChart3 size={20} style={{ color: 'var(--gold)' }} /> Probabilidades dos próximos jogos
+        </h2>
+        <AdminMatchProbabilitiesUpload />
       </section>
     </div>
   );

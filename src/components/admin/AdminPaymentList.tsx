@@ -110,53 +110,62 @@ function Row({ req }: { req: PaymentRequest }) {
   );
 }
 
-export function AdminPaymentList({
+/**
+ * Card "Pendentes": solicitações de Pix aguardando aprovação. Aceita
+ * `children` para conteúdo relacionado a itens pendentes de ação do admin
+ * (ex.: sorteios de desempate) renderizado dentro do mesmo card.
+ */
+export function AdminPendingPayments({
   pending,
-  reviewed,
+  children,
 }: {
   pending: PaymentRequest[];
-  reviewed: PaymentRequest[];
+  children?: React.ReactNode;
 }) {
+  return (
+    <section className="admin-glass-section">
+      <h2 className="admin-section-title">
+        Pendentes ({pending.length})
+      </h2>
+      {pending.length === 0 ? (
+        <p className="admin-empty">Nenhuma solicitação aguardando aprovação.</p>
+      ) : (
+        pending.map((req) => <Row key={req.id} req={req} />)
+      )}
+      {children}
+    </section>
+  );
+}
+
+/** Card "Histórico recente": solicitações de Pix já aprovadas/rejeitadas. */
+export function AdminPaymentHistory({ reviewed }: { reviewed: PaymentRequest[] }) {
   const [showHistory, setShowHistory] = useState(false);
 
-  return (
-    <div className="admin-list">
-      <section>
-        <h2 className="admin-section-title">
-          Pendentes ({pending.length})
-        </h2>
-        {pending.length === 0 ? (
-          <p className="admin-empty">Nenhuma solicitação aguardando aprovação.</p>
-        ) : (
-          pending.map((req) => <Row key={req.id} req={req} />)
-        )}
-      </section>
+  if (reviewed.length === 0) return null;
 
-      {reviewed.length > 0 && (
-        <section>
-          <button
-            type="button"
-            className="admin-history-toggle"
-            onClick={() => setShowHistory((v) => !v)}
-            aria-expanded={showHistory}
-          >
-            <h2 className="admin-section-title" style={{ margin: 0 }}>
-              Histórico recente ({reviewed.length})
-            </h2>
-            <ChevronDown
-              size={18}
-              style={{
-                transition: 'transform 0.2s ease',
-                transform: showHistory ? 'rotate(180deg)' : 'none',
-                color: 'var(--text-tertiary)',
-              }}
-            />
-          </button>
-          {showHistory && reviewed.map((req) => (
-            <Row key={req.id} req={req} />
-          ))}
-        </section>
-      )}
-    </div>
+  return (
+    <section className="admin-glass-section">
+      <button
+        type="button"
+        className="admin-history-toggle"
+        onClick={() => setShowHistory((v) => !v)}
+        aria-expanded={showHistory}
+      >
+        <h2 className="admin-section-title" style={{ margin: 0 }}>
+          Histórico recente ({reviewed.length})
+        </h2>
+        <ChevronDown
+          size={18}
+          style={{
+            transition: 'transform 0.2s ease',
+            transform: showHistory ? 'rotate(180deg)' : 'none',
+            color: 'var(--text-tertiary)',
+          }}
+        />
+      </button>
+      {showHistory && reviewed.map((req) => (
+        <Row key={req.id} req={req} />
+      ))}
+    </section>
   );
 }

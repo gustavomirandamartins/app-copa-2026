@@ -15,6 +15,7 @@ const navLinks = [
   { href: '/ranking', label: 'Classificação' },
   { href: '/jogos', label: 'Jogos' },
   { href: '/grupos', label: 'Grupos' },
+  { href: '/eliminatorias', label: 'Eliminatórias' },
   { href: '/selecoes', label: 'Seleções' },
 ];
 
