@@ -18,6 +18,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
 import { isProfileComplete } from '@/lib/bolao/profile';
+import { computeGeneralRanking } from '@/lib/bolao/generalRanking';
 import { computeThermometer, verdictFor } from '@/lib/bolao/thermometer';
 import { ROUND_BONUS_POINTS, ROUND_ORDER, ROUND_LABELS, type RoundKey } from '@/lib/bolao/rounds';
 import { REFERRAL_BONUS_POINTS } from '@/lib/bolao/referral';
@@ -93,19 +94,20 @@ export default async function HomePage() {
 
   if (configured) {
     const supabase = await createClient();
+    const adminForRanking = createAdminClient();
 
-    const [{ data: user }, { data: top }, { data: settings }, { data: live }] =
+    const [{ data: user }, generalRanking, { data: settings }, { data: live }] =
       await Promise.all([
         supabase.auth.getUser().then((r) => ({ data: r.data.user })),
-        supabase
-          .from('public_ranking')
-          .select('full_name, total_score')
-          .order('total_score', { ascending: false }),
+        // Mesmo critério de desempate da página /ranking (fonte única —
+        // ver src/lib/bolao/generalRanking.ts). A view public_ranking só
+        // ordenava por total_score, sem aplicar os critérios de desempate.
+        computeGeneralRanking(adminForRanking),
         supabase.from('match_settings').select('match_id, score_multiplier').gt('score_multiplier', 1),
         supabase.from('matches').select('id, status, home_score, away_score, home_penalties, away_penalties'),
       ]);
 
-    rankRows = (top as RankRow[]) ?? [];
+    rankRows = generalRanking.map((u) => ({ full_name: u.full_name, total_score: u.total_score }));
     leaderPoints = rankRows[0]?.total_score ?? 0;
 
     for (const s of settings ?? []) multipliers[s.match_id] = s.score_multiplier as number;

@@ -12,6 +12,12 @@ import {
   type GeneralRow,
   type DrawRecord,
 } from '@/lib/bolao/tiebreak';
+import {
+  buildGeneralRanking,
+  type GeneralRankedUser,
+  type GeneralTiebreak,
+  type GeneralBreakdown,
+} from '@/lib/bolao/generalRanking';
 import './ranking.css';
 
 export const revalidate = 0;
@@ -20,32 +26,7 @@ const ADMIN_NAME = 'Gustavo Martins';
 const normalizeName = (s: string | null) => (s ?? '').trim().toLowerCase();
 const isAdminName = (s: string | null) => normalizeName(s) === normalizeName(ADMIN_NAME);
 
-interface Tiebreakers {
-  prediction_pts: number;
-  exact_pts: number;
-  diff_pts: number;
-  winner_pts: number;
-  exact_count: number;
-  diff_count: number;
-  winner_count: number;
-  exact_turbo_count: number;
-  diff_turbo_count: number;
-  winner_turbo_count: number;
-  final_pts: number;
-  semi_pts: number;
-  quarters_pts: number;
-  ro16_pts: number;
-}
-
-interface RankedUser {
-  id: string;
-  full_name: string | null;
-  total_score: number;
-  is_admin: boolean;
-  referral_bonus: number;
-  score_adjustment: number;
-  tb: Tiebreakers;
-}
+type RankedUser = GeneralRankedUser;
 
 interface RoundRow {
   user_id: string;
@@ -111,27 +92,24 @@ const PRIZES = [
   },
 ];
 
-const EMPTY_TB: Tiebreakers = { prediction_pts: 0, exact_pts: 0, diff_pts: 0, winner_pts: 0, exact_count: 0, diff_count: 0, winner_count: 0, exact_turbo_count: 0, diff_turbo_count: 0, winner_turbo_count: 0, final_pts: 0, semi_pts: 0, quarters_pts: 0, ro16_pts: 0 };
+const EMPTY_TB: GeneralTiebreak = {
+  prediction_pts: 0, exact_tiebreak_pts: 0, diff_tiebreak_pts: 0,
+  final_pts: 0, semi_pts: 0, quarters_pts: 0, ro16_pts: 0,
+};
+const EMPTY_BD: GeneralBreakdown = {
+  exact_pts: 0, diff_pts: 0, winner_pts: 0,
+  exact_count: 0, diff_count: 0, winner_count: 0,
+  exact_turbo_count: 0, diff_turbo_count: 0, winner_turbo_count: 0,
+};
 
 const DEMO_RANKING: RankedUser[] = [
-  { id: '1', full_name: 'Ana Souza',    total_score: 87, is_admin: false, referral_bonus: 5,  score_adjustment: 0, tb: { ...EMPTY_TB, prediction_pts: 82, exact_pts: 40, diff_pts: 27, winner_pts: 15 } },
-  { id: '2', full_name: 'Bruno Lima',   total_score: 81, is_admin: false, referral_bonus: 0,  score_adjustment: 0, tb: { ...EMPTY_TB, prediction_pts: 81, exact_pts: 35, diff_pts: 30, winner_pts: 16 } },
-  { id: '3', full_name: 'Carla Mendes', total_score: 76, is_admin: false, referral_bonus: 5,  score_adjustment: 0, tb: { ...EMPTY_TB, prediction_pts: 71, exact_pts: 25, diff_pts: 30, winner_pts: 16 } },
-  { id: '4', full_name: 'Diego Alves',  total_score: 64, is_admin: false, referral_bonus: 0,  score_adjustment: 0, tb: { ...EMPTY_TB, prediction_pts: 64, exact_pts: 20, diff_pts: 24, winner_pts: 20 } },
-  { id: '5', full_name: 'Elaine Costa', total_score: 59, is_admin: false, referral_bonus: 0,  score_adjustment: 0, tb: { ...EMPTY_TB, prediction_pts: 59, exact_pts: 10, diff_pts: 21, winner_pts: 28 } },
-  { id: '6', full_name: 'Felipe Rocha', total_score: 48, is_admin: false, referral_bonus: 0,  score_adjustment: 0, tb: { ...EMPTY_TB, prediction_pts: 48, exact_pts: 0,  diff_pts: 18, winner_pts: 30 } },
+  { id: '1', full_name: 'Ana Souza',    total_score: 87, is_admin: false, referral_bonus: 5,  score_adjustment: 0, tb: { ...EMPTY_TB, prediction_pts: 82, exact_tiebreak_pts: 40, diff_tiebreak_pts: 27 }, breakdown: { ...EMPTY_BD, exact_pts: 40, diff_pts: 27, winner_pts: 15 } },
+  { id: '2', full_name: 'Bruno Lima',   total_score: 81, is_admin: false, referral_bonus: 0,  score_adjustment: 0, tb: { ...EMPTY_TB, prediction_pts: 81, exact_tiebreak_pts: 35, diff_tiebreak_pts: 30 }, breakdown: { ...EMPTY_BD, exact_pts: 35, diff_pts: 30, winner_pts: 16 } },
+  { id: '3', full_name: 'Carla Mendes', total_score: 76, is_admin: false, referral_bonus: 5,  score_adjustment: 0, tb: { ...EMPTY_TB, prediction_pts: 71, exact_tiebreak_pts: 25, diff_tiebreak_pts: 30 }, breakdown: { ...EMPTY_BD, exact_pts: 25, diff_pts: 30, winner_pts: 16 } },
+  { id: '4', full_name: 'Diego Alves',  total_score: 64, is_admin: false, referral_bonus: 0,  score_adjustment: 0, tb: { ...EMPTY_TB, prediction_pts: 64, exact_tiebreak_pts: 20, diff_tiebreak_pts: 24 }, breakdown: { ...EMPTY_BD, exact_pts: 20, diff_pts: 24, winner_pts: 20 } },
+  { id: '5', full_name: 'Elaine Costa', total_score: 59, is_admin: false, referral_bonus: 0,  score_adjustment: 0, tb: { ...EMPTY_TB, prediction_pts: 59, exact_tiebreak_pts: 10, diff_tiebreak_pts: 21 }, breakdown: { ...EMPTY_BD, exact_pts: 10, diff_pts: 21, winner_pts: 28 } },
+  { id: '6', full_name: 'Felipe Rocha', total_score: 48, is_admin: false, referral_bonus: 0,  score_adjustment: 0, tb: { ...EMPTY_TB, prediction_pts: 48, exact_tiebreak_pts: 0,  diff_tiebreak_pts: 18 }, breakdown: { ...EMPTY_BD, exact_pts: 0,  diff_pts: 18, winner_pts: 30 } },
 ];
-
-function compareTiebreakers(a: Tiebreakers, b: Tiebreakers): number {
-  if (b.prediction_pts !== a.prediction_pts) return b.prediction_pts - a.prediction_pts;
-  if (b.exact_pts      !== a.exact_pts)      return b.exact_pts      - a.exact_pts;
-  if (b.diff_pts       !== a.diff_pts)       return b.diff_pts       - a.diff_pts;
-  if (b.final_pts      !== a.final_pts)      return b.final_pts      - a.final_pts;
-  if (b.semi_pts       !== a.semi_pts)       return b.semi_pts       - a.semi_pts;
-  if (b.quarters_pts   !== a.quarters_pts)   return b.quarters_pts   - a.quarters_pts;
-  if (b.ro16_pts       !== a.ro16_pts)       return b.ro16_pts       - a.ro16_pts;
-  return 0;
-}
 
 function toGeneralRow(user: RankedUser, roundBonuses: Array<{ roundKey: string; label: string; pts: number }>): RankedUserRow {
   return {
@@ -140,15 +118,15 @@ function toGeneralRow(user: RankedUser, roundBonuses: Array<{ roundKey: string; 
     score: user.total_score,
     is_admin: user.is_admin,
     breakdown: {
-      exact_pts: user.tb.exact_pts,
-      diff_pts: user.tb.diff_pts,
-      winner_pts: user.tb.winner_pts,
-      exact_count: user.tb.exact_count,
-      diff_count: user.tb.diff_count,
-      winner_count: user.tb.winner_count,
-      exact_turbo_count: user.tb.exact_turbo_count,
-      diff_turbo_count: user.tb.diff_turbo_count,
-      winner_turbo_count: user.tb.winner_turbo_count,
+      exact_pts: user.breakdown.exact_pts,
+      diff_pts: user.breakdown.diff_pts,
+      winner_pts: user.breakdown.winner_pts,
+      exact_count: user.breakdown.exact_count,
+      diff_count: user.breakdown.diff_count,
+      winner_count: user.breakdown.winner_count,
+      exact_turbo_count: user.breakdown.exact_turbo_count,
+      diff_turbo_count: user.breakdown.diff_turbo_count,
+      winner_turbo_count: user.breakdown.winner_turbo_count,
       prediction_pts: user.tb.prediction_pts,
       round_bonuses: roundBonuses,
       referral_bonus: user.referral_bonus,
@@ -257,49 +235,8 @@ export default async function RankingPage() {
       place: number | null; bonus: number; complete: boolean; is_winner: boolean;
     }[];
 
-    const { matches: staticMatches } = await import('@/data/matches');
-
-    const finalIds    = new Set(staticMatches.filter(m => m.stage === 'final').map(m => m.id));
-    const semiIds     = new Set(staticMatches.filter(m => m.stage === 'semi-final').map(m => m.id));
-    const quartersIds = new Set(staticMatches.filter(m => m.stage === 'quarter-final').map(m => m.id));
-    const ro16Ids     = new Set(staticMatches.filter(m => m.stage === 'round-of-16').map(m => m.id));
-
-    // ── Tiebreakers por usuário ──────────────────────────────────────────
-    // Acertos: contados pelo tipo (base_points) mas somados com points_earned
-    // (já com o multiplicador de jogos turbinados). Assim o somatório
-    // exact + diff + winner == prediction_pts, sem divergência.
-    const tbMap = new Map<string, Tiebreakers>();
-    for (const p of preds) {
-      const t = tbMap.get(p.user_id) ?? { ...EMPTY_TB };
-      const pts  = p.points_earned;
-      const base = p.base_points ?? 0;
-      t.prediction_pts += pts;
-      // Acumula pontos reais (com turbo) em cada categoria
-      if (base === 5) { t.exact_pts  += pts; t.exact_count  += 1; if (pts > 5)  t.exact_turbo_count  += 1; }
-      if (base === 3) { t.diff_pts   += pts; t.diff_count   += 1; if (pts > 3)  t.diff_turbo_count   += 1; }
-      if (base === 1) { t.winner_pts += pts; t.winner_count += 1; if (pts > 1)  t.winner_turbo_count += 1; }
-      if (finalIds.has(p.match_id))    t.final_pts    += pts;
-      if (semiIds.has(p.match_id))     t.semi_pts     += pts;
-      if (quartersIds.has(p.match_id)) t.quarters_pts += pts;
-      if (ro16Ids.has(p.match_id))     t.ro16_pts     += pts;
-      tbMap.set(p.user_id, t);
-    }
-
-    // ── Classificação geral ─────────────────────────────────────────────
-    ranking = profiles
-      .map((pr) => ({
-        id: pr.id,
-        full_name: pr.full_name,
-        total_score: pr.total_score ?? 0,
-        is_admin: pr.is_admin ?? false,
-        referral_bonus: pr.referral_bonus ?? 0,
-        score_adjustment: pr.score_adjustment ?? 0,
-        tb: tbMap.get(pr.id) ?? { ...EMPTY_TB },
-      }))
-      .sort((a, b) => {
-        if (b.total_score !== a.total_score) return b.total_score - a.total_score;
-        return compareTiebreakers(a.tb, b.tb);
-      });
+    // ── Classificação geral (mesmos critérios de desempate da home) ──────
+    ranking = buildGeneralRanking(profiles, preds);
 
     // ── Bônus de rodada por usuário (escalonado: lê o bônus já gravado) ──
     for (const r of rScores) {
@@ -389,8 +326,8 @@ export default async function RankingPage() {
       tb: {
         total_score: u.total_score,
         prediction_pts: u.tb.prediction_pts,
-        exact_pts: u.tb.exact_pts,
-        diff_pts: u.tb.diff_pts,
+        exact_pts: u.tb.exact_tiebreak_pts,
+        diff_pts: u.tb.diff_tiebreak_pts,
         final_pts: u.tb.final_pts,
         semi_pts: u.tb.semi_pts,
         quarters_pts: u.tb.quarters_pts,
