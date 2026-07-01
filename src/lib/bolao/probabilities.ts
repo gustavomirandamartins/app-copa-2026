@@ -28,16 +28,19 @@ export async function loadTeamProbabilities(): Promise<Record<string, UfmgProbab
     const { data } = await admin.from('team_probabilities').select('*');
     for (const r of (data ?? []) as Record<string, unknown>[]) {
       const id = String(r.team_id);
-      const champion = Number(r.champion);
-      const final = Number(r.final);
-      const semifinal = Number(r.semi_final);
-      const quarterFinal = Number(r.quarter_final);
-      const roundOf16 = Number(r.round_of_16);
-      const roundOf32 = Number(r.round_of_32);
-      // Linha ainda não preenchida (upload em branco vira tudo 0) — mantém o
-      // fallback estático em vez de zerar a seleção.
-      if (!champion && !final && !semifinal && !quarterFinal && !roundOf16 && !roundOf32) continue;
-      map[id] = { teamId: id, champion, final, semifinal, quarterFinal, roundOf16, roundOf32 };
+      // 0% em todas as fases é um valor real e válido (seleção eliminada) —
+      // ao contrário de match_probabilities, aqui NÃO tratamos zero como
+      // "linha em branco". A blindagem contra upload parcial fica só no
+      // lado da escrita (uploadTeamProbabilities só grava linhas preenchidas).
+      map[id] = {
+        teamId: id,
+        champion: Number(r.champion),
+        final: Number(r.final),
+        semifinal: Number(r.semi_final),
+        quarterFinal: Number(r.quarter_final),
+        roundOf16: Number(r.round_of_16),
+        roundOf32: Number(r.round_of_32),
+      };
     }
   } catch {
     // Sem banco/credenciais → mantém o fallback estático.
