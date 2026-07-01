@@ -14,6 +14,7 @@ import { RankingConsentModal } from '@/components/bolao/RankingConsentModal';
 import type { Match, UfmgProbability } from '@/lib/types';
 import type { Profile, PredictionInput } from '@/lib/bolao/types';
 import type { MatchResult } from '@/components/bolao/BolaoClient';
+import type { MatchWinProbability } from '@/lib/bolao/probabilities';
 
 /** WhatsApp da MinduBier — harmonização / pedido de chopp. */
 const WHATSAPP_URL =
@@ -31,6 +32,8 @@ interface Props {
   results: Record<string, MatchResult>;
   /** Probabilidades por seleção (tabela + fallback estático). */
   probabilities: Record<string, UfmgProbability>;
+  /** Probabilidades V-E-D por jogo (tabela match_probabilities), quando o admin já preencheu. */
+  matchProbabilities?: Record<number, MatchWinProbability>;
   /** Quantos jogos mostrar na lista "Próximos jogos" (fora o destaque). */
   upcomingCount?: number;
 }
@@ -75,6 +78,7 @@ export function DashboardClient({
   multipliers,
   results,
   probabilities,
+  matchProbabilities,
   upcomingCount = 6,
 }: Props) {
   const [values, setValues] = useState<Map<string, Value>>(() => seed(existingPredictions));
@@ -162,7 +166,14 @@ export function DashboardClient({
   const fStadium = getStadiumById(featured.stadiumId);
   const fMult = multipliers[featured.id] ?? 1;
   const fVal = values.get(featured.id);
-  const wdw = fHome && fAway ? toPercentParts(winDrawWin(fHome.fifaRanking, fAway.fifaRanking)) : null;
+  // Prioriza a planilha do admin (match_probabilities); sem ela, cai na
+  // estimativa por ranking FIFA.
+  const featuredProb = matchProbabilities?.[featured.matchNumber];
+  const wdw = featuredProb
+    ? { home: Math.round(featuredProb.home), draw: Math.round(featuredProb.draw), away: Math.round(featuredProb.away) }
+    : fHome && fAway
+      ? toPercentParts(winDrawWin(fHome.fifaRanking, fAway.fifaRanking))
+      : null;
 
   return (
     <>

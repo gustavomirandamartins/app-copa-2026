@@ -33,7 +33,7 @@ import { type MatchResult } from '@/components/bolao/BolaoClient';
 import { DashboardClient } from '@/components/home/DashboardClient';
 import { BracketCard } from '@/components/home/BracketCard';
 import { matches as staticMatches } from '@/data/matches';
-import { loadTeamProbabilities } from '@/lib/bolao/probabilities';
+import { loadTeamProbabilities, loadMatchProbabilities } from '@/lib/bolao/probabilities';
 import type { Match } from '@/lib/types';
 import './home.css';
 import './dashboard.css';
@@ -199,6 +199,8 @@ export default async function HomePage() {
 
     // Probabilidades por seleção (tabela team_probabilities + fallback estático).
     const probabilities = await loadTeamProbabilities();
+    // Probabilidades V-E-D por jogo (tabela match_probabilities, sem fallback).
+    const matchProbabilities = await loadMatchProbabilities();
 
     // Bracket precisa dos times já classificados (mesma fonte da página Jogos).
     const enrichedMatches: Match[] = [...staticMatches];
@@ -245,6 +247,7 @@ export default async function HomePage() {
           multipliers={multipliers}
           results={results}
           probabilities={probabilities}
+          matchProbabilities={matchProbabilities}
         />
 
         {/* ── Chaveamento das eliminatórias ──────────────────── */}

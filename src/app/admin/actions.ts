@@ -62,16 +62,22 @@ export async function uploadTeamProbabilities(
 
   const admin = createAdminClient();
   const now = new Date().toISOString();
-  const payload = rows.map((r) => ({
-    team_id: r.teamId,
-    round_of_32: r.roundOf32,
-    round_of_16: r.roundOf16,
-    quarter_final: r.quarterFinal,
-    semi_final: r.semiFinal,
-    final: r.final,
-    champion: r.champion,
-    updated_at: now,
-  }));
+  const payload = rows
+    // Linha do template deixada em branco pelo admin (todas as colunas
+    // zeradas) — pula em vez de sobrescrever uma probabilidade real já
+    // salva para essa seleção com zero.
+    .filter((r) => r.roundOf32 || r.roundOf16 || r.quarterFinal || r.semiFinal || r.final || r.champion)
+    .map((r) => ({
+      team_id: r.teamId,
+      round_of_32: r.roundOf32,
+      round_of_16: r.roundOf16,
+      quarter_final: r.quarterFinal,
+      semi_final: r.semiFinal,
+      final: r.final,
+      champion: r.champion,
+      updated_at: now,
+    }));
+  if (!payload.length) return { ok: false, error: 'Nenhuma linha com probabilidades preenchidas.' };
 
   const { error } = await admin
     .from('team_probabilities')
@@ -104,13 +110,18 @@ export async function uploadMatchProbabilities(
 
   const admin = createAdminClient();
   const now = new Date().toISOString();
-  const payload = rows.map((r) => ({
-    match_number: r.matchNumber,
-    home_win: r.homeWin,
-    draw: r.draw,
-    away_win: r.awayWin,
-    updated_at: now,
-  }));
+  const payload = rows
+    // Linha do template deixada em branco pelo admin — pula em vez de
+    // sobrescrever uma probabilidade real já salva para esse jogo com zero.
+    .filter((r) => r.homeWin || r.draw || r.awayWin)
+    .map((r) => ({
+      match_number: r.matchNumber,
+      home_win: r.homeWin,
+      draw: r.draw,
+      away_win: r.awayWin,
+      updated_at: now,
+    }));
+  if (!payload.length) return { ok: false, error: 'Nenhuma linha com probabilidades preenchidas.' };
 
   const { error } = await admin
     .from('match_probabilities')
