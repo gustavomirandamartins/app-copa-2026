@@ -63,19 +63,25 @@ export function extractScore(score: FdScore | undefined): ExtractedScore {
   };
   if (!score) return empty;
 
-  const sum = (a: number | null | undefined, b: number | null | undefined) =>
-    a == null && b == null ? null : (a ?? 0) + (b ?? 0);
-
-  // Placar de campo = tempo normal + prorrogação. Quando a API detalha
-  // `regularTime` (mata-mata), usamos ele; senão `fullTime` é o placar de campo
-  // (jogos regulares e de prorrogação sem pênaltis têm fullTime == regular+extra).
+  // Placar de campo = tempo normal + prorrogação. Quando a API já detalhou
+  // `regularTime` (mata-mata), somamos com `extraTime`; senão `fullTime` é o
+  // placar de campo (jogos regulares e de prorrogação sem pênaltis têm
+  // fullTime == regular+extra).
+  //
+  // IMPORTANTE: exige `regularTime.home`/`.away` não-nulos, não só o objeto
+  // `regularTime` existir. A API pode entregar `regularTime: { home: null,
+  // away: null }` com `extraTime` já preenchido (gol na prorrogação chega
+  // antes do tempo normal ser "fechado" pela API) — nesse caso, tratar o
+  // null como 0 grava só o gol da prorrogação como se fosse o placar final
+  // (foi exatamente isso que aconteceu: 1×0 em vez de 3×2 quando o jogo
+  // terminou 2×2 no tempo normal + 1×0 na prorrogação).
   const home =
-    score.regularTime != null
-      ? sum(score.regularTime.home, score.extraTime?.home)
+    score.regularTime?.home != null
+      ? score.regularTime.home + (score.extraTime?.home ?? 0)
       : score.fullTime?.home ?? null;
   const away =
-    score.regularTime != null
-      ? sum(score.regularTime.away, score.extraTime?.away)
+    score.regularTime?.away != null
+      ? score.regularTime.away + (score.extraTime?.away ?? 0)
       : score.fullTime?.away ?? null;
 
   // Pênaltis apenas quando houve disputa. Regra do projeto: o placar do
