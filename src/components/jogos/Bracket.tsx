@@ -6,56 +6,85 @@ import type { Match, MatchStage } from '@/lib/types';
 import './bracket.css';
 
 type Transform = { scale: number; x: number; y: number };
+type Side = 'left' | 'right';
 
 // Espaçamento de respiro ao enquadrar (em px do espaço de tela).
 const PAD = 48;
 // Escala alvo ao focar uma única partida (tamanho confortável de leitura).
 const MATCH_FOCUS_SCALE = 1.15;
 
+const KO_STAGES: MatchStage[] = ['round-of-32', 'round-of-16', 'quarter-final', 'semi-final'];
+const STAGE_TITLES: Record<MatchStage, string> = {
+  group: 'Grupos',
+  'round-of-32': '16 Avos',
+  'round-of-16': 'Oitavas',
+  'quarter-final': 'Quartas',
+  'semi-final': 'Semifinais',
+  'third-place': '3º Lugar',
+  final: 'Final',
+};
+
+interface BracketData {
+  /** Cada rodada, com os confrontos de cada metade do chaveamento já na
+   * ordem visual correta (pares que se alimentam do mesmo jogo seguinte
+   * ficam adjacentes). */
+  stages: Array<{ stage: MatchStage; title: string; left: Match[]; right: Match[] }>;
+  finalMatch: Match | null;
+  thirdPlace: Match | null;
+}
+
+function feederNum(placeholder?: string | null): number | null {
+  if (!placeholder) return null;
+  const hit = placeholder.match(/^(?:Vencedor|Perdedor) do Jogo (\d+)$/i);
+  return hit ? Number(hit[1]) : null;
+}
+
 /**
- * Traversal in-order da árvore do chaveamento a partir da Final, para que
- * cada rodada mostre os jogos na ordem visual correta (pares que se alimentam
- * do mesmo jogo seguinte ficam adjacentes, com linhas de bracket corretas).
- *
- * Sem isso, ordenar por matchNumber quebra o bracket: jogos atribuídos por
- * data de disputa, não por posição no chaveamento.
+ * Constrói as duas metades do chaveamento (esquerda/direita), espelhadas e
+ * convergindo para a Final ao centro — como um chaveamento de mata-mata
+ * tradicional. Faz um traversal in-order da árvore a partir dos dois
+ * alimentadores da Final (não por matchNumber, que reflete ordem
+ * cronológica, não posição visual no bracket).
  */
-function computeBracketOrder(matches: Match[]): Map<string, number> {
+function buildBracketData(matches: Match[]): BracketData {
   const byNum = new Map(matches.map((m) => [m.matchNumber, m]));
+  const buckets: Record<Side, Record<string, Match[]>> = {
+    left: { 'round-of-32': [], 'round-of-16': [], 'quarter-final': [], 'semi-final': [] },
+    right: { 'round-of-32': [], 'round-of-16': [], 'quarter-final': [], 'semi-final': [] },
+  };
 
-  function feederNum(placeholder?: string | null): number | null {
-    if (!placeholder) return null;
-    const hit = placeholder.match(/^(?:Vencedor|Perdedor) do Jogo (\d+)$/i);
-    return hit ? Number(hit[1]) : null;
-  }
-
-  const order = new Map<string, number>();
-  let pos = 0;
-
-  function traverse(matchNum: number) {
+  function expand(matchNum: number, side: Side) {
     const m = byNum.get(matchNum);
     if (!m) return;
     const hn = feederNum(m.homeTeamPlaceholder);
     const an = feederNum(m.awayTeamPlaceholder);
-    if (hn) traverse(hn);
-    order.set(m.id, pos++);
-    if (an) traverse(an);
+    if (hn) expand(hn, side);
+    buckets[side][m.stage]?.push(m);
+    if (an) expand(an, side);
   }
 
-  const finalMatch = matches.find((m) => m.stage === 'final');
-  if (finalMatch) traverse(finalMatch.matchNumber);
+  const finalMatch = matches.find((m) => m.stage === 'final') ?? null;
+  if (finalMatch) {
+    const hn = feederNum(finalMatch.homeTeamPlaceholder);
+    const an = feederNum(finalMatch.awayTeamPlaceholder);
+    if (hn) expand(hn, 'left');
+    if (an) expand(an, 'right');
+  }
+  const thirdPlace = matches.find((m) => m.stage === 'third-place') ?? null;
 
-  // 3º lugar não está na árvore da Final — adiciona ao final
-  const thirdPlace = matches.find((m) => m.stage === 'third-place');
-  if (thirdPlace && !order.has(thirdPlace.id)) order.set(thirdPlace.id, pos++);
+  const stages = KO_STAGES.map((stage) => ({
+    stage,
+    title: STAGE_TITLES[stage],
+    left: buckets.left[stage] ?? [],
+    right: buckets.right[stage] ?? [],
+  }));
 
-  return order;
+  return { stages, finalMatch, thirdPlace };
 }
 
 export function Bracket({ matches, onMatchClick }: { matches: Match[], onMatchClick?: (stage: MatchStage) => void }) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
-  const columnRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const matchRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
   // Transform aplicado ao canvas. Espelhado num ref para leituras síncronas
@@ -75,28 +104,19 @@ export function Bracket({ matches, onMatchClick }: { matches: Match[], onMatchCl
     active: boolean; moved: boolean; startX: number; startY: number; baseX: number; baseY: number;
   }>({ active: false, moved: false, startX: 0, startY: 0, baseX: 0, baseY: 0 });
 
-  // Filtra e ordena por fase (memoizado: identidade estável evita re-subscrição
-  // do ResizeObserver e laços de reenquadramento).
-  // Usa traversal in-order da árvore do chaveamento — não matchNumber, que
-  // reflete ordem cronológica, não posição visual no bracket.
-  const columns = useMemo(() => {
-    const bracketOrder = computeBracketOrder(matches);
-    const by = (stage: MatchStage) =>
-      matches
-        .filter((m) => m.stage === stage)
-        .sort((a, b) => (bracketOrder.get(a.id) ?? 0) - (bracketOrder.get(b.id) ?? 0));
-    const finalCol = [
-      ...by('final'),
-      ...by('third-place'),
-    ];
-    return [
-      { title: '16 Avos', stage: 'round-of-32' as MatchStage, matches: by('round-of-32') },
-      { title: 'Oitavas', stage: 'round-of-16' as MatchStage, matches: by('round-of-16') },
-      { title: 'Quartas', stage: 'quarter-final' as MatchStage, matches: by('quarter-final') },
-      { title: 'Semifinais', stage: 'semi-final' as MatchStage, matches: by('semi-final') },
-      { title: 'Final / 3º Lugar', stage: 'final' as MatchStage, matches: finalCol },
-    ];
-  }, [matches]);
+  const data = useMemo(() => buildBracketData(matches), [matches]);
+
+  // Itens de navegação por rodada: as 4 fases de mata-mata (cada uma cobrindo
+  // os jogos das duas metades) + a Final/3º lugar ao centro.
+  const navItems = useMemo(() => {
+    const items = data.stages.map((s) => ({
+      title: s.title,
+      matchIds: [...s.left, ...s.right].map((m) => m.id),
+    }));
+    const finalIds = [data.finalMatch?.id, data.thirdPlace?.id].filter((id): id is string => !!id);
+    if (finalIds.length > 0) items.push({ title: 'Final / 3º Lugar', matchIds: finalIds });
+    return items;
+  }, [data]);
 
   // Retângulo de um elemento no espaço de layout (sem transform) do canvas.
   const localRect = useCallback((el: HTMLElement) => {
@@ -144,13 +164,10 @@ export function Bracket({ matches, onMatchClick }: { matches: Match[], onMatchCl
     animateTo(frameRect(localRect(el), MATCH_FOCUS_SCALE));
   }, [animateTo, frameRect, localRect]);
 
-  // Focar uma rodada. A coluna ocupa toda a altura do bracket (os jogos ficam
-  // distribuídos/centralizados), então enquadramos a CAIXA dos jogos da rodada,
-  // não a coluna inteira. Numa escala legível (até 1x): se a rodada couber na
-  // vertical, centralizamos; se for alta demais (ex.: 16 avos), ancoramos no
-  // topo e o usuário arrasta na vertical.
-  const focusColumn = useCallback((idx: number) => {
-    const ids = columns[idx].matches.map((m) => m.id);
+  // Focar uma rodada: enquadra a CAIXA que envolve todos os jogos daquela
+  // rodada (as duas metades, quando aplicável), numa escala legível (até 1x).
+  const focusRound = useCallback((idx: number) => {
+    const ids = navItems[idx]?.matchIds ?? [];
     const els = ids.map((id) => matchRefs.current.get(id)).filter(Boolean) as HTMLElement[];
     if (!els.length) return;
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
@@ -168,9 +185,9 @@ export function Bracket({ matches, onMatchClick }: { matches: Match[], onMatchCl
     const y = fitsHeight
       ? vp.clientHeight / 2 - (rect.y + rect.h / 2) * scale // centraliza
       : PAD / 2 - rect.y * scale;                            // ancora no topo
-    setFocused(`col-${idx}`);
+    setFocused(`round-${idx}`);
     animateTo({ scale, x, y });
-  }, [animateTo, columns, localRect]);
+  }, [animateTo, localRect, navItems]);
 
   // Visão geral inicial + reenquadre ao redimensionar.
   useLayoutEffect(() => {
@@ -183,7 +200,7 @@ export function Bracket({ matches, onMatchClick }: { matches: Match[], onMatchCl
   const reframeRef = useRef<() => void>(() => {});
   useEffect(() => {
     reframeRef.current = () => {
-      if (focused && focused.startsWith('col-')) focusColumn(Number(focused.slice(4)));
+      if (focused && focused.startsWith('round-')) focusRound(Number(focused.slice(6)));
       else if (focused) focusMatch(focused);
       else showOverview();
     };
@@ -248,16 +265,116 @@ export function Bracket({ matches, onMatchClick }: { matches: Match[], onMatchCl
     }
   };
 
+  const renderCard = (match: Match) => {
+    const home = match.homeTeamId ? getTeamById(match.homeTeamId) : null;
+    const away = match.awayTeamId ? getTeamById(match.awayTeamId) : null;
+    const isActive = focused === match.id;
+    const isMuted = focused !== null && !focused.startsWith('round-') && focused !== match.id;
+
+    return (
+      <div
+        ref={(el) => { if (el) matchRefs.current.set(match.id, el); }}
+        className={`bracket-card glass-card ${isActive ? 'active' : ''} ${isMuted ? 'muted' : ''}`}
+        onClick={() => handleMatchClick(match)}
+        role="button"
+        tabIndex={0}
+      >
+        <div className="bracket-card-header">
+          <span className="match-num">#{match.matchNumber}</span>
+          {match.status === 'live' && <span className="match-live">●</span>}
+        </div>
+
+        <div className="bracket-card-team">
+          {home ? (
+            <>
+              <TeamFlag name={home.name} flagEmoji={home.flag} size={20} />
+              <span className="team-name">{home.name}</span>
+            </>
+          ) : (
+            <>
+              <span className="team-flag-placeholder">🏳️</span>
+              <span className="team-name placeholder">{match.homeTeamPlaceholder || 'A definir'}</span>
+            </>
+          )}
+          <span className="team-score">
+            {match.homeGoals !== null ? match.homeGoals : '-'}
+            {match.status === 'finished' && match.homePenalties != null && (
+              <span style={{ fontSize: '0.7em', opacity: 0.7 }}> ({match.homePenalties})</span>
+            )}
+          </span>
+        </div>
+
+        <div className="bracket-card-team">
+          {away ? (
+            <>
+              <TeamFlag name={away.name} flagEmoji={away.flag} size={20} />
+              <span className="team-name">{away.name}</span>
+            </>
+          ) : (
+            <>
+              <span className="team-flag-placeholder">🏳️</span>
+              <span className="team-name placeholder">{match.awayTeamPlaceholder || 'A definir'}</span>
+            </>
+          )}
+          <span className="team-score">
+            {match.awayGoals !== null ? match.awayGoals : '-'}
+            {match.status === 'finished' && match.awayPenalties != null && (
+              <span style={{ fontSize: '0.7em', opacity: 0.7 }}> ({match.awayPenalties})</span>
+            )}
+          </span>
+        </div>
+      </div>
+    );
+  };
+
+  // Uma metade do chaveamento: 4 colunas (rodadas), cada uma com os slots de
+  // altura duplicada a cada rodada (técnica clássica de bracket em CSS puro —
+  // sem medir pixels via JS, o dobro de altura por rodada já alinha cada jogo
+  // exatamente no meio dos dois jogos que o alimentam).
+  const renderSide = (side: Side) => {
+    // Do lado direito, a rodada mais próxima do centro (Semis) vem primeiro
+    // no layout visual (mais perto do meio da tela).
+    const orderedStages = side === 'left' ? data.stages : [...data.stages].reverse();
+    return (
+      <div className={`bracket-side bracket-side-${side}`}>
+        {orderedStages.map((s) => {
+          const stageIdx = KO_STAGES.indexOf(s.stage); // 0=16avos .. 3=semis
+          const isOuter = stageIdx === 0; // sem linha de entrada
+          const isInner = stageIdx === 3; // conecta direto à Final, sem "cotovelo"
+          const roundMatches = side === 'left' ? s.left : s.right;
+          return (
+            <div
+              key={s.stage}
+              className={`bracket-col stage-idx-${stageIdx} ${isOuter ? 'is-outer' : ''} ${isInner ? 'is-inner' : ''}`}
+            >
+              <div className="bracket-col-title">{s.title}</div>
+              <div className="bracket-col-slots">
+                {roundMatches.map((match, i) => (
+                  <div
+                    key={match.id}
+                    className={`bracket-slot stage-h-${stageIdx} ${i % 2 === 0 ? 'slot-a' : 'slot-b'}`}
+                  >
+                    {renderCard(match)}
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
     <div className="bracket-shell">
       <div className="bracket-roundnav">
-        {columns.map((col, i) => (
+        {navItems.map((item, i) => (
           <button
-            key={col.title}
-            className={`bracket-roundnav-btn ${focused === `col-${i}` ? 'active' : ''}`}
-            onClick={() => focusColumn(i)}
+            key={item.title}
+            className={`bracket-roundnav-btn ${focused === `round-${i}` ? 'active' : ''}`}
+            onClick={() => focusRound(i)}
           >
-            {col.title}
+            {item.title}
           </button>
         ))}
       </div>
@@ -274,81 +391,25 @@ export function Bracket({ matches, onMatchClick }: { matches: Match[], onMatchCl
             transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`,
           }}
         >
-          <div className="bracket-columns">
-            {columns.map((col, colIdx) => (
-              <div
-                key={col.title}
-                className="bracket-column"
-                ref={(el) => { if (el) columnRefs.current.set(colIdx, el); }}
-              >
-                <div className="bracket-column-title">{col.title}</div>
-                <div className={`bracket-column-matches ${colIdx === columns.length - 1 ? 'is-final' : ''}`}>
-                  {col.matches.map((match) => {
-                    const home = match.homeTeamId ? getTeamById(match.homeTeamId) : null;
-                    const away = match.awayTeamId ? getTeamById(match.awayTeamId) : null;
-                    const isActive = focused === match.id;
-                    const isMuted = focused !== null && !focused.startsWith('col-') && focused !== match.id;
+          <div className="bracket-mirror">
+            {renderSide('left')}
 
-                    return (
-                      <div className={`bracket-match-wrapper stage-${match.stage}`} key={match.id}>
-                        <div
-                          ref={(el) => { if (el) matchRefs.current.set(match.id, el); }}
-                          className={`bracket-card glass-card ${isActive ? 'active' : ''} ${isMuted ? 'muted' : ''}`}
-                          onClick={() => handleMatchClick(match)}
-                          role="button"
-                          tabIndex={0}
-                        >
-                          <div className="bracket-card-header">
-                            <span className="match-num">#{match.matchNumber}</span>
-                            {match.status === 'live' && <span className="match-live">●</span>}
-                          </div>
-
-                          <div className="bracket-card-team">
-                            {home ? (
-                              <>
-                                <TeamFlag name={home.name} flagEmoji={home.flag} size={20} />
-                                <span className="team-name">{home.name}</span>
-                              </>
-                            ) : (
-                              <>
-                                <span className="team-flag-placeholder">🏳️</span>
-                                <span className="team-name placeholder">{match.homeTeamPlaceholder || 'A definir'}</span>
-                              </>
-                            )}
-                            <span className="team-score">
-                              {match.homeGoals !== null ? match.homeGoals : '-'}
-                              {match.status === 'finished' && match.homePenalties != null && (
-                                <span style={{ fontSize: '0.7em', opacity: 0.7 }}> ({match.homePenalties})</span>
-                              )}
-                            </span>
-                          </div>
-
-                          <div className="bracket-card-team">
-                            {away ? (
-                              <>
-                                <TeamFlag name={away.name} flagEmoji={away.flag} size={20} />
-                                <span className="team-name">{away.name}</span>
-                              </>
-                            ) : (
-                              <>
-                                <span className="team-flag-placeholder">🏳️</span>
-                                <span className="team-name placeholder">{match.awayTeamPlaceholder || 'A definir'}</span>
-                              </>
-                            )}
-                            <span className="team-score">
-                              {match.awayGoals !== null ? match.awayGoals : '-'}
-                              {match.status === 'finished' && match.awayPenalties != null && (
-                                <span style={{ fontSize: '0.7em', opacity: 0.7 }}> ({match.awayPenalties})</span>
-                              )}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
+            <div className="bracket-center">
+              {data.finalMatch && (
+                <div className="bracket-center-block">
+                  <div className="bracket-col-title">Final</div>
+                  {renderCard(data.finalMatch)}
                 </div>
-              </div>
-            ))}
+              )}
+              {data.thirdPlace && (
+                <div className="bracket-center-block third-place">
+                  <div className="bracket-col-title">Decisão do 3º lugar</div>
+                  {renderCard(data.thirdPlace)}
+                </div>
+              )}
+            </div>
+
+            {renderSide('right')}
           </div>
         </div>
 

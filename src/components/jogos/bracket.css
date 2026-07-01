@@ -98,19 +98,37 @@
   transform: translateY(-1px);
 }
 
-.bracket-columns {
-  display: flex;
-  gap: 60px; /* space between rounds */
+/* ════════════════════════════════════════════════════════════════
+   Chaveamento espelhado: duas metades (16avos → oitavas → quartas →
+   semis) convergindo para a Final ao centro, como um mata-mata
+   tradicional. Cada rodada usa uma coluna cuja altura de slot DOBRA a
+   cada rodada (--bracket-unit × 2^rodada) — truque clássico de bracket
+   em CSS puro: sem medir pixels via JS, o dobro de altura já alinha
+   cada jogo exatamente no meio dos dois jogos que o alimentam.
+   ════════════════════════════════════════════════════════════════ */
+:root {
+  --bracket-unit: 92px;
 }
 
-.bracket-column {
+.bracket-mirror {
+  display: flex;
+  align-items: stretch;
+  gap: 32px;
+}
+
+.bracket-side {
+  display: flex;
+  gap: 32px;
+}
+
+.bracket-col {
   display: flex;
   flex-direction: column;
-  justify-content: space-around;
-  min-width: 200px;
+  width: 200px;
+  flex-shrink: 0;
 }
 
-.bracket-column-title {
+.bracket-col-title {
   text-align: center;
   font-weight: 600;
   font-size: 0.9rem;
@@ -118,85 +136,121 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: var(--space-xl);
-  position: relative;
 }
 
-.bracket-column-matches {
+.bracket-col-slots {
   display: flex;
   flex-direction: column;
-  justify-content: space-around;
-  flex-grow: 1;
 }
 
-/* Final + 3º lugar: agrupados e centralizados no meio da coluna */
-.bracket-column-matches.is-final {
+.bracket-slot {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.bracket-slot.stage-h-0 { height: calc(var(--bracket-unit) * 1); }
+.bracket-slot.stage-h-1 { height: calc(var(--bracket-unit) * 2); }
+.bracket-slot.stage-h-2 { height: calc(var(--bracket-unit) * 4); }
+.bracket-slot.stage-h-3 { height: calc(var(--bracket-unit) * 8); }
+
+.bracket-slot .bracket-card { width: 100%; }
+
+/* ── Coluna central: Final + Decisão do 3º lugar, centralizadas na
+   mesma altura total de uma metade (8 unidades = altura das Semis) ── */
+.bracket-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
   gap: var(--space-xl);
+  width: 220px;
+  flex-shrink: 0;
+  height: calc(var(--bracket-unit) * 8);
 }
 
-.bracket-column-matches.is-final .bracket-match-wrapper {
-  flex-grow: 0;
+.bracket-center-block {
+  width: 100%;
 }
 
-.bracket-match-wrapper {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  flex-grow: 1;
-  padding: var(--space-sm) 0;
-}
-
-/* Bracket connection lines (CSS approach) */
-/* We draw a right border and top/bottom border on the wrapper */
-.bracket-column:not(:last-child) .bracket-match-wrapper::after {
+/* ── Linhas de conexão (metade esquerda: saem para a direita, entram
+   pela esquerda) ── */
+.bracket-side-left .bracket-col:not(.is-inner) .bracket-slot::after {
   content: '';
   position: absolute;
-  right: -30px; /* half of column gap */
-  width: 30px;
-  border-right: 5px solid rgba(255, 255, 255, 0.85);
-  border-top: 5px solid rgba(255, 255, 255, 0.85);
-  border-radius: 0 8px 0 0;
-  opacity: 1;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
-  transition: opacity var(--transition-base), border-color var(--transition-base);
-}
-
-/* Top half of a pair connects down */
-.bracket-column:not(:last-child) .bracket-match-wrapper:nth-child(odd)::after {
+  right: -16px;
+  width: 16px;
+  border-right: 3px solid rgba(255, 255, 255, 0.55);
+  border-top: 3px solid rgba(255, 255, 255, 0.55);
+  border-radius: 0 6px 0 0;
   top: 50%;
   bottom: -50%;
-  border-top: 5px solid rgba(255, 255, 255, 0.85);
-  border-bottom: none;
-  border-radius: 0 8px 0 0;
 }
-
-/* Bottom half of a pair connects up */
-.bracket-column:not(:last-child) .bracket-match-wrapper:nth-child(even)::after {
+.bracket-side-left .bracket-col:not(.is-inner) .bracket-slot.slot-b::after {
   top: -50%;
   bottom: 50%;
-  border-bottom: 5px solid rgba(255, 255, 255, 0.85);
   border-top: none;
-  border-radius: 0 0 8px 0;
+  border-bottom: 3px solid rgba(255, 255, 255, 0.55);
+  border-radius: 0 0 6px 0;
 }
-
-/* Connect to the next column's card */
-.bracket-column:not(:first-child) .bracket-match-wrapper::before {
+.bracket-side-left .bracket-col.is-inner .bracket-slot::after {
   content: '';
   position: absolute;
-  left: -30px;
-  width: 30px;
+  right: -16px;
+  width: 16px;
   top: 50%;
-  border-top: 5px solid rgba(255, 255, 255, 0.85);
-  opacity: 1;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
-  transition: opacity var(--transition-base), border-color var(--transition-base);
+  border-top: 3px solid rgba(255, 255, 255, 0.55);
+}
+.bracket-side-left .bracket-col:not(.is-outer) .bracket-slot::before {
+  content: '';
+  position: absolute;
+  left: -16px;
+  width: 16px;
+  top: 50%;
+  border-top: 3px solid rgba(255, 255, 255, 0.55);
 }
 
-/* 3rd place has no incoming line */
-.bracket-match-wrapper.stage-third-place::before,
-.bracket-match-wrapper.stage-third-place::after {
-  display: none !important;
+/* ── Linhas de conexão (metade direita: espelhadas — saem para a
+   esquerda, entram pela direita) ── */
+.bracket-side-right .bracket-col:not(.is-inner) .bracket-slot::before {
+  content: '';
+  position: absolute;
+  left: -16px;
+  width: 16px;
+  border-left: 3px solid rgba(255, 255, 255, 0.55);
+  border-top: 3px solid rgba(255, 255, 255, 0.55);
+  border-radius: 6px 0 0 0;
+  top: 50%;
+  bottom: -50%;
+}
+.bracket-side-right .bracket-col:not(.is-inner) .bracket-slot.slot-b::before {
+  top: -50%;
+  bottom: 50%;
+  border-top: none;
+  border-bottom: 3px solid rgba(255, 255, 255, 0.55);
+  border-radius: 0 0 0 6px;
+}
+.bracket-side-right .bracket-col.is-inner .bracket-slot::before {
+  content: '';
+  position: absolute;
+  left: -16px;
+  width: 16px;
+  top: 50%;
+  border-top: 3px solid rgba(255, 255, 255, 0.55);
+}
+.bracket-side-right .bracket-col:not(.is-outer) .bracket-slot::after {
+  content: '';
+  position: absolute;
+  right: -16px;
+  width: 16px;
+  top: 50%;
+  border-top: 3px solid rgba(255, 255, 255, 0.55);
+}
+
+@media (max-width: 640px) {
+  :root { --bracket-unit: 76px; }
+  .bracket-col { width: 168px; }
+  .bracket-center { width: 180px; }
 }
 
 /* The card itself */
