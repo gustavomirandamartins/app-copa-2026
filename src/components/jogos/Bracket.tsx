@@ -2,6 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { Maximize2 } from 'lucide-react';
 import { getTeamById } from '@/data/teams';
 import { TeamFlag } from '@/components/ui/TeamFlag';
+import { formatKickoffDate, formatKickoffTime } from '@/lib/datetime';
 import type { Match, MatchStage } from '@/lib/types';
 import './bracket.css';
 
@@ -86,6 +87,11 @@ export function Bracket({ matches, onMatchClick }: { matches: Match[], onMatchCl
   const viewportRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const matchRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+
+  // Evita mismatch de hidratação: data/hora formatada só depois de montar
+  // no client (mesmo padrão do DashboardClient).
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   // Transform aplicado ao canvas. Espelhado num ref para leituras síncronas
   // (medições com getBoundingClientRect precisam da escala corrente).
@@ -293,7 +299,14 @@ export function Bracket({ matches, onMatchClick }: { matches: Match[], onMatchCl
         tabIndex={0}
       >
         <div className="bracket-card-header">
-          <span className="match-num">#{match.matchNumber}</span>
+          <span className="match-num-group">
+            <span className="match-num">#{match.matchNumber}</span>
+            <span className="match-datetime">
+              {mounted
+                ? `${formatKickoffDate(match.dateUTC, { day: '2-digit', month: '2-digit', year: 'numeric' })}, ${formatKickoffTime(match.dateUTC)}`
+                : ''}
+            </span>
+          </span>
           {match.status === 'live' && <span className="match-live">●</span>}
         </div>
 
@@ -409,21 +422,22 @@ export function Bracket({ matches, onMatchClick }: { matches: Match[], onMatchCl
 
             <div className="bracket-center">
               {data.finalMatch && (
-                <div className="bracket-center-block">
+                <>
                   <div className="bracket-col-title">Final</div>
-                  {renderCard(data.finalMatch)}
-                </div>
-              )}
-              {data.thirdPlace && (
-                <div className="bracket-center-block third-place">
-                  <div className="bracket-col-title">Decisão do 3º lugar</div>
-                  {renderCard(data.thirdPlace)}
-                </div>
+                  <div className="bracket-final-slot">{renderCard(data.finalMatch)}</div>
+                </>
               )}
             </div>
 
             {renderSide('right')}
           </div>
+
+          {data.thirdPlace && (
+            <div className="bracket-third-place">
+              <div className="bracket-col-title">Decisão do 3º lugar</div>
+              {renderCard(data.thirdPlace)}
+            </div>
+          )}
         </div>
 
         {focused !== null && (
