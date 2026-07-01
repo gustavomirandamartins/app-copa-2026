@@ -137,11 +137,24 @@ export function AdminPendingPayments({
   );
 }
 
-/** Card "Histórico recente": solicitações de Pix já aprovadas/rejeitadas. */
-export function AdminPaymentHistory({ reviewed }: { reviewed: PaymentRequest[] }) {
+/**
+ * Card "Histórico recente": solicitações de Pix já aprovadas/rejeitadas.
+ * Aceita `children` para conteúdo relacionado já resolvido (ex.: sorteios de
+ * desempate) renderizado junto, dentro do mesmo toggle. `extraCount` soma ao
+ * total exibido no título quando `children` tem itens mas `reviewed` está vazio.
+ */
+export function AdminPaymentHistory({
+  reviewed,
+  children,
+  extraCount = 0,
+}: {
+  reviewed: PaymentRequest[];
+  children?: React.ReactNode;
+  extraCount?: number;
+}) {
   const [showHistory, setShowHistory] = useState(false);
 
-  if (reviewed.length === 0) return null;
+  if (reviewed.length === 0 && extraCount === 0) return null;
 
   return (
     <section className="admin-glass-section">
@@ -152,7 +165,7 @@ export function AdminPaymentHistory({ reviewed }: { reviewed: PaymentRequest[] }
         aria-expanded={showHistory}
       >
         <h2 className="admin-section-title" style={{ margin: 0 }}>
-          Histórico recente ({reviewed.length})
+          Histórico recente ({reviewed.length + extraCount})
         </h2>
         <ChevronDown
           size={18}
@@ -163,9 +176,14 @@ export function AdminPaymentHistory({ reviewed }: { reviewed: PaymentRequest[] }
           }}
         />
       </button>
-      {showHistory && reviewed.map((req) => (
-        <Row key={req.id} req={req} />
-      ))}
+      {showHistory && (
+        <>
+          {reviewed.map((req) => (
+            <Row key={req.id} req={req} />
+          ))}
+          {children}
+        </>
+      )}
     </section>
   );
 }

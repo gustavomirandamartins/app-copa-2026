@@ -13,7 +13,7 @@ import {
   type MatrixColumn,
   type MatrixCell,
 } from '@/components/admin/AdminPredictionsMatrix';
-import { AdminTiebreakDraws, type TiebreakEntry } from '@/components/admin/AdminTiebreakDraws';
+import { AdminTiebreakDrawsPending, AdminTiebreakDrawsResolved, type TiebreakEntry } from '@/components/admin/AdminTiebreakDraws';
 import { AdminProbabilitiesUpload } from '@/components/admin/AdminProbabilitiesUpload';
 import { AdminMatchProbabilitiesUpload } from '@/components/admin/AdminMatchProbabilitiesUpload';
 import { matches } from '@/data/matches';
@@ -326,7 +326,7 @@ export default async function AdminPage() {
       </section>
 
       <AdminPendingPayments pending={pending}>
-        <AdminTiebreakDraws entries={tiebreakEntries} />
+        <AdminTiebreakDrawsPending entries={tiebreakEntries} />
       </AdminPendingPayments>
 
       <div style={{ marginTop: 'var(--space-2xl)' }}>
@@ -338,7 +338,12 @@ export default async function AdminPage() {
       </div>
 
       <div style={{ marginTop: 'var(--space-2xl)' }}>
-        <AdminPaymentHistory reviewed={reviewed} />
+        <AdminPaymentHistory
+          reviewed={reviewed}
+          extraCount={tiebreakEntries.filter((e) => e.draw).length}
+        >
+          <AdminTiebreakDrawsResolved entries={tiebreakEntries} />
+        </AdminPaymentHistory>
       </div>
 
       <div style={{ marginTop: 'var(--space-2xl)' }}>
