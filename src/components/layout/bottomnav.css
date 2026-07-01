@@ -2,7 +2,7 @@
    Item ativo expande mostrando o rótulo, no estilo do nav flutuante. */
 .floating-nav {
   position: fixed;
-  bottom: calc(env(safe-area-inset-bottom) + 10px);
+  bottom: var(--footer-bottom);
   left: var(--space-md);
   right: var(--space-md);
   display: flex;

@@ -183,7 +183,7 @@ export function DashboardClient({
 
         <div className="nx-match">
           <div className="nx-team nx-team-home">
-            {fHome && <TeamFlag name={fHome.name} flagEmoji={fHome.flag} size={72} />}
+            {fHome && <TeamFlag name={fHome.name} flagEmoji={fHome.flag} size={72} className="nx-hero-flag" />}
             <span className="nx-team-name">{fHome?.name}</span>
           </div>
 
@@ -206,7 +206,7 @@ export function DashboardClient({
           </div>
 
           <div className="nx-team nx-team-away">
-            {fAway && <TeamFlag name={fAway.name} flagEmoji={fAway.flag} size={72} />}
+            {fAway && <TeamFlag name={fAway.name} flagEmoji={fAway.flag} size={72} className="nx-hero-flag" />}
             <span className="nx-team-name">{fAway?.name}</span>
           </div>
         </div>

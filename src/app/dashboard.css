@@ -26,7 +26,20 @@
   line-height: 1.02;
   letter-spacing: -0.02em;
   margin: 0;
+  color: #fff;
   text-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+}
+/* O nome do usuário reaproveita .home-title-accent (gradiente âmbar→verde
+   na Home pública) — aqui sobrescrito para ficar branco, igual ao resto do
+   título, como pedido. */
+.nx-hello-title .home-title-accent {
+  background: none;
+  -webkit-background-clip: unset;
+  background-clip: unset;
+  -webkit-text-fill-color: #fff;
+  color: #fff;
+  text-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+  filter: none;
 }
 
 /* ── Seções e títulos ──────────────────────────────────────── */
@@ -136,15 +149,23 @@
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  gap: 16px;
+  gap: 10px;
   position: relative;
 }
 .nx-team {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   text-align: center;
+  min-width: 0; /* deixa a bandeira encolher dentro da coluna 1fr */
+}
+/* Bandeiras do card em destaque — menores e fluidas no mobile (largura
+   fixa em px estourava a largura do card), voltam ao tamanho original
+   (equivalente a size=72) só a partir do breakpoint desktop abaixo. */
+.nx-hero-flag {
+  width: clamp(40px, 13vw, 64px) !important;
+  height: auto !important;
 }
 .nx-team-name {
   font-weight: 800;
@@ -153,17 +174,17 @@
   color: #fff;
 }
 
-.nx-score { display: flex; align-items: center; gap: 8px; }
+.nx-score { display: flex; align-items: center; gap: 6px; }
 .nx-score-input {
-  width: 60px;
-  height: 64px;
-  border-radius: 18px;
+  width: 48px;
+  height: 54px;
+  border-radius: 14px;
   border: 1.5px solid var(--glass-border);
   background: #fff;
   backdrop-filter: blur(12px);
   color: #000;
   font-family: var(--font-heading);
-  font-size: 1.9rem;
+  font-size: 1.55rem;
   font-weight: 800;
   text-align: center;
   -moz-appearance: textfield;
@@ -407,7 +428,10 @@
   background: var(--gold); color: #1a1205; font-size: 0.68rem; font-weight: 800;
 }
 
-/* ════════════ Barra de salvar ═════════════════════════════ */
+/* ════════════ Barra de salvar ═══════════════════════════════
+   Mesmo visual e comportamento do botão "Salvar palpites" da página
+   Bolão (.bolao-savebar/.bolao-save-btn em bolao.css): pílula de vidro
+   escura (não dourada) com o mesmo bottom flutuante acima do footer. */
 .nx-savebar {
   position: sticky;
   bottom: calc(var(--bottom-nav-height, 0px) + 12px);
@@ -428,34 +452,75 @@
   backdrop-filter: blur(12px);
   border: 1px solid var(--glass-border);
 }
-.nx-save-btn {
-  border-radius: 16px !important;
+.btn.nx-save-btn {
+  border-radius: 999px !important;
   padding: 12px 22px !important;
-  box-shadow: 0 12px 30px rgba(224, 124, 0, 0.32);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #fff;
+  background: rgba(12, 10, 24, 0.72);
+  backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.50), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+.btn.nx-save-btn:hover {
+  background: rgba(20, 17, 38, 0.82);
 }
 .nx-save-count {
-  margin-left: 4px;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 6px;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.28);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.72rem;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  font-size: 0.78rem;
   font-weight: 800;
+  color: var(--copa-green-deep);
+  background: #fff;
+  border-radius: var(--radius-full);
 }
 .nx-spin { animation: spin 1s linear infinite; }
 
 /* ════════════ Bracket card ════════════════════════════════ */
 .nx-bracket-card { padding: 8px; overflow: hidden; }
 
+/* ── Mobile: barra flutuante fixa, igual à página Bolão ─────── */
+@media (max-width: 680px) {
+  .nx-savebar {
+    position: fixed;
+    left: var(--space-md);
+    right: var(--space-md);
+    bottom: calc(var(--footer-bottom) + 74px);
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 0;
+  }
+  .btn.nx-save-btn {
+    width: 100%;
+    justify-content: center;
+    height: 52px;
+    font-size: 1rem;
+    box-shadow: 0 12px 34px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+  .nx-save-msg {
+    width: 100%;
+    text-align: center;
+  }
+  /* O savebar sai do fluxo (fixed); reserva espaço para o último bloco
+     (Indique e ganhe pontos) não ficar escondido atrás dele + footer. */
+  .nx-dash {
+    padding-bottom: 160px;
+  }
+}
+
 /* ── Desktop ───────────────────────────────────────────────── */
 @media (min-width: 768px) {
   .nx-feature { gap: 28px; }
   .nx-score-input { width: 72px; height: 76px; font-size: 2.2rem; }
   .nx-team-name { font-size: 1.25rem; }
+  .nx-match { gap: 16px; }
+  .nx-hero-flag { width: 108px !important; }
 
   /* Seleções lado a lado (sem slide) */
   .nx-sel-tabs, .nx-sel-dots { display: none; }

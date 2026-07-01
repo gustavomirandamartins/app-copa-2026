@@ -561,7 +561,7 @@
     position: fixed;
     left: var(--space-md);
     right: var(--space-md);
-    bottom: calc(env(safe-area-inset-bottom) + 84px);
+    bottom: calc(var(--footer-bottom) + 74px);
     justify-content: center;
     flex-wrap: wrap;
     margin-top: 0;
