@@ -120,16 +120,21 @@ export function buildGeneralRanking(profiles: ProfileRow[], preds: PredRow[]): G
     const pts  = p.points_earned;
     const base = p.base_points ?? 0;
     t.prediction_pts += pts;
-    if (base === 5) {
+    // base_points grava o total já com o bônus de +1 por acertar o vencedor
+    // dos pênaltis num mata-mata empatado: um placar exato "puro" vale 5,
+    // mas com o bônus vale 6 (idem 3→4 para saldo certo). Checar só "=== 5"
+    // ou "=== 3" perdia esses acertos inteiros do desempate — 1 só ponto
+    // (2 vs 1) já derruba um "1 acerto" para "0 acertos" na comparação.
+    if (base === 5 || base === 6) {
       t.exact_tiebreak_pts += 5;
-      bd.exact_pts += pts; bd.exact_count += 1; if (pts > 5) bd.exact_turbo_count += 1;
+      bd.exact_pts += pts; bd.exact_count += 1; if (pts > base) bd.exact_turbo_count += 1;
     }
-    if (base === 3) {
+    if (base === 3 || base === 4) {
       t.diff_tiebreak_pts += 3;
-      bd.diff_pts += pts; bd.diff_count += 1; if (pts > 3) bd.diff_turbo_count += 1;
+      bd.diff_pts += pts; bd.diff_count += 1; if (pts > base) bd.diff_turbo_count += 1;
     }
     if (base === 1) {
-      bd.winner_pts += pts; bd.winner_count += 1; if (pts > 1) bd.winner_turbo_count += 1;
+      bd.winner_pts += pts; bd.winner_count += 1; if (pts > base) bd.winner_turbo_count += 1;
     }
     if (finalIds.has(p.match_id))    t.final_pts    += pts;
     if (semiIds.has(p.match_id))     t.semi_pts     += pts;

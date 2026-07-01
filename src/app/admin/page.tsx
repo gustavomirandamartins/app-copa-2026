@@ -219,8 +219,10 @@ export default async function AdminPage() {
     const pts = p.points_earned;
     const base = p.base_points ?? 0;
     t.prediction_pts += pts;
-    if (base === 5) t.exact_pts += pts;
-    if (base === 3) t.diff_pts  += pts;
+    // base_points inclui o bônus de +1 por pênaltis certos num mata-mata
+    // empatado (5→6, 3→4) — checar só "=== 5"/"=== 3" perdia esses acertos.
+    if (base === 5 || base === 6) t.exact_pts += pts;
+    if (base === 3 || base === 4) t.diff_pts  += pts;
     if (finalIds.has(p.match_id))    t.final_pts    += pts;
     if (semiIds.has(p.match_id))     t.semi_pts     += pts;
     if (quartersIds.has(p.match_id)) t.quarters_pts += pts;
