@@ -135,7 +135,12 @@ export function Bracket({ matches, onMatchClick }: { matches: Match[], onMatchCl
       const vpW = vp.clientWidth;
       const vpH = vp.clientHeight;
       const fit = Math.min((vpW - PAD) / rect.w, (vpH - PAD) / rect.h);
-      const scale = Math.min(desiredScale, fit);
+      // Piso de segurança: se o viewport ainda não tiver altura/largura
+      // medida (ex.: primeiro layout antes do paint), vpW/vpH podem vir 0 e
+      // "fit" sair negativo — sem o piso, a escala negativa espelha e some
+      // com o bracket (e "gruda" nesse estado, já que localRect() divide
+      // pela escala corrente para desfazer o transform).
+      const scale = Math.max(0.05, Math.min(desiredScale, fit));
       const cx = rect.x + rect.w / 2;
       const cy = rect.y + rect.h / 2;
       return { scale, x: vpW / 2 - cx * scale, y: vpH / 2 - cy * scale };
@@ -152,7 +157,15 @@ export function Bracket({ matches, onMatchClick }: { matches: Match[], onMatchCl
   // Enquadra o bracket inteiro (visão geral).
   const showOverview = useCallback(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    const vp = viewportRef.current;
+    if (!canvas || !vp) return;
+    // Se o viewport ainda não tiver altura medida (ex.: primeiro layout
+    // antes do CSS aplicar), tenta de novo no próximo frame em vez de
+    // enquadrar com dimensão 0 (produziria uma escala inválida).
+    if (vp.clientWidth === 0 || vp.clientHeight === 0) {
+      requestAnimationFrame(showOverview);
+      return;
+    }
     setFocused(null);
     animateTo(frameRect({ x: 0, y: 0, w: canvas.offsetWidth, h: canvas.offsetHeight }, 1));
   }, [animateTo, frameRect]);
@@ -178,7 +191,7 @@ export function Bracket({ matches, onMatchClick }: { matches: Match[], onMatchCl
     });
     const rect = { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
     const vp = viewportRef.current!;
-    const scale = Math.min(1, (vp.clientWidth - PAD) / rect.w);
+    const scale = Math.max(0.05, Math.min(1, (vp.clientWidth - PAD) / rect.w));
     const cx = rect.x + rect.w / 2;
     const x = vp.clientWidth / 2 - cx * scale;
     const fitsHeight = rect.h * scale <= vp.clientHeight - PAD;

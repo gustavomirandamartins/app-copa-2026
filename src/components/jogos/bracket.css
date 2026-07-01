@@ -106,8 +106,11 @@
    em CSS puro: sem medir pixels via JS, o dobro de altura já alinha
    cada jogo exatamente no meio dos dois jogos que o alimentam.
    ════════════════════════════════════════════════════════════════ */
+/* O card (cabeçalho + 2 linhas de time + padding) renderiza a ~119px de
+   altura, medido — independe da largura da coluna. 140px dá ~21px de
+   distância mínima entre um card e o próximo, sem sobrepor. */
 :root {
-  --bracket-unit: 92px;
+  --bracket-unit: 140px;
 }
 
 .bracket-mirror {
@@ -248,7 +251,9 @@
 }
 
 @media (max-width: 640px) {
-  :root { --bracket-unit: 76px; }
+  /* Só a largura encolhe no mobile — a altura do card não muda com a
+     largura da coluna (medido: ~119px nas duas), então --bracket-unit
+     precisa continuar igual para não voltar a sobrepor. */
   .bracket-col { width: 168px; }
   .bracket-center { width: 180px; }
 }
