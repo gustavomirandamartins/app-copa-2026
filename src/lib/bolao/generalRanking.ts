@@ -6,30 +6,27 @@ type Admin = ReturnType<typeof createAdminClient>;
 /**
  * Critérios de desempate oficiais da Classificação Geral, na ordem em que
  * `compareGeneral` os aplica (após empate em total_score):
- *   1) prediction_pts    — pontos de palpites, sem bônus de rodada/indicação
- *   2) exact_tiebreak_pts — nº de acertos de placar exato × 5 (nominal, sem turbo)
- *   3) diff_tiebreak_pts  — nº de acertos de vencedor+saldo × 3 (nominal, sem turbo)
+ *   1) prediction_pts — pontos de palpites, sem bônus de rodada/indicação
+ *   2) exact_pts       — pontos OBTIDOS em acertos de placar exato (com turbo)
+ *   3) diff_pts        — pontos OBTIDOS em acertos de vencedor+saldo (com turbo)
  *   4) final_pts · 5) semi_pts · 6) quarters_pts · 7) ro16_pts
- * Os critérios 2 e 3 usam o valor NOMINAL (contagem × 5/3), não os pontos
- * reais com multiplicador turbinado — senão um único acerto turbinado
- * (ex.: 5×3=15) supera vários acertos normais, distorcendo o que o critério
- * mede ("quantas vezes acertou"). Mesma regra já usada na Classificação por
- * Rodada (ver scoring-sync.ts).
+ * Os critérios 2 e 3 valem pelos pontos realmente ganhos na categoria, não
+ * pela quantidade de acertos — um acerto turbinado pesa mais que vários
+ * acertos normais. Mesma regra aplicada na Classificação por Rodada
+ * (ver scoring-sync.ts).
  */
 export interface GeneralTiebreak {
   prediction_pts: number;
-  exact_tiebreak_pts: number;
-  diff_tiebreak_pts: number;
+  exact_pts: number;
+  diff_pts: number;
   final_pts: number;
   semi_pts: number;
   quarters_pts: number;
   ro16_pts: number;
 }
 
-/** Só para exibição (breakdown "pontos reais", já com turbo) — não entra no desempate. */
+/** Só para exibição (contagem de acertos por categoria) — não entra no desempate. */
 export interface GeneralBreakdown {
-  exact_pts: number;
-  diff_pts: number;
   winner_pts: number;
   exact_count: number;
   diff_count: number;
@@ -51,24 +48,24 @@ export interface GeneralRankedUser {
 }
 
 const EMPTY_TB: GeneralTiebreak = {
-  prediction_pts: 0, exact_tiebreak_pts: 0, diff_tiebreak_pts: 0,
+  prediction_pts: 0, exact_pts: 0, diff_pts: 0,
   final_pts: 0, semi_pts: 0, quarters_pts: 0, ro16_pts: 0,
 };
 
 const EMPTY_BREAKDOWN: GeneralBreakdown = {
-  exact_pts: 0, diff_pts: 0, winner_pts: 0,
+  winner_pts: 0,
   exact_count: 0, diff_count: 0, winner_count: 0,
   exact_turbo_count: 0, diff_turbo_count: 0, winner_turbo_count: 0,
 };
 
 function compareGeneral(a: GeneralTiebreak, b: GeneralTiebreak): number {
-  if (b.prediction_pts     !== a.prediction_pts)     return b.prediction_pts     - a.prediction_pts;
-  if (b.exact_tiebreak_pts !== a.exact_tiebreak_pts) return b.exact_tiebreak_pts - a.exact_tiebreak_pts;
-  if (b.diff_tiebreak_pts  !== a.diff_tiebreak_pts)  return b.diff_tiebreak_pts  - a.diff_tiebreak_pts;
-  if (b.final_pts          !== a.final_pts)          return b.final_pts          - a.final_pts;
-  if (b.semi_pts           !== a.semi_pts)           return b.semi_pts           - a.semi_pts;
-  if (b.quarters_pts       !== a.quarters_pts)       return b.quarters_pts       - a.quarters_pts;
-  if (b.ro16_pts           !== a.ro16_pts)           return b.ro16_pts           - a.ro16_pts;
+  if (b.prediction_pts !== a.prediction_pts) return b.prediction_pts - a.prediction_pts;
+  if (b.exact_pts      !== a.exact_pts)      return b.exact_pts      - a.exact_pts;
+  if (b.diff_pts       !== a.diff_pts)       return b.diff_pts       - a.diff_pts;
+  if (b.final_pts      !== a.final_pts)      return b.final_pts      - a.final_pts;
+  if (b.semi_pts       !== a.semi_pts)       return b.semi_pts       - a.semi_pts;
+  if (b.quarters_pts   !== a.quarters_pts)   return b.quarters_pts   - a.quarters_pts;
+  if (b.ro16_pts       !== a.ro16_pts)       return b.ro16_pts       - a.ro16_pts;
   return 0;
 }
 
@@ -123,15 +120,14 @@ export function buildGeneralRanking(profiles: ProfileRow[], preds: PredRow[]): G
     // base_points grava o total já com o bônus de +1 por acertar o vencedor
     // dos pênaltis num mata-mata empatado: um placar exato "puro" vale 5,
     // mas com o bônus vale 6 (idem 3→4 para saldo certo). Checar só "=== 5"
-    // ou "=== 3" perdia esses acertos inteiros do desempate — 1 só ponto
-    // (2 vs 1) já derruba um "1 acerto" para "0 acertos" na comparação.
+    // ou "=== 3" perdia esses acertos inteiros do desempate.
     if (base === 5 || base === 6) {
-      t.exact_tiebreak_pts += 5;
-      bd.exact_pts += pts; bd.exact_count += 1; if (pts > base) bd.exact_turbo_count += 1;
+      t.exact_pts += pts;
+      bd.exact_count += 1; if (pts > base) bd.exact_turbo_count += 1;
     }
     if (base === 3 || base === 4) {
-      t.diff_tiebreak_pts += 3;
-      bd.diff_pts += pts; bd.diff_count += 1; if (pts > base) bd.diff_turbo_count += 1;
+      t.diff_pts += pts;
+      bd.diff_count += 1; if (pts > base) bd.diff_turbo_count += 1;
     }
     if (base === 1) {
       bd.winner_pts += pts; bd.winner_count += 1; if (pts > base) bd.winner_turbo_count += 1;

@@ -157,10 +157,11 @@ export async function applyScoring(admin: Admin): Promise<{ updatedPredictions: 
       const stats = roundStats.get(rk)!;
       const cur = stats.get(p.user_id) ?? { points: 0, exact: 0, diff: 0 };
       cur.points += points;
-      // Desempate por contagem de acertos (5 cada / 3 cada), independente do
-      // multiplicador — o turbo entra só no total de pontos, não no desempate.
-      if (baseWithoutPenalty === 5) cur.exact += 5; // acerto de placar exato
-      if (baseWithoutPenalty === 3) cur.diff += 3; // acerto de saldo de gols
+      // Desempate pelos pontos OBTIDOS em cada categoria (com multiplicador
+      // turbinado) — um acerto turbinado pesa mais que vários acertos
+      // normais. Mesma regra da Classificação Geral (generalRanking.ts).
+      if (baseWithoutPenalty === 5) cur.exact += points; // placar exato
+      if (baseWithoutPenalty === 3) cur.diff += points; // vencedor + saldo
       stats.set(p.user_id, cur);
     }
   }
