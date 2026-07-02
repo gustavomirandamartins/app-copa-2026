@@ -473,3 +473,115 @@ export async function clearTiebreakDraw(
   revalidatePath('/admin');
   return { ok: true };
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Backup do banco (Central de controle → baixar/carregar backup)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Todas as tabelas de negócio do app (schema public), na ordem de dependência
+ *  pai → filho — importante pro restore, que faz upsert nessa mesma ordem. */
+const BACKUP_TABLES = [
+  'teams',
+  'profiles',
+  'matches',
+  'standings',
+  'match_settings',
+  'round_scores',
+  'team_probabilities',
+  'match_probabilities',
+  'tiebreak_draws',
+  'payment_requests',
+  'referrals',
+  'predictions',
+] as const;
+
+type BackupTable = (typeof BACKUP_TABLES)[number];
+
+/** Coluna(s) de conflito pro upsert de restore, casando as constraints reais do banco. */
+const BACKUP_CONFLICT_KEYS: Record<BackupTable, string> = {
+  teams: 'id',
+  profiles: 'id',
+  matches: 'id',
+  standings: 'group_letter,team_id',
+  match_settings: 'match_id',
+  round_scores: 'round_key,user_id',
+  team_probabilities: 'team_id',
+  match_probabilities: 'match_number',
+  tiebreak_draws: 'scope,signature',
+  payment_requests: 'id',
+  referrals: 'referred_user_id',
+  predictions: 'user_id,match_id',
+};
+
+export interface BackupData {
+  exportedAt: string;
+  tables: Partial<Record<BackupTable, Record<string, unknown>[]>>;
+}
+
+/**
+ * Exporta todas as tabelas do banco (schema public) como JSON — backup
+ * completo pra download. Pagina em blocos de 1000 (limite do PostgREST).
+ */
+export async function exportBackup(): Promise<AdminActionResult & { data?: BackupData }> {
+  const auth = await requireAdmin();
+  if ('error' in auth) return { ok: false, error: auth.error };
+
+  const admin = createAdminClient();
+  const tables: BackupData['tables'] = {};
+
+  for (const table of BACKUP_TABLES) {
+    const rows: Record<string, unknown>[] = [];
+    for (let from = 0; ; from += 1000) {
+      const { data, error } = await admin.from(table).select('*').range(from, from + 999);
+      if (error) return { ok: false, error: `Falha ao ler ${table}: ${error.message}` };
+      rows.push(...((data as Record<string, unknown>[]) ?? []));
+      if (!data || data.length < 1000) break;
+    }
+    tables[table] = rows;
+  }
+
+  return { ok: true, data: { exportedAt: new Date().toISOString(), tables } };
+}
+
+/**
+ * Restaura um backup gerado por exportBackup(): faz upsert tabela por tabela,
+ * na ordem pai → filho, casando pela constraint real de cada uma. NÃO apaga
+ * linhas que não estejam no backup (upsert, não replace) — restaurar um
+ * backup antigo não remove dados criados depois dele.
+ */
+export async function restoreBackup(
+  backup: BackupData,
+): Promise<AdminActionResult & { restored?: Partial<Record<BackupTable, number>> }> {
+  const auth = await requireAdmin();
+  if ('error' in auth) return { ok: false, error: auth.error };
+
+  if (!backup || typeof backup !== 'object' || !backup.tables) {
+    return { ok: false, error: 'Arquivo de backup inválido.' };
+  }
+
+  const admin = createAdminClient();
+  const restored: Partial<Record<BackupTable, number>> = {};
+
+  for (const table of BACKUP_TABLES) {
+    const rows = backup.tables[table];
+    if (!Array.isArray(rows) || rows.length === 0) continue;
+
+    for (let i = 0; i < rows.length; i += 500) {
+      const chunk = rows.slice(i, i + 500);
+      const { error } = await admin
+        .from(table)
+        .upsert(chunk, { onConflict: BACKUP_CONFLICT_KEYS[table] });
+      if (error) {
+        return {
+          ok: false,
+          error: `Falha ao restaurar ${table} (linha ${i}): ${error.message}`,
+          restored,
+        };
+      }
+    }
+    restored[table] = rows.length;
+  }
+
+  revalidatePath('/', 'layout');
+  return { ok: true, restored };
+}

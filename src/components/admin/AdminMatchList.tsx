@@ -15,6 +15,7 @@ const stageTabs: { key: MatchStage; label: string }[] = [
   { key: 'round-of-16', label: 'Oitavas' },
   { key: 'quarter-final', label: 'Quartas' },
   { key: 'semi-final', label: 'Semifinais' },
+  { key: 'third-place', label: '3º lugar' },
   { key: 'final', label: 'Final' },
 ];
 

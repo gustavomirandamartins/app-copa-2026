@@ -7,6 +7,14 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: import.meta.dirname,
   },
+  experimental: {
+    // Backup do banco (Central de controle → restaurar) envia todas as
+    // tabelas de volta como argumento de Server Action — passa do limite
+    // padrão de 1mb com ~1900 palpites.
+    serverActions: {
+      bodySizeLimit: '10mb',
+    },
+  },
   images: {
     remotePatterns: [
       {

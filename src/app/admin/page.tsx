@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { ShieldCheck, Zap, BarChart3 } from 'lucide-react';
+import { ShieldCheck, Zap, BarChart3, DatabaseBackup } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
@@ -16,6 +16,7 @@ import {
 import { AdminTiebreakDrawsPending, AdminTiebreakDrawsResolved, type TiebreakEntry } from '@/components/admin/AdminTiebreakDraws';
 import { AdminProbabilitiesUpload } from '@/components/admin/AdminProbabilitiesUpload';
 import { AdminMatchProbabilitiesUpload } from '@/components/admin/AdminMatchProbabilitiesUpload';
+import { AdminBackup } from '@/components/admin/AdminBackup';
 import { matches } from '@/data/matches';
 import { teams } from '@/data/teams';
 import { ROUND_ORDER, ROUND_LABELS } from '@/lib/bolao/rounds';
@@ -349,6 +350,13 @@ export default async function AdminPage() {
       <div style={{ marginTop: 'var(--space-2xl)' }}>
         <AdminUserList users={users} />
       </div>
+
+      <section className="glass-card-static" style={{ marginTop: 'var(--space-2xl)', padding: 'var(--space-lg)' }}>
+        <h2 style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 'var(--space-md)' }}>
+          <DatabaseBackup size={20} style={{ color: 'var(--gold)' }} /> Backup do banco
+        </h2>
+        <AdminBackup />
+      </section>
 
       <section className="glass-card-static" style={{ marginTop: 'var(--space-2xl)', padding: 'var(--space-lg)' }}>
         <h2 style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 'var(--space-md)' }}>

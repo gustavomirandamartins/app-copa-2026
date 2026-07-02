@@ -9,6 +9,11 @@ import type { Team, UfmgProbability } from '@/lib/types';
 
 type ProbMap = Record<string, UfmgProbability>;
 
+/** Formata percentual com 1 casa decimal e vírgula (pt-BR): 3.7 → "3,7". */
+function formatPct(n: number): string {
+  return n.toFixed(1).replace('.', ',');
+}
+
 function stages(prob: UfmgProbability | undefined) {
   if (!prob) return [];
   return [
@@ -47,7 +52,7 @@ function TeamPanel({ team, prob }: { team: Team; prob: UfmgProbability | undefin
         <div className="nx-sel-champ">
           <Medal size={15} />
           <span>Chance de título</span>
-          <b>{prob.champion.toFixed(1)}%</b>
+          <b>{formatPct(prob.champion)}%</b>
         </div>
       )}
 
@@ -59,7 +64,7 @@ function TeamPanel({ team, prob }: { team: Team; prob: UfmgProbability | undefin
               <span className="nx-sel-stage-track">
                 <span className="nx-sel-stage-fill" style={{ width: `${Math.min(100, s.value)}%` }} />
               </span>
-              <span className="nx-sel-stage-val">{s.value.toFixed(0)}%</span>
+              <span className="nx-sel-stage-val">{formatPct(s.value)}%</span>
             </li>
           ))}
         </ul>
