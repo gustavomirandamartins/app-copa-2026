@@ -70,7 +70,7 @@
 }
 
 /* ================================================================
-   VIEWPORT — recipiente com overflow hidden
+   VIEWPORT
    ================================================================ */
 .bracket-viewport {
   position: relative;
@@ -83,27 +83,29 @@
 }
 
 /* ================================================================
-   CANVAS — árvore do bracket, animada por framer-motion spring
+   CANVAS — animado por framer-motion spring
    ================================================================ */
 .bracket-canvas {
   position: absolute;
   top: 0;
   left: 0;
-  padding: var(--space-md) var(--space-lg) var(--space-xl);
+  padding: var(--space-lg) var(--space-xl) var(--space-2xl);
   will-change: transform;
 }
 
+/* ================================================================
+   ÁRVORE — layout das três seções
+   ================================================================ */
 .bracket-tree {
   display: flex;
-  gap: 40px;
-  align-items: center;
+  gap: 0;
+  align-items: stretch;
 }
 
-/* ── Metades (esquerda / direita) ──────────────────────────────── */
 .bracket-tree-half {
   display: flex;
-  gap: 32px;
-  align-items: center;
+  gap: 0;
+  align-items: stretch;
 }
 
 .bracket-tree-left {
@@ -114,46 +116,58 @@
   flex-direction: row-reverse;
 }
 
+/* ── Coluna de uma etapa ────────────────────────────────────────── */
 .bracket-tree-column {
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
-  min-width: 130px;
+  min-width: 140px;
 }
 
 .bracket-tree-col-title {
   text-align: center;
   font-weight: 700;
-  font-size: 0.66rem;
+  font-size: 0.64rem;
   color: var(--text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  margin-bottom: var(--space-xs);
+  padding-bottom: var(--space-sm);
+  flex-shrink: 0;
 }
 
 .bracket-tree-col-matches {
   display: flex;
   flex-direction: column;
-  justify-content: space-around;
-  gap: var(--space-sm);
   flex-grow: 1;
 }
 
-/* ── Centro: Final + 3º lugar empilhados ───────────────────────── */
+/* ── Wrapper de cada partida ────────────────────────────────────── */
+/* O flexGrow é setado inline (1=R32, 2=R16, 4=QF, 8=SF) garantindo
+   que todas as colunas tenham a mesma altura e cada partida fique
+   centrada em relação aos seus alimentadores. */
+.bracket-tree-match-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  min-height: 0;
+}
+
+/* ── Centro: Final + 3º lugar ──────────────────────────────────── */
 .bracket-tree-center {
   display: flex;
   flex-direction: column;
   align-items: stretch;
   justify-content: center;
-  gap: var(--space-lg);
   min-width: 150px;
+  gap: var(--space-md);
 }
 
 /* ================================================================
-   CARD — compacto, glassmorphism
+   CARD — glassmorphism compacto
    ================================================================ */
 .bracket-tree-card {
-  padding: 7px 9px;
+  width: 100%;
+  padding: 7px 10px;
   border-radius: var(--radius-md);
   background: var(--glass-bg);
   backdrop-filter: blur(var(--glass-blur)) saturate(160%);
@@ -175,7 +189,6 @@
   filter: grayscale(0.7);
 }
 
-/* ── Header do card ────────────────────────────────────────────── */
 .bracket-tree-header {
   display: flex;
   justify-content: space-between;
@@ -197,7 +210,6 @@
   100% { opacity: 1; }
 }
 
-/* ── Linhas de time ────────────────────────────────────────────── */
 .bracket-tree-team {
   display: flex;
   align-items: center;
@@ -247,7 +259,7 @@
 }
 
 /* ================================================================
-   CARD DA FINAL — dourado, maior, com troféu
+   CARD DA FINAL — dourado
    ================================================================ */
 .bracket-tree-card.is-final {
   border: 1.5px solid var(--gold);
@@ -320,50 +332,143 @@
 }
 
 /* ================================================================
-   LINHAS DE CONEXÃO (CSS only)
+   LINHAS DE CONEXÃO — técnica de bracket com flex sizing
    ================================================================ */
-.bracket-tree-half .bracket-tree-col-matches .bracket-tree-card::after {
+
+/* ── Margens das colunas para espaço das linhas ─────────────────── */
+.bracket-tree-left .bracket-tree-column {
+  margin-right: 28px;
+}
+
+.bracket-tree-right .bracket-tree-column {
+  margin-left: 28px;
+}
+
+/* ── Lado ESQUERDO: linhas saem pela direita do card ────────────── */
+
+/* Linha horizontal saindo do card para a direita (para o próximo round) */
+.bracket-tree-left .bracket-tree-match-wrapper:not(:last-child) .bracket-tree-card::after {
   content: '';
   position: absolute;
   left: 100%;
-  width: 32px;
+  width: 14px;
   top: 50%;
-  border-top: 3px solid rgba(255, 255, 255, 0.50);
+  border-top: 2px solid rgba(255, 255, 255, 0.45);
   z-index: 1;
 }
 
-.bracket-tree-half .bracket-tree-col-matches .bracket-tree-card::before {
+/* Par TOP: linha vertical descendo do meio direito até o par de baixo */
+.bracket-tree-left .bracket-tree-match-wrapper.pair-top::after {
+  content: '';
+  position: absolute;
+  left: 100%;
+  width: 14px;
+  top: 50%;
+  bottom: 0;
+  border-right: 2px solid rgba(255, 255, 255, 0.45);
+  border-top: 2px solid rgba(255, 255, 255, 0.45);
+  border-radius: 0 4px 4px 0;
+  z-index: 1;
+}
+
+/* Par BOTTOM: linha vertical subindo do meio direito até o par de cima,
+   + linha horizontal entrando do próximo round (esquerda) */
+.bracket-tree-left .bracket-tree-match-wrapper.pair-bot::after {
+  content: '';
+  position: absolute;
+  left: 100%;
+  width: 14px;
+  top: 0;
+  height: 50%;
+  border-right: 2px solid rgba(255, 255, 255, 0.45);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.45);
+  border-radius: 0 0 4px 0;
+  z-index: 1;
+}
+
+/* Linha horizontal entrando pela esquerda (do round anterior) */
+.bracket-tree-left .bracket-tree-column:not(:first-child) .bracket-tree-match-wrapper .bracket-tree-card::before {
   content: '';
   position: absolute;
   right: 100%;
-  width: 32px;
+  width: 14px;
   top: 50%;
-  border-top: 3px solid rgba(255, 255, 255, 0.50);
+  border-top: 2px solid rgba(255, 255, 255, 0.45);
   z-index: 1;
 }
 
-/* Remove linhas na primeira coluna esquerda e última direita */
-.bracket-tree-left .bracket-tree-column:first-child .bracket-tree-card::before {
+/* ── Lado DIREITO: linhas saem pela esquerda do card (espelhado) ── */
+
+/* Linha horizontal saindo do card para a esquerda */
+.bracket-tree-right .bracket-tree-match-wrapper:not(:last-child) .bracket-tree-card::after {
+  content: '';
+  position: absolute;
+  right: 100%;
+  width: 14px;
+  top: 50%;
+  border-top: 2px solid rgba(255, 255, 255, 0.45);
+  z-index: 1;
+}
+
+/* Par TOP: linha vertical descendo */
+.bracket-tree-right .bracket-tree-match-wrapper.pair-top::after {
+  content: '';
+  position: absolute;
+  right: 100%;
+  width: 14px;
+  top: 50%;
+  bottom: 0;
+  border-left: 2px solid rgba(255, 255, 255, 0.45);
+  border-top: 2px solid rgba(255, 255, 255, 0.45);
+  border-radius: 4px 0 0 4px;
+  z-index: 1;
+}
+
+/* Par BOTTOM: linha vertical subindo */
+.bracket-tree-right .bracket-tree-match-wrapper.pair-bot::after {
+  content: '';
+  position: absolute;
+  right: 100%;
+  width: 14px;
+  top: 0;
+  height: 50%;
+  border-left: 2px solid rgba(255, 255, 255, 0.45);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.45);
+  border-radius: 0 0 0 4px;
+  z-index: 1;
+}
+
+/* Linha horizontal entrando pela direita (do round anterior, que está à direita) */
+.bracket-tree-right .bracket-tree-column:not(:first-child) .bracket-tree-match-wrapper .bracket-tree-card::before {
+  content: '';
+  position: absolute;
+  left: 100%;
+  width: 14px;
+  top: 50%;
+  border-top: 2px solid rgba(255, 255, 255, 0.45);
+  z-index: 1;
+}
+
+/* ── Centro sem linhas ──────────────────────────────────────────── */
+.bracket-tree-center .bracket-tree-card::before,
+.bracket-tree-center .bracket-tree-card::after {
   display: none;
 }
 
-.bracket-tree-right .bracket-tree-column:first-child .bracket-tree-card::before {
-  display: none;
-}
-
+/* ── Última coluna de cada metade não tem linha de saída (::after) ─ */
+.bracket-tree-left .bracket-tree-column:last-child .bracket-tree-match-wrapper::after,
 .bracket-tree-left .bracket-tree-column:last-child .bracket-tree-card::after {
   display: none;
 }
 
+.bracket-tree-right .bracket-tree-column:last-child .bracket-tree-match-wrapper::after,
 .bracket-tree-right .bracket-tree-column:last-child .bracket-tree-card::after {
   display: none;
 }
 
-/* Final sem linhas laterais */
-.bracket-tree-card.is-final::before,
-.bracket-tree-card.is-final::after,
-.bracket-tree-card.is-third::before,
-.bracket-tree-card.is-third::after {
+/* ── Primeira coluna não tem linha de entrada (::before) ─────────── */
+.bracket-tree-left .bracket-tree-column:first-child .bracket-tree-card::before,
+.bracket-tree-right .bracket-tree-column:first-child .bracket-tree-card::before {
   display: none;
 }
 
@@ -375,20 +480,20 @@
     height: min(68vh, 560px);
   }
 
-  .bracket-tree {
-    gap: 24px;
-  }
-
-  .bracket-tree-half {
-    gap: 20px;
-  }
-
   .bracket-tree-column {
     min-width: 100px;
   }
 
   .bracket-tree-center {
-    min-width: 120px;
+    min-width: 110px;
+  }
+
+  .bracket-tree-left .bracket-tree-column {
+    margin-right: 18px;
+  }
+
+  .bracket-tree-right .bracket-tree-column {
+    margin-left: 18px;
   }
 
   .bracket-roundnav-btn {
@@ -399,10 +504,14 @@
 
 @media (max-width: 480px) {
   .bracket-tree-column {
-    min-width: 86px;
+    min-width: 84px;
   }
 
   .bracket-tree-center {
-    min-width: 100px;
+    min-width: 96px;
+  }
+
+  .bracket-tree-code {
+    font-size: 0.66rem;
   }
 }

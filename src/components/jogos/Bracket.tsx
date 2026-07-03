@@ -324,68 +324,88 @@ export function Bracket({
           <div className="bracket-tree">
             {/* Metade esquerda */}
             <div className="bracket-tree-half bracket-tree-left">
-              {KO_STAGES.map((stage) => (
-                <div key={stage} className="bracket-tree-column">
-                  <div className="bracket-tree-col-title">
-                    {STAGE_PILLS.find((s) => s.key === stage)?.label}
+              {KO_STAGES.map((stage, stageIdx) => {
+                const flexVal = Math.pow(2, stageIdx);
+                return (
+                  <div key={stage} className="bracket-tree-column">
+                    <div className="bracket-tree-col-title">
+                      {STAGE_PILLS.find((s) => s.key === stage)?.label}
+                    </div>
+                    <div className="bracket-tree-col-matches">
+                      {sides.left[stage].map((match, matchIdx) => (
+                        <div
+                          key={match.id}
+                          className={`bracket-tree-match-wrapper ${matchIdx % 2 === 0 ? 'pair-top' : 'pair-bot'}`}
+                          style={{ flexGrow: flexVal, flexShrink: 0, flexBasis: 0 }}
+                        >
+                          <BracketCard
+                            match={match}
+                            isMuted={isMuted(match.id, match.stage)}
+                            onClick={handleMatchClick}
+                            cardRef={(el) => { if (el) matchRefs.current.set(match.id, el); }}
+                          />
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="bracket-tree-col-matches">
-                    {sides.left[stage].map((match) => (
-                      <BracketCard
-                        key={match.id}
-                        match={match}
-                        isMuted={isMuted(match.id, match.stage)}
-                        onClick={handleMatchClick}
-                        cardRef={(el) => { if (el) matchRefs.current.set(match.id, el); }}
-                      />
-                    ))}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Centro: Final + 3º lugar */}
             <div className="bracket-tree-center">
               {sides.final && (
-                <BracketCard
-                  match={sides.final}
-                  isFinal
-                  isMuted={isMuted(sides.final.id, 'final')}
-                  onClick={handleMatchClick}
-                  cardRef={(el) => { if (el) matchRefs.current.set(sides.final!.id, el); }}
-                />
+                <div className="bracket-tree-match-wrapper" style={{ flexGrow: 16, flexBasis: 0 }}>
+                  <BracketCard
+                    match={sides.final}
+                    isFinal
+                    isMuted={isMuted(sides.final.id, 'final')}
+                    onClick={handleMatchClick}
+                    cardRef={(el) => { if (el) matchRefs.current.set(sides.final!.id, el); }}
+                  />
+                </div>
               )}
               {sides.thirdPlace && (
-                <BracketCard
-                  match={sides.thirdPlace}
-                  isThird
-                  isMuted={isMuted(sides.thirdPlace.id, 'third-place')}
-                  onClick={handleMatchClick}
-                  cardRef={(el) => { if (el) matchRefs.current.set(sides.thirdPlace!.id, el); }}
-                />
+                <div className="bracket-tree-match-wrapper" style={{ flexGrow: 4, flexBasis: 0 }}>
+                  <BracketCard
+                    match={sides.thirdPlace}
+                    isThird
+                    isMuted={isMuted(sides.thirdPlace.id, 'third-place')}
+                    onClick={handleMatchClick}
+                    cardRef={(el) => { if (el) matchRefs.current.set(sides.thirdPlace!.id, el); }}
+                  />
+                </div>
               )}
             </div>
 
             {/* Metade direita (espelhada) */}
             <div className="bracket-tree-half bracket-tree-right">
-              {[...KO_STAGES].reverse().map((stage) => (
-                <div key={stage} className="bracket-tree-column">
-                  <div className="bracket-tree-col-title">
-                    {STAGE_PILLS.find((s) => s.key === stage)?.label}
+              {[...KO_STAGES].reverse().map((stage, stageIdx) => {
+                const flexVal = Math.pow(2, stageIdx);
+                return (
+                  <div key={stage} className="bracket-tree-column">
+                    <div className="bracket-tree-col-title">
+                      {STAGE_PILLS.find((s) => s.key === stage)?.label}
+                    </div>
+                    <div className="bracket-tree-col-matches">
+                      {sides.right[stage].map((match, matchIdx) => (
+                        <div
+                          key={match.id}
+                          className={`bracket-tree-match-wrapper ${matchIdx % 2 === 0 ? 'pair-top' : 'pair-bot'}`}
+                          style={{ flexGrow: flexVal, flexShrink: 0, flexBasis: 0 }}
+                        >
+                          <BracketCard
+                            match={match}
+                            isMuted={isMuted(match.id, match.stage)}
+                            onClick={handleMatchClick}
+                            cardRef={(el) => { if (el) matchRefs.current.set(match.id, el); }}
+                          />
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="bracket-tree-col-matches">
-                    {sides.right[stage].map((match) => (
-                      <BracketCard
-                        key={match.id}
-                        match={match}
-                        isMuted={isMuted(match.id, match.stage)}
-                        onClick={handleMatchClick}
-                        cardRef={(el) => { if (el) matchRefs.current.set(match.id, el); }}
-                      />
-                    ))}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </motion.div>
