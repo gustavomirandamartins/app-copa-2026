@@ -109,322 +109,79 @@
 }
 
 /* ================================================================
-   MODO FOCO — Grade de cards
+   MODO FOCO — Bracket horizontal com a etapa selecionada em destaque
+   (estilo Apple Sports)
    ================================================================ */
 .bracket-focus-view {
   width: 100%;
 }
 
-.bracket-focus-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--space-md);
+.bracket-focus-track {
+  display: flex;
+  gap: 32px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: var(--space-sm) var(--space-md) var(--space-xl);
 }
 
-@media (min-width: 640px) {
-  .bracket-focus-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .bracket-grid-semifinal {
-    max-width: 720px;
-    margin: 0 auto;
-  }
-  .bracket-grid-quarterfinal {
-    grid-template-columns: repeat(2, 1fr);
-  }
+.bracket-focus-track::-webkit-scrollbar {
+  display: none;
 }
 
-@media (min-width: 768px) {
-  .bracket-grid-roundof16 {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (min-width: 1024px) {
-  .bracket-grid-roundof16 {
-    grid-template-columns: repeat(4, 1fr);
-  }
-  .bracket-grid-roundof32 {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-
-/* ── Área da Final + 3º Lugar ──────────────────────────────────── */
-.bracket-focus-final-area {
+/* Coluna de etapa (base) */
+.bracket-stage-column {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: var(--space-md);
-  max-width: 520px;
-  margin: 0 auto;
-}
-
-.bracket-focus-final-wrapper {
-  width: 100%;
-}
-
-.bracket-focus-third-wrapper {
-  width: 100%;
-  max-width: 420px;
-}
-
-/* ── Card de partida (Modo Foco) ───────────────────────────────── */
-.bracket-focus-card {
-  padding: var(--space-md);
-  border-radius: var(--radius-lg);
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  transition: border-color var(--transition-fast), background var(--transition-fast), box-shadow var(--transition-fast);
-}
-
-.bracket-focus-card:hover {
-  border-color: var(--glass-border-hover);
-  background: var(--glass-bg-hover);
-  box-shadow: var(--shadow-lg), var(--shadow-glow-green);
-}
-
-.bracket-focus-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--space-sm);
-  font-size: 0.72rem;
-}
-
-.bracket-focus-card-num {
-  font-weight: 700;
-  color: var(--text-tertiary);
-}
-
-.bracket-focus-live {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: var(--red);
-  font-weight: 700;
-  font-size: 0.68rem;
-  letter-spacing: 0.03em;
-}
-
-.bracket-focus-live-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--red);
-  animation: pulse-live 1.5s infinite;
-}
-
-@keyframes pulse-live {
-  0% { opacity: 1; }
-  50% { opacity: 0.4; }
-  100% { opacity: 1; }
-}
-
-.bracket-focus-finished {
-  font-size: 0.68rem;
-  font-weight: 600;
-  color: var(--text-tertiary);
-  background: rgba(255,255,255,0.06);
-  padding: 2px 8px;
-  border-radius: 999px;
-}
-
-.bracket-focus-teams {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.bracket-focus-team {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6px 0;
-  gap: var(--space-sm);
-  border-bottom: 1px solid rgba(255,255,255,0.06);
-}
-
-.bracket-focus-team:last-child {
-  border-bottom: none;
-}
-
-.bracket-focus-team.winner {
-  background: rgba(0, 151, 57, 0.08);
-  margin: 0 calc(-1 * var(--space-md));
-  padding: 6px var(--space-md);
-  border-radius: var(--radius-sm);
-}
-
-.bracket-focus-team-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-}
-
-.bracket-focus-team-name {
-  font-weight: 700;
-  font-size: 0.92rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.bracket-focus-team-name.placeholder {
-  font-weight: 500;
-  color: var(--text-tertiary);
-  font-size: 0.82rem;
-}
-
-.bracket-focus-flag-placeholder {
-  font-size: 1.6rem;
-  line-height: 1;
-  opacity: 0.35;
-  filter: grayscale(1);
-}
-
-.bracket-focus-score {
-  font-weight: 800;
-  font-family: var(--font-heading);
-  font-size: 1.1rem;
-  background: rgba(0,0,0,0.18);
-  padding: 3px 10px;
-  border-radius: 6px;
-  min-width: 36px;
-  text-align: center;
-}
-
-.bracket-focus-pen {
-  font-size: 0.65em;
-  opacity: 0.7;
-  margin-left: 3px;
-  font-weight: 600;
-}
-
-.bracket-focus-meta {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-top: var(--space-sm);
-  font-size: 0.72rem;
-  color: var(--text-tertiary);
-  font-weight: 500;
-}
-
-.bracket-focus-next {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  margin-top: var(--space-sm);
-  padding: 6px 10px;
-  border-radius: var(--radius-full);
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.08);
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-}
-
-.bracket-focus-next svg {
-  color: var(--gold);
+  min-width: 170px;
   flex-shrink: 0;
+  scroll-snap-align: center;
 }
 
-.bracket-focus-next-num {
-  color: var(--gold);
-  font-weight: 800;
-  font-family: var(--font-heading);
-}
-
-/* ── Card da FINAL (exclusivo) ──────────────────────────────────── */
-.bracket-final-card {
-  border: 1.5px solid var(--gold);
-  background:
-    linear-gradient(160deg, rgba(224, 124, 0, 0.10), rgba(254, 221, 0, 0.04) 60%, transparent),
-    var(--glass-bg);
-  box-shadow: var(--shadow-lg), 0 0 32px rgba(224, 124, 0, 0.15);
-}
-
-.bracket-final-card:hover {
-  border-color: var(--gold);
-  box-shadow: var(--shadow-lg), 0 0 40px rgba(224, 124, 0, 0.25);
-}
-
-.bracket-final-ribbon {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  align-self: center;
-  margin-bottom: var(--space-sm);
-  padding: 4px 14px;
-  border-radius: 999px;
-  background: rgba(224, 124, 0, 0.18);
-  border: 1px solid rgba(224, 124, 0, 0.45);
-  color: #ffcf8a;
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.bracket-final-card .bracket-focus-team-name {
-  font-size: 1.05rem;
-}
-
-.bracket-final-card .bracket-focus-score {
-  font-size: 1.35rem;
-  padding: 4px 14px;
-  border-radius: 8px;
-}
-
-.bracket-final-card .bracket-focus-meta {
-  font-size: 0.78rem;
-  color: rgba(255, 255, 255, 0.7);
-}
-
-/* ── Card do 3º Lugar ─────────────────────────────────────────── */
-.bracket-third-card {
-  border: 1.5px solid rgba(205, 127, 50, 0.55);
-  background:
-    linear-gradient(160deg, rgba(205, 127, 50, 0.06), transparent 60%),
-    var(--glass-bg);
-}
-
-.bracket-third-card:hover {
-  border-color: rgba(205, 127, 50, 0.75);
-  box-shadow: var(--shadow-lg), 0 0 24px rgba(205, 127, 50, 0.12);
-}
-
-.bracket-third-ribbon {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  align-self: center;
-  margin-bottom: var(--space-sm);
-  padding: 3px 12px;
-  border-radius: 999px;
-  background: rgba(205, 127, 50, 0.14);
-  border: 1px solid rgba(205, 127, 50, 0.40);
-  color: rgba(255, 205, 160, 0.9);
-  font-size: 0.68rem;
+.bracket-stage-title {
+  text-align: center;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
   text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: var(--space-md);
 }
 
-.bracket-third-card .bracket-focus-team-name {
-  font-size: 0.88rem;
+.bracket-stage-matches {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex-grow: 1;
+  gap: var(--space-lg);
 }
 
-.bracket-third-card .bracket-focus-score {
-  font-size: 1rem;
+.bracket-stage-matches.is-final {
+  justify-content: center;
+  gap: var(--space-xl);
+}
+
+/* No Modo Foco: etapas não selecionadas são esmaecidas e menores */
+.bracket-focus-view .bracket-stage-column {
+  opacity: 0.40;
+  transform: scale(0.92);
+  filter: grayscale(50%);
+  transition: opacity 0.45s var(--ease), transform 0.45s var(--ease), filter 0.45s var(--ease);
+}
+
+.bracket-focus-view .bracket-stage-column.is-selected {
+  opacity: 1;
+  transform: scale(1);
+  filter: grayscale(0%);
+}
+
+.bracket-focus-view .bracket-stage-column.is-selected .bracket-stage-title {
+  color: var(--gold);
 }
 
 /* ================================================================
-   MODO COMPLETO — Colunas horizontais com cards compactos
+   MODO COMPLETO — Mobile: 5 colunas horizontais com scroll
    ================================================================ */
 .bracket-full-view {
   width: 100%;
@@ -444,6 +201,10 @@
   border-radius: 3px;
 }
 
+.bracket-full-mobile {
+  display: block;
+}
+
 .bracket-full-columns {
   display: flex;
   gap: 48px;
@@ -451,202 +212,17 @@
   min-width: max-content;
 }
 
-.bracket-full-column {
-  display: flex;
-  flex-direction: column;
+.bracket-full-mobile .bracket-stage-column {
   min-width: 170px;
 }
 
-.bracket-full-column-title {
-  text-align: center;
-  font-weight: 700;
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin-bottom: var(--space-lg);
-}
-
-.bracket-full-column-matches {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-around;
-  flex-grow: 1;
-  gap: var(--space-lg);
-}
-
-.bracket-full-column-matches.is-final {
-  justify-content: center;
-  gap: var(--space-xl);
-}
-
-/* ── Linhas de conexão entre colunas (modo completo) ───────────── */
-.bracket-full-column:not(:last-child) .bracket-full-card-wrapper::after {
-  content: '';
-  position: absolute;
-  right: -24px;
-  width: 24px;
-  border-right: 3px solid rgba(255, 255, 255, 0.6);
-  border-top: 3px solid rgba(255, 255, 255, 0.6);
-  border-radius: 0 6px 0 0;
-  opacity: 1;
-  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.3));
-}
-
-.bracket-full-column:not(:last-child) .bracket-full-card-wrapper:nth-child(odd)::after {
-  top: 50%;
-  bottom: -50%;
-  border-top: 3px solid rgba(255, 255, 255, 0.6);
-  border-bottom: none;
-  border-radius: 0 6px 0 0;
-}
-
-.bracket-full-column:not(:last-child) .bracket-full-card-wrapper:nth-child(even)::after {
-  top: -50%;
-  bottom: 50%;
-  border-bottom: 3px solid rgba(255, 255, 255, 0.6);
-  border-top: none;
-  border-radius: 0 0 6px 0;
-}
-
-.bracket-full-column:not(:first-child) .bracket-full-card-wrapper::before {
-  content: '';
-  position: absolute;
-  left: -24px;
-  width: 24px;
-  top: 50%;
-  border-top: 3px solid rgba(255, 255, 255, 0.6);
-  opacity: 1;
-  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.3));
-}
-
-.bracket-full-card-wrapper.stage-third-place::before,
-.bracket-full-card-wrapper.stage-third-place::after {
-  display: none !important;
-}
-
-.bracket-full-card-wrapper {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  flex-grow: 1;
-}
-
-.bracket-full-column-matches.is-final .bracket-full-card-wrapper {
+.bracket-full-mobile .bracket-stage-matches.is-final .bracket-full-card-wrapper {
   flex-grow: 0;
-}
-
-/* ── Card compacto (Modo Completo) ──────────────────────────────── */
-.bracket-full-card {
-  padding: 8px 10px;
-  border-radius: var(--radius-md);
-  font-size: 0.78rem;
-  position: relative;
-  z-index: 2;
-  cursor: pointer;
-  transition: border-color var(--transition-fast), background var(--transition-fast), box-shadow var(--transition-fast);
-}
-
-.bracket-full-card:hover {
-  border-color: var(--glass-border-hover);
-  background: var(--glass-bg-hover);
-  box-shadow: var(--shadow-md), var(--shadow-glow-green);
-}
-
-.bracket-full-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 5px;
-  font-size: 0.68rem;
-  color: var(--text-tertiary);
-}
-
-.bracket-full-live {
-  color: var(--red);
-  animation: pulse-live 1.5s infinite;
-  font-size: 0.75rem;
-}
-
-.bracket-full-team {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 3px 0;
-  gap: 8px;
-}
-
-.bracket-full-team-left {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-}
-
-.bracket-full-code {
-  font-weight: 700;
-  font-size: 0.82rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.bracket-full-code.placeholder {
-  font-weight: 500;
-  color: var(--text-tertiary);
-  font-size: 0.75rem;
-}
-
-.bracket-full-flag-placeholder {
-  font-size: 1.1rem;
-  line-height: 1;
-  opacity: 0.35;
-  filter: grayscale(1);
-}
-
-.bracket-full-score {
-  font-weight: 700;
-  font-family: var(--font-heading);
-  background: rgba(0,0,0,0.12);
-  padding: 1px 6px;
-  border-radius: 4px;
-  font-size: 0.85rem;
-  min-width: 24px;
-  text-align: center;
-}
-
-.bracket-full-final {
-  border: 1.5px solid var(--gold);
-  background:
-    linear-gradient(160deg, rgba(224, 124, 0, 0.10), rgba(254, 221, 0, 0.04) 60%, transparent),
-    var(--glass-bg);
-}
-
-.bracket-full-final:hover {
-  border-color: var(--gold);
-  box-shadow: var(--shadow-md), 0 0 24px rgba(224, 124, 0, 0.18);
-}
-
-.bracket-full-third {
-  border: 1.5px solid rgba(205, 127, 50, 0.50);
-  background:
-    linear-gradient(160deg, rgba(205, 127, 50, 0.06), transparent 60%),
-    var(--glass-bg);
-}
-
-.bracket-full-third:hover {
-  border-color: rgba(205, 127, 50, 0.70);
-  box-shadow: var(--shadow-md), 0 0 16px rgba(205, 127, 50, 0.10);
 }
 
 /* ================================================================
    DESKTOP — Bracket completo dividido em esquerda / centro / direita
    ================================================================ */
-.bracket-full-mobile {
-  display: block;
-}
-
 .bracket-full-desktop {
   display: none;
 }
@@ -712,8 +288,64 @@
     gap: var(--space-xl);
     min-width: 180px;
   }
+}
 
-  /* Linhas de conexão no desktop */
+/* ================================================================
+   LINHAS DE CONEXÃO ENTRE COLUNAS
+   ================================================================ */
+
+/* Mobile / colunas verticais */
+.bracket-full-column:not(:last-child) .bracket-full-card-wrapper::after,
+.bracket-full-mobile .bracket-stage-column:not(:last-child) .bracket-full-card-wrapper::after {
+  content: '';
+  position: absolute;
+  right: -24px;
+  width: 24px;
+  border-right: 3px solid rgba(255, 255, 255, 0.6);
+  border-top: 3px solid rgba(255, 255, 255, 0.6);
+  border-radius: 0 6px 0 0;
+  opacity: 1;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.3));
+}
+
+.bracket-full-column:not(:last-child) .bracket-full-card-wrapper:nth-child(odd)::after,
+.bracket-full-mobile .bracket-stage-column:not(:last-child) .bracket-full-card-wrapper:nth-child(odd)::after {
+  top: 50%;
+  bottom: -50%;
+  border-top: 3px solid rgba(255, 255, 255, 0.6);
+  border-bottom: none;
+  border-radius: 0 6px 0 0;
+}
+
+.bracket-full-column:not(:last-child) .bracket-full-card-wrapper:nth-child(even)::after,
+.bracket-full-mobile .bracket-stage-column:not(:last-child) .bracket-full-card-wrapper:nth-child(even)::after {
+  top: -50%;
+  bottom: 50%;
+  border-bottom: 3px solid rgba(255, 255, 255, 0.6);
+  border-top: none;
+  border-radius: 0 0 6px 0;
+}
+
+.bracket-full-column:not(:first-child) .bracket-full-card-wrapper::before,
+.bracket-full-mobile .bracket-stage-column:not(:first-child) .bracket-full-card-wrapper::before {
+  content: '';
+  position: absolute;
+  left: -24px;
+  width: 24px;
+  top: 50%;
+  border-top: 3px solid rgba(255, 255, 255, 0.6);
+  opacity: 1;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.3));
+}
+
+/* 3º lugar sem linhas de entrada/saída */
+.bracket-full-card-wrapper.stage-third-place::before,
+.bracket-full-card-wrapper.stage-third-place::after {
+  display: none !important;
+}
+
+/* Desktop: linhas saindo das metades para o centro */
+@media (min-width: 1024px) {
   .bracket-full-desktop-left .bracket-full-card-wrapper::after {
     content: '';
     position: absolute;
@@ -750,6 +382,127 @@
   }
 }
 
+.bracket-full-card-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex-grow: 1;
+}
+
+/* ================================================================
+   CARD COMPACTO (usado em todas as visualizações)
+   ================================================================ */
+.bracket-full-card {
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  font-size: 0.78rem;
+  position: relative;
+  z-index: 2;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.bracket-full-card:hover {
+  border-color: var(--glass-border-hover);
+  background: var(--glass-bg-hover);
+  box-shadow: var(--shadow-md), var(--shadow-glow-green);
+}
+
+.bracket-full-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+  font-size: 0.68rem;
+  color: var(--text-tertiary);
+}
+
+.bracket-full-live {
+  color: var(--red);
+  animation: pulse-live 1.5s infinite;
+  font-size: 0.75rem;
+}
+
+@keyframes pulse-live {
+  0% { opacity: 1; }
+  50% { opacity: 0.4; }
+  100% { opacity: 1; }
+}
+
+.bracket-full-team {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px 0;
+  gap: 8px;
+}
+
+.bracket-full-team-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.bracket-full-code {
+  font-weight: 700;
+  font-size: 0.82rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bracket-full-code.placeholder {
+  font-weight: 500;
+  color: var(--text-tertiary);
+  font-size: 0.75rem;
+}
+
+.bracket-full-flag-placeholder {
+  font-size: 1.1rem;
+  line-height: 1;
+  opacity: 0.35;
+  filter: grayscale(1);
+}
+
+.bracket-full-score {
+  font-weight: 700;
+  font-family: var(--font-heading);
+  background: rgba(0,0,0,0.12);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  min-width: 24px;
+  text-align: center;
+}
+
+/* Card da Final */
+.bracket-full-final {
+  border: 1.5px solid var(--gold);
+  background:
+    linear-gradient(160deg, rgba(224, 124, 0, 0.10), rgba(254, 221, 0, 0.04) 60%, transparent),
+    var(--glass-bg);
+}
+
+.bracket-full-final:hover {
+  border-color: var(--gold);
+  box-shadow: var(--shadow-md), 0 0 24px rgba(224, 124, 0, 0.18);
+}
+
+/* Card do 3º lugar */
+.bracket-full-third {
+  border: 1.5px solid rgba(205, 127, 50, 0.50);
+  background:
+    linear-gradient(160deg, rgba(205, 127, 50, 0.06), transparent 60%),
+    var(--glass-bg);
+}
+
+.bracket-full-third:hover {
+  border-color: rgba(205, 127, 50, 0.70);
+  box-shadow: var(--shadow-md), 0 0 16px rgba(205, 127, 50, 0.10);
+}
+
 /* ================================================================
    Highlight de card ao navegar do bracket com hash
    ================================================================ */
@@ -767,12 +520,13 @@
    RESPONSIVIDADE
    ================================================================ */
 @media (max-width: 767px) {
-  .bracket-focus-grid {
-    grid-template-columns: 1fr !important;
+  .bracket-focus-track {
+    gap: 20px;
+    padding: var(--space-sm) var(--space-sm) var(--space-lg);
   }
 
-  .bracket-focus-final-area {
-    max-width: 100%;
+  .bracket-stage-column {
+    min-width: 150px;
   }
 
   .bracket-full-columns {
@@ -780,7 +534,7 @@
     padding: var(--space-sm) var(--space-sm) var(--space-md);
   }
 
-  .bracket-full-column {
+  .bracket-full-mobile .bracket-stage-column {
     min-width: 150px;
   }
 
