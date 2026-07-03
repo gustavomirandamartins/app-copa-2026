@@ -1,59 +1,30 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Maximize2, Minimize2 } from 'lucide-react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { Trophy, Medal, Maximize2 } from 'lucide-react';
 import { getTeamById } from '@/data/teams';
 import { TeamFlag } from '@/components/ui/TeamFlag';
-import type { Match, MatchStage, MatchStatus } from '@/lib/types';
-import { AnimatePresence, motion } from 'framer-motion';
+import type { Match, MatchStage } from '@/lib/types';
+import { motion } from 'framer-motion';
 import './bracket.css';
 
-type ViewMode = 'focus' | 'full';
-type Side = 'left' | 'right';
+const PAD = 48;
 
+const KO_STAGES: KnockoutStage[] = ['round-of-32', 'round-of-16', 'quarter-final', 'semi-final'];
 type KnockoutStage = 'round-of-32' | 'round-of-16' | 'quarter-final' | 'semi-final';
 
-const STAGES: { key: MatchStage; label: string; short: string; count: number }[] = [
-  { key: 'round-of-32', label: '16 Avos', short: '16 Avos', count: 16 },
-  { key: 'round-of-16', label: 'Oitavas de Final', short: 'Oitavas', count: 8 },
-  { key: 'quarter-final', label: 'Quartas de Final', short: 'Quartas', count: 4 },
-  { key: 'semi-final', label: 'Semifinais', short: 'Semis', count: 2 },
-  { key: 'final', label: 'Final', short: 'Final', count: 1 },
+const STAGE_PILLS: { key: MatchStage; label: string }[] = [
+  { key: 'round-of-32', label: '16 Avos' },
+  { key: 'round-of-16', label: 'Oitavas' },
+  { key: 'quarter-final', label: 'Quartas' },
+  { key: 'semi-final', label: 'Semis' },
+  { key: 'final', label: 'Final' },
 ];
-
-const STAGE_ORDER: MatchStage[] = STAGES.map((s) => s.key);
-const KO_STAGE_ORDER: KnockoutStage[] = ['round-of-32', 'round-of-16', 'quarter-final', 'semi-final'];
-
-const EASE_CUBIC: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
 function feederNum(placeholder?: string | null): number | null {
   if (!placeholder) return null;
   const hit = placeholder.match(/^(?:Vencedor|Perdedor) do Jogo (\d+)$/i);
   return hit ? Number(hit[1]) : null;
-}
-
-function computeBracketOrder(matches: Match[]): Map<string, number> {
-  const byNum = new Map(matches.map((m) => [m.matchNumber, m]));
-  const order = new Map<string, number>();
-  let pos = 0;
-
-  function traverse(matchNum: number) {
-    const m = byNum.get(matchNum);
-    if (!m) return;
-    const hn = feederNum(m.homeTeamPlaceholder);
-    const an = feederNum(m.awayTeamPlaceholder);
-    if (hn) traverse(hn);
-    order.set(m.id, pos++);
-    if (an) traverse(an);
-  }
-
-  const finalMatch = matches.find((m) => m.stage === 'final');
-  if (finalMatch) traverse(finalMatch.matchNumber);
-
-  const thirdPlace = matches.find((m) => m.stage === 'third-place');
-  if (thirdPlace && !order.has(thirdPlace.id)) order.set(thirdPlace.id, pos++);
-
-  return order;
 }
 
 function abbrevPlaceholder(placeholder?: string | null): string {
@@ -63,28 +34,6 @@ function abbrevPlaceholder(placeholder?: string | null): string {
   const lose = placeholder.match(/^Perdedor do Jogo (\d+)$/i);
   if (lose) return `L${lose[1]}`;
   return placeholder;
-}
-
-function getActiveStage(matches: Match[]): MatchStage {
-  const stagesWithStatus = new Map<MatchStage, MatchStatus[]>();
-  for (const m of matches) {
-    if (!STAGE_ORDER.includes(m.stage)) continue;
-    const list = stagesWithStatus.get(m.stage) ?? [];
-    list.push(m.status);
-    stagesWithStatus.set(m.stage, list);
-  }
-
-  for (const stage of STAGE_ORDER) {
-    const statuses = stagesWithStatus.get(stage) ?? [];
-    if (statuses.includes('live')) return stage;
-  }
-
-  for (const stage of STAGE_ORDER) {
-    const statuses = stagesWithStatus.get(stage) ?? [];
-    if (statuses.some((s) => s !== 'finished')) return stage;
-  }
-
-  return 'final';
 }
 
 interface BracketHalf {
@@ -106,13 +55,13 @@ function buildBracketSides(matches: Match[]): BracketSides {
   const left: BracketHalf = { 'round-of-32': [], 'round-of-16': [], 'quarter-final': [], 'semi-final': [] };
   const right: BracketHalf = { 'round-of-32': [], 'round-of-16': [], 'quarter-final': [], 'semi-final': [] };
 
-  function expand(matchNum: number, side: Side) {
+  function expand(matchNum: number, side: 'left' | 'right') {
     const m = byNum.get(matchNum);
     if (!m) return;
     const hn = feederNum(m.homeTeamPlaceholder);
     const an = feederNum(m.awayTeamPlaceholder);
     if (hn) expand(hn, side);
-    if (KO_STAGE_ORDER.includes(m.stage as KnockoutStage)) {
+    if (KO_STAGES.includes(m.stage as KnockoutStage)) {
       (side === 'left' ? left : right)[m.stage as KnockoutStage].push(m);
     }
     if (an) expand(an, side);
@@ -126,189 +75,95 @@ function buildBracketSides(matches: Match[]): BracketSides {
     if (an) expand(an, 'right');
   }
 
+  for (const stage of KO_STAGES) right[stage].reverse();
+
   const thirdPlace = matches.find((m) => m.stage === 'third-place') ?? null;
   return { left, right, final: finalMatch, thirdPlace };
 }
 
-const FULL_VARIANTS = {
-  container: {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.04, delayChildren: 0.02 },
-    },
-    exit: { opacity: 0, transition: { duration: 0.3 } },
-  },
-  card: {
-    hidden: { opacity: 0, x: -20 },
-    visible: {
-      opacity: 1,
-      x: 0,
-      transition: { duration: 0.4, ease: EASE_CUBIC },
-    },
-    exit: { opacity: 0, transition: { duration: 0.2 } },
-  },
-};
+/** Partidas que devem ficar destacadas quando um matchId é focado. */
+function getFocusContext(focusId: string, matches: Match[]): Set<string> {
+  const ids = new Set<string>([focusId]);
+  const match = matches.find((m) => m.id === focusId);
+  if (!match) return ids;
 
-const FOCUS_VARIANTS = {
-  container: {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.03, delayChildren: 0.02 },
-    },
-    exit: { opacity: 0, transition: { duration: 0.25 } },
-  },
-  column: {
-    hidden: { opacity: 0, y: 16 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.4, ease: EASE_CUBIC },
-    },
-    exit: { opacity: 0, transition: { duration: 0.2 } },
-  },
-};
+  //.próximo confronto (para onde o vencedor vai)
+  const next = matches.find((m) => {
+    const h = feederNum(m.homeTeamPlaceholder);
+    const a = feederNum(m.awayTeamPlaceholder);
+    return (h === match.matchNumber && /^Vencedor/i.test(m.homeTeamPlaceholder ?? ''))
+        || (a === match.matchNumber && /^Vencedor/i.test(m.awayTeamPlaceholder ?? ''));
+  });
+  if (next) ids.add(next.id);
 
-function CompactMatchCard({ match, onClick }: { match: Match; onClick: (match: Match) => void }) {
+  // alimentadores (de onde veio)
+  const hn = feederNum(match.homeTeamPlaceholder);
+  const an = feederNum(match.awayTeamPlaceholder);
+  if (hn) { const f = matches.find((m) => m.matchNumber === hn); if (f) ids.add(f.id); }
+  if (an) { const f = matches.find((m) => m.matchNumber === an); if (f) ids.add(f.id); }
+
+  return ids;
+}
+
+// ─── Card compacto (usado em toda a árvore) ───────────────────────
+function BracketCard({
+  match,
+  isFinal,
+  isThird,
+  isMuted,
+  onClick,
+  cardRef,
+}: {
+  match: Match;
+  isFinal?: boolean;
+  isThird?: boolean;
+  isMuted?: boolean;
+  onClick: (match: Match) => void;
+  cardRef?: (el: HTMLDivElement | null) => void;
+}) {
   const home = match.homeTeamId ? getTeamById(match.homeTeamId) : null;
   const away = match.awayTeamId ? getTeamById(match.awayTeamId) : null;
 
   const teamRow = (team: typeof home, placeholder?: string, goals: number | null = null) => (
-    <div className="bracket-full-team">
-      <div className="bracket-full-team-left">
+    <div className="bracket-tree-team">
+      <div className="bracket-tree-team-left">
         {team ? (
           <>
-            <TeamFlag name={team.name} flagEmoji={team.flag} size={20} />
-            <span className="bracket-full-code">{team.code}</span>
+            <TeamFlag name={team.name} flagEmoji={team.flag} size={isFinal ? 24 : 18} />
+            <span className="bracket-tree-code">{isFinal || isThird ? team.code : team.code}</span>
           </>
         ) : (
           <>
-            <span className="bracket-full-flag-placeholder">🏳️</span>
-            <span className="bracket-full-code placeholder">{abbrevPlaceholder(placeholder)}</span>
+            <span className="bracket-tree-flag-placeholder">🏳️</span>
+            <span className="bracket-tree-code placeholder">{abbrevPlaceholder(placeholder)}</span>
           </>
         )}
       </div>
-      <span className="bracket-full-score">{goals !== null ? goals : '—'}</span>
+      <span className="bracket-tree-score">{goals !== null ? goals : '—'}</span>
     </div>
   );
 
   return (
-    <motion.div
-      variants={FULL_VARIANTS.card}
-      className={`glass-card bracket-full-card${match.stage === 'final' ? ' bracket-full-final' : ''}${match.stage === 'third-place' ? ' bracket-full-third' : ''}`}
+    <div
+      ref={cardRef}
+      className={`bracket-tree-card${isFinal ? ' is-final' : ''}${isThird ? ' is-third' : ''}${isMuted ? ' muted' : ''}`}
       onClick={() => onClick(match)}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => e.key === 'Enter' && onClick(match)}
     >
-      <div className="bracket-full-header">
+      {isFinal && (
+        <div className="bracket-tree-final-badge"><Trophy size={11} /> FINAL</div>
+      )}
+      {isThird && (
+        <div className="bracket-tree-third-badge"><Medal size={10} /> 3º</div>
+      )}
+      <div className="bracket-tree-header">
         <span>#{match.matchNumber}</span>
-        {match.status === 'live' && <span className="bracket-full-live">●</span>}
+        {match.status === 'live' && <span className="bracket-tree-live">●</span>}
       </div>
       {teamRow(home, match.homeTeamPlaceholder, match.homeGoals)}
       {teamRow(away, match.awayTeamPlaceholder, match.awayGoals)}
-    </motion.div>
-  );
-}
-
-/** Coluna de uma etapa usada tanto no Modo Foco quanto no Modo Completo mobile. */
-function BracketStageColumn({
-  stage,
-  matches,
-  thirdPlace,
-  isSelected,
-  onMatchClick,
-  columnRef,
-}: {
-  stage: MatchStage;
-  matches: Match[];
-  thirdPlace?: Match[];
-  isSelected: boolean;
-  onMatchClick: (match: Match) => void;
-  columnRef?: (el: HTMLDivElement | null) => void;
-}) {
-  return (
-    <motion.div
-      variants={FOCUS_VARIANTS.column}
-      ref={columnRef}
-      className={`bracket-stage-column${isSelected ? ' is-selected' : ''}`}
-      data-stage={stage}
-    >
-      <div className="bracket-stage-title">{STAGES.find((s) => s.key === stage)?.label}</div>
-      <div className={`bracket-stage-matches${stage === 'final' ? ' is-final' : ''}`}>
-        {matches.map((match) => (
-          <div key={match.id} className={`bracket-full-card-wrapper stage-${match.stage}`}>
-            <CompactMatchCard match={match} onClick={onMatchClick} />
-          </div>
-        ))}
-        {stage === 'final' &&
-          thirdPlace?.map((match) => (
-            <div key={match.id} className={`bracket-full-card-wrapper stage-${match.stage}`}>
-              <CompactMatchCard match={match} onClick={onMatchClick} />
-            </div>
-          ))}
-      </div>
-    </motion.div>
-  );
-}
-
-/** Visualização desktop do bracket completo: esquerda / centro / direita. */
-function DesktopFullBracket({
-  sides,
-  onMatchClick,
-}: {
-  sides: BracketSides;
-  onMatchClick: (match: Match) => void;
-}) {
-  return (
-    <div className="bracket-full-desktop">
-      <div className="bracket-full-desktop-half bracket-full-desktop-left">
-        {[...KO_STAGE_ORDER].reverse().map((stage) => (
-          <div key={stage} className="bracket-full-desktop-column">
-            <div className="bracket-full-desktop-stage-title">
-              {STAGES.find((s) => s.key === stage)?.label}
-            </div>
-            <div className="bracket-full-desktop-matches">
-              {sides.left[stage].map((match) => (
-                <div key={match.id} className={`bracket-full-card-wrapper stage-${match.stage}`}>
-                  <CompactMatchCard match={match} onClick={onMatchClick} />
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="bracket-full-desktop-center">
-        {sides.final && (
-          <div className="bracket-full-card-wrapper stage-final">
-            <CompactMatchCard match={sides.final} onClick={onMatchClick} />
-          </div>
-        )}
-        {sides.thirdPlace && (
-          <div className="bracket-full-card-wrapper stage-third-place">
-            <CompactMatchCard match={sides.thirdPlace} onClick={onMatchClick} />
-          </div>
-        )}
-      </div>
-
-      <div className="bracket-full-desktop-half bracket-full-desktop-right">
-        {[...KO_STAGE_ORDER].reverse().map((stage) => (
-          <div key={stage} className="bracket-full-desktop-column">
-            <div className="bracket-full-desktop-stage-title">
-              {STAGES.find((s) => s.key === stage)?.label}
-            </div>
-            <div className="bracket-full-desktop-matches">
-              {sides.right[stage].map((match) => (
-                <div key={match.id} className={`bracket-full-card-wrapper stage-${match.stage}`}>
-                  <CompactMatchCard match={match} onClick={onMatchClick} />
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }
@@ -320,139 +175,220 @@ export function Bracket({
   matches: Match[];
   onMatchClick?: (match: Match) => void;
 }) {
-  const [viewMode, setViewMode] = useState<ViewMode>('focus');
-  const [activeStage, setActiveStage] = useState<MatchStage>(() => getActiveStage(matches));
-  const focusTrackRef = useRef<HTMLDivElement>(null);
-  const columnRefs = useRef<Map<MatchStage, HTMLDivElement>>(new Map());
+  const [focus, setFocus] = useState<string | null>(null);
+  const [camera, setCamera] = useState({ x: 0, y: 0, scale: 1 });
+  const cameraRef = useRef(camera);
 
-  const bracketOrder = useMemo(() => computeBracketOrder(matches), [matches]);
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const matchRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+
   const sides = useMemo(() => buildBracketSides(matches), [matches]);
+  const focusHighlight = useMemo(() => {
+    if (!focus || focus.startsWith('stage-')) return null;
+    return getFocusContext(focus, matches);
+  }, [focus, matches]);
 
-  const stageData = useMemo(() => {
-    const byStage = new Map<MatchStage, Match[]>();
-    for (const stage of STAGE_ORDER) {
-      const list = matches
-        .filter((m) => m.stage === stage)
-        .sort((a, b) => (bracketOrder.get(a.id) ?? 0) - (bracketOrder.get(b.id) ?? 0));
-      byStage.set(stage, list);
+  // ── Cálculo do transform da câmera ──────────────────────────────
+  const localRect = useCallback((el: HTMLElement) => {
+    const canvas = canvasRef.current!;
+    const er = el.getBoundingClientRect();
+    const cr = canvas.getBoundingClientRect();
+    const s = cameraRef.current.scale || 1;
+    return { x: (er.left - cr.left) / s, y: (er.top - cr.top) / s, w: er.width / s, h: er.height / s };
+  }, []);
+
+  const computeCamera = useCallback((): { x: number; y: number; scale: number } => {
+    const vp = viewportRef.current;
+    const canvas = canvasRef.current;
+    if (!vp || !canvas) return { x: 0, y: 0, scale: 1 };
+
+    if (!focus) {
+      const scale = Math.min(
+        (vp.clientWidth - PAD) / canvas.offsetWidth,
+        (vp.clientHeight - PAD) / canvas.offsetHeight,
+      ) || 1;
+      const cx = canvas.offsetWidth / 2;
+      const cy = canvas.offsetHeight / 2;
+      return { scale, x: vp.clientWidth / 2 - cx * scale, y: vp.clientHeight / 2 - cy * scale };
     }
-    const thirdPlace = matches.filter((m) => m.stage === 'third-place');
-    return { byStage, thirdPlace };
-  }, [matches, bracketOrder]);
+
+    if (focus.startsWith('stage-')) {
+      const stage = focus.slice(6) as MatchStage;
+      const els: HTMLElement[] = [];
+      matchRefs.current.forEach((el, id) => {
+        const m = matches.find((mm) => mm.id === id);
+        if (m && m.stage === stage) els.push(el);
+      });
+      if (!els.length) return cameraRef.current;
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      for (const el of els) {
+        const r = localRect(el);
+        minX = Math.min(minX, r.x); minY = Math.min(minY, r.y);
+        maxX = Math.max(maxX, r.x + r.w); maxY = Math.max(maxY, r.y + r.h);
+      }
+      const rect = { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
+      const fit = Math.min((vp.clientWidth - PAD) / rect.w, (vp.clientHeight - PAD) / rect.h);
+      const scale = Math.min(1.2, fit);
+      const cx = rect.x + rect.w / 2;
+      const cy = rect.y + rect.h / 2;
+      return { scale, x: vp.clientWidth / 2 - cx * scale, y: vp.clientHeight / 2 - cy * scale };
+    }
+
+    // Foco numa partida específica: amplia com contexto (3× largura, 2× altura)
+    const el = matchRefs.current.get(focus);
+    if (!el) return cameraRef.current;
+    const r = localRect(el);
+    const contextW = r.w * 3.5;
+    const contextH = r.h * 2.5;
+    const fit = Math.min((vp.clientWidth - PAD) / contextW, (vp.clientHeight - PAD) / contextH);
+    const scale = Math.min(2.2, fit);
+    const cx = r.x + r.w / 2;
+    const cy = r.y + r.h / 2;
+    return { scale, x: vp.clientWidth / 2 - cx * scale, y: vp.clientHeight / 2 - cy * scale };
+  }, [focus, matches, localRect]);
+
+  useLayoutEffect(() => {
+    const next = computeCamera();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCamera(next);
+    cameraRef.current = next;
+  }, [computeCamera]);
+
+  // Reenquadra ao redimensionar
+  useEffect(() => {
+    const vp = viewportRef.current;
+    if (!vp) return;
+    let first = true;
+    const ro = new ResizeObserver(() => {
+      if (first) { first = false; return; }
+      const next = computeCamera();
+      setCamera(next);
+      cameraRef.current = next;
+    });
+    ro.observe(vp);
+    return () => ro.disconnect();
+  }, [computeCamera]);
+
+  // ── Interação ────────────────────────────────────────────────────
+  const handleStageClick = (stage: MatchStage) => {
+    setFocus((prev) => (prev === `stage-${stage}` ? null : `stage-${stage}`));
+  };
 
   const handleMatchClick = (match: Match) => {
-    onMatchClick?.(match);
+    if (focus === match.id) {
+      onMatchClick?.(match);
+    } else {
+      setFocus(match.id);
+    }
   };
 
-  const handleStageClick = (stage: MatchStage) => {
-    setActiveStage(stage);
-    if (viewMode === 'full') setViewMode('focus');
+  const isMuted = (matchId: string, stage: MatchStage): boolean => {
+    if (!focus) return false;
+    if (focus.startsWith('stage-')) {
+      return focus.slice(6) !== stage;
+    }
+    return !focusHighlight?.has(matchId);
   };
-
-  // No Modo Foco, centraliza suavemente a coluna da etapa selecionada.
-  useEffect(() => {
-    if (viewMode !== 'focus') return;
-    const el = columnRefs.current.get(activeStage);
-    const track = focusTrackRef.current;
-    if (!el || !track) return;
-    const trackRect = track.getBoundingClientRect();
-    const elRect = el.getBoundingClientRect();
-    const scrollLeft = el.offsetLeft - (trackRect.width - elRect.width) / 2;
-    track.scrollTo({ left: scrollLeft, behavior: 'smooth' });
-  }, [activeStage, viewMode]);
 
   return (
     <div className="bracket-shell">
+      {/* Pills de etapa + Ver tudo */}
       <div className="bracket-roundnav">
-        {STAGES.map((s) => {
-          const isActive = activeStage === s.key;
-          const hasMatches = (stageData.byStage.get(s.key)?.length ?? 0) > 0;
-          return (
-            <button
-              key={s.key}
-              className={`bracket-roundnav-btn${isActive ? ' active' : ''}${!hasMatches ? ' disabled' : ''}`}
-              onClick={() => hasMatches && handleStageClick(s.key)}
-              disabled={!hasMatches}
-            >
-              {viewMode === 'full' ? s.short : s.label}
-              <span className="bracket-roundnav-count">{s.count}</span>
-            </button>
-          );
-        })}
+        {STAGE_PILLS.map((s) => (
+          <button
+            key={s.key}
+            className={`bracket-roundnav-btn${focus === `stage-${s.key}` ? ' active' : ''}`}
+            onClick={() => handleStageClick(s.key)}
+          >
+            {s.label}
+          </button>
+        ))}
+        <button
+          className="bracket-overview-btn"
+          onClick={() => setFocus(null)}
+        >
+          <Maximize2 size={14} /> Ver tudo
+        </button>
       </div>
 
-      <button
-        className="bracket-toggle-btn"
-        onClick={() => setViewMode(viewMode === 'focus' ? 'full' : 'focus')}
-      >
-        {viewMode === 'focus' ? (
-          <>
-            <Maximize2 size={14} /> Ver bracket completo
-          </>
-        ) : (
-          <>
-            <Minimize2 size={14} /> Focar etapa
-          </>
-        )}
-      </button>
-
-      <div className="bracket-content">
-        <AnimatePresence mode="wait">
-          {viewMode === 'focus' ? (
-            <motion.div
-              key="focus"
-              variants={FOCUS_VARIANTS.container}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              className="bracket-focus-view"
-            >
-              <div ref={focusTrackRef} className="bracket-focus-track">
-                {STAGES.map((s) => (
-                  <BracketStageColumn
-                    key={s.key}
-                    stage={s.key}
-                    matches={stageData.byStage.get(s.key) ?? []}
-                    thirdPlace={s.key === 'final' ? stageData.thirdPlace : undefined}
-                    isSelected={activeStage === s.key}
-                    onMatchClick={handleMatchClick}
-                    columnRef={(el) => {
-                      if (el) columnRefs.current.set(s.key, el);
-                      else columnRefs.current.delete(s.key);
-                    }}
-                  />
-                ))}
-              </div>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="full"
-              variants={FULL_VARIANTS.container}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              className="bracket-full-view"
-            >
-              <div className="bracket-full-mobile">
-                <div className="bracket-full-columns">
-                  {STAGES.map((s) => (
-                    <BracketStageColumn
-                      key={s.key}
-                      stage={s.key}
-                      matches={stageData.byStage.get(s.key) ?? []}
-                      thirdPlace={s.key === 'final' ? stageData.thirdPlace : undefined}
-                      isSelected={false}
-                      onMatchClick={handleMatchClick}
-                    />
-                  ))}
+      {/* Viewport com câmera spring */}
+      <div ref={viewportRef} className="bracket-viewport">
+        <motion.div
+          ref={canvasRef}
+          className="bracket-canvas"
+          animate={{ x: camera.x, y: camera.y, scale: camera.scale }}
+          transition={{ type: 'spring', stiffness: 180, damping: 26, mass: 0.8 }}
+          style={{ transformOrigin: '0 0' }}
+        >
+          <div className="bracket-tree">
+            {/* Metade esquerda */}
+            <div className="bracket-tree-half bracket-tree-left">
+              {KO_STAGES.map((stage) => (
+                <div key={stage} className="bracket-tree-column">
+                  <div className="bracket-tree-col-title">
+                    {STAGE_PILLS.find((s) => s.key === stage)?.label}
+                  </div>
+                  <div className="bracket-tree-col-matches">
+                    {sides.left[stage].map((match) => (
+                      <BracketCard
+                        key={match.id}
+                        match={match}
+                        isMuted={isMuted(match.id, match.stage)}
+                        onClick={handleMatchClick}
+                        cardRef={(el) => { if (el) matchRefs.current.set(match.id, el); }}
+                      />
+                    ))}
+                  </div>
                 </div>
-              </div>
-              <div className="bracket-full-desktop">
-                <DesktopFullBracket sides={sides} onMatchClick={handleMatchClick} />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              ))}
+            </div>
+
+            {/* Centro: Final + 3º lugar */}
+            <div className="bracket-tree-center">
+              {sides.final && (
+                <BracketCard
+                  match={sides.final}
+                  isFinal
+                  isMuted={isMuted(sides.final.id, 'final')}
+                  onClick={handleMatchClick}
+                  cardRef={(el) => { if (el) matchRefs.current.set(sides.final!.id, el); }}
+                />
+              )}
+              {sides.thirdPlace && (
+                <BracketCard
+                  match={sides.thirdPlace}
+                  isThird
+                  isMuted={isMuted(sides.thirdPlace.id, 'third-place')}
+                  onClick={handleMatchClick}
+                  cardRef={(el) => { if (el) matchRefs.current.set(sides.thirdPlace!.id, el); }}
+                />
+              )}
+            </div>
+
+            {/* Metade direita (espelhada) */}
+            <div className="bracket-tree-half bracket-tree-right">
+              {[...KO_STAGES].reverse().map((stage) => (
+                <div key={stage} className="bracket-tree-column">
+                  <div className="bracket-tree-col-title">
+                    {STAGE_PILLS.find((s) => s.key === stage)?.label}
+                  </div>
+                  <div className="bracket-tree-col-matches">
+                    {sides.right[stage].map((match) => (
+                      <BracketCard
+                        key={match.id}
+                        match={match}
+                        isMuted={isMuted(match.id, match.stage)}
+                        onClick={handleMatchClick}
+                        cardRef={(el) => { if (el) matchRefs.current.set(match.id, el); }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </motion.div>
       </div>
     </div>
   );
