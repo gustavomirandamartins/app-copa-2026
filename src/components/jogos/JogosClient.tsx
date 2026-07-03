@@ -29,6 +29,7 @@ function MatchTimeChip({ dateUTC }: { dateUTC: string }) {
 
 export function JogosClient({ matches }: { matches: Match[] }) {
   const [activeStage, setActiveStage] = useState<MatchStage | 'all'>('group');
+  const [hasHandledHash, setHasHandledHash] = useState(false);
 
   const filteredMatches = useMemo(() => {
     const list = activeStage === 'all' ? matches : matches.filter((m) => m.stage === activeStage);
@@ -48,6 +49,29 @@ export function JogosClient({ matches }: { matches: Match[] }) {
     });
     setGroupedByDate(groups);
   }, [filteredMatches]);
+
+  // Ao entrar com hash #match-{id} (vindo do bracket), ativa a aba da fase
+  // e rola até o card correspondente.
+  useEffect(() => {
+    if (hasHandledHash || typeof window === 'undefined') return;
+    const hash = window.location.hash;
+    if (!hash.startsWith('#match-')) return;
+    const matchId = hash.slice('#match-'.length);
+    const match = matches.find((m) => m.id === matchId);
+    if (!match) return;
+    setActiveStage(match.stage);
+    setHasHandledHash(true);
+    window.location.hash = '';
+    const timer = window.setTimeout(() => {
+      const el = document.getElementById(`match-${matchId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.add('match-card-highlight');
+        window.setTimeout(() => el.classList.remove('match-card-highlight'), 1800);
+      }
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [hasHandledHash, matches]);
 
   return (
     <div className="container">
@@ -89,7 +113,7 @@ export function JogosClient({ matches }: { matches: Match[] }) {
               const away = match.awayTeamId ? getTeamById(match.awayTeamId) : null;
               const stadium = getStadiumById(match.stadiumId);
               return (
-                <div key={match.id} className="glass-card match-card">
+                <div key={match.id} id={`match-${match.id}`} className="glass-card match-card">
                   <div className="match-card-header">
                     {match.group && <span className="badge badge-group">Grupo {match.group}</span>}
                     <span>

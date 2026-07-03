@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Trophy, Medal, Maximize2, Minimize2 } from 'lucide-react';
+import { Trophy, Medal, Maximize2, Minimize2, ArrowRight } from 'lucide-react';
 import { getTeamById } from '@/data/teams';
 import { TeamFlag } from '@/components/ui/TeamFlag';
 import type { Match, MatchStage, MatchStatus } from '@/lib/types';
@@ -10,6 +10,9 @@ import { AnimatePresence, motion } from 'framer-motion';
 import './bracket.css';
 
 type ViewMode = 'focus' | 'full';
+type Side = 'left' | 'right';
+
+type KnockoutStage = 'round-of-32' | 'round-of-16' | 'quarter-final' | 'semi-final';
 
 const STAGES: { key: MatchStage; label: string; short: string; count: number }[] = [
   { key: 'round-of-32', label: '16 Avos', short: '16 Avos', count: 16 },
@@ -20,6 +23,7 @@ const STAGES: { key: MatchStage; label: string; short: string; count: number }[]
 ];
 
 const STAGE_ORDER: MatchStage[] = STAGES.map((s) => s.key);
+const KO_STAGE_ORDER: KnockoutStage[] = ['round-of-32', 'round-of-16', 'quarter-final', 'semi-final'];
 
 const EASE_CUBIC: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
@@ -84,6 +88,89 @@ function getActiveStage(matches: Match[]): MatchStage {
   return 'final';
 }
 
+/** Para cada partida, qual a próxima que o vencedor/perdedor alimenta. */
+function buildNextMatchMap(matches: Match[]): Map<string, Match> {
+  const byNum = new Map(matches.map((m) => [m.matchNumber, m]));
+  const nextById = new Map<string, Match>();
+
+  function setFeeder(placeholder: string | null | undefined, target: Match) {
+    const num = feederNum(placeholder);
+    if (!num) return;
+    const feeder = byNum.get(num);
+    if (feeder) nextById.set(feeder.id, target);
+  }
+
+  // 1º passo: mapeia vencedores (prioridade — Final > 3º lugar).
+  for (const m of matches) {
+    if (/^Vencedor/i.test(m.homeTeamPlaceholder ?? '')) setFeeder(m.homeTeamPlaceholder, m);
+    if (/^Vencedor/i.test(m.awayTeamPlaceholder ?? '')) setFeeder(m.awayTeamPlaceholder, m);
+  }
+  // 2º passo: mapeia perdedores apenas se ainda não houver mapeamento.
+  for (const m of matches) {
+    if (/^Perdedor/i.test(m.homeTeamPlaceholder ?? '')) {
+      const num = feederNum(m.homeTeamPlaceholder);
+      const feeder = num ? byNum.get(num) : undefined;
+      if (feeder && !nextById.has(feeder.id)) setFeeder(m.homeTeamPlaceholder, m);
+    }
+    if (/^Perdedor/i.test(m.awayTeamPlaceholder ?? '')) {
+      const num = feederNum(m.awayTeamPlaceholder);
+      const feeder = num ? byNum.get(num) : undefined;
+      if (feeder && !nextById.has(feeder.id)) setFeeder(m.awayTeamPlaceholder, m);
+    }
+  }
+
+  return nextById;
+}
+
+interface BracketHalf {
+  'round-of-32': Match[];
+  'round-of-16': Match[];
+  'quarter-final': Match[];
+  'semi-final': Match[];
+}
+
+interface BracketSides {
+  left: BracketHalf;
+  right: BracketHalf;
+  final: Match | null;
+  thirdPlace: Match | null;
+}
+
+/** Divide o chaveamento em duas metades (esquerda/direita) convergindo para a Final. */
+function buildBracketSides(matches: Match[]): BracketSides {
+  const byNum = new Map(matches.map((m) => [m.matchNumber, m]));
+  const left: BracketHalf = { 'round-of-32': [], 'round-of-16': [], 'quarter-final': [], 'semi-final': [] };
+  const right: BracketHalf = { 'round-of-32': [], 'round-of-16': [], 'quarter-final': [], 'semi-final': [] };
+
+  function expand(matchNum: number, side: Side) {
+    const m = byNum.get(matchNum);
+    if (!m) return;
+    const hn = feederNum(m.homeTeamPlaceholder);
+    const an = feederNum(m.awayTeamPlaceholder);
+    if (hn) expand(hn, side);
+    if (KO_STAGE_ORDER.includes(m.stage as KnockoutStage)) {
+      (side === 'left' ? left : right)[m.stage as KnockoutStage].push(m);
+    }
+    if (an) expand(an, side);
+  }
+
+  const finalMatch = matches.find((m) => m.stage === 'final') ?? null;
+  if (finalMatch) {
+    const hn = feederNum(finalMatch.homeTeamPlaceholder);
+    const an = feederNum(finalMatch.awayTeamPlaceholder);
+    if (hn) expand(hn, 'left');
+    if (an) expand(an, 'right');
+  }
+
+  // Inverte a metade direita para que o chaveamento "se encontre" no meio.
+  for (const stage of KO_STAGE_ORDER) {
+    right[stage].reverse();
+  }
+
+  const thirdPlace = matches.find((m) => m.stage === 'third-place') ?? null;
+  return { left, right, final: finalMatch, thirdPlace };
+}
+
 const FOCUS_VARIANTS = {
   container: {
     hidden: { opacity: 0 },
@@ -137,11 +224,13 @@ function FocusMatchCard({
   match,
   isFinal,
   isThird,
+  nextMatch,
   onClick,
 }: {
   match: Match;
   isFinal?: boolean;
   isThird?: boolean;
+  nextMatch?: Match | null;
   onClick: (match: Match) => void;
 }) {
   const home = match.homeTeamId ? getTeamById(match.homeTeamId) : null;
@@ -225,6 +314,13 @@ function FocusMatchCard({
         {teamRow(home, match.homeTeamPlaceholder, match.homeGoals, match.homePenalties, homeWinner)}
         {teamRow(away, match.awayTeamPlaceholder, match.awayGoals, match.awayPenalties, awayWinner)}
       </div>
+      {nextMatch && !isFinal && !isThird && (
+        <div className="bracket-focus-next">
+          <span>Vencedor enfrenta</span>
+          <ArrowRight size={12} />
+          <span className="bracket-focus-next-num">#{nextMatch.matchNumber}</span>
+        </div>
+      )}
       <div className="bracket-focus-meta">
         <span>{formatKickoffDate(match.dateUTC)}</span>
         <span>·</span>
@@ -276,17 +372,115 @@ function CompactMatchCard({ match, onClick }: { match: Match; onClick: (match: M
   );
 }
 
+/** Visualização desktop do bracket completo: esquerda / centro / direita. */
+function DesktopFullBracket({
+  sides,
+  onMatchClick,
+}: {
+  sides: BracketSides;
+  onMatchClick: (match: Match) => void;
+}) {
+  return (
+    <div className="bracket-full-desktop">
+      <div className="bracket-full-desktop-half bracket-full-desktop-left">
+        {KO_STAGE_ORDER.map((stage) => (
+          <div key={stage} className="bracket-full-desktop-column">
+            <div className="bracket-full-desktop-stage-title">
+              {STAGES.find((s) => s.key === stage)?.label}
+            </div>
+            <div className="bracket-full-desktop-matches">
+              {sides.left[stage].map((match) => (
+                <div key={match.id} className={`bracket-full-card-wrapper stage-${match.stage}`}>
+                  <CompactMatchCard match={match} onClick={onMatchClick} />
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="bracket-full-desktop-center">
+        {sides.final && (
+          <div className="bracket-full-card-wrapper stage-final">
+            <CompactMatchCard match={sides.final} onClick={onMatchClick} />
+          </div>
+        )}
+        {sides.thirdPlace && (
+          <div className="bracket-full-card-wrapper stage-third-place">
+            <CompactMatchCard match={sides.thirdPlace} onClick={onMatchClick} />
+          </div>
+        )}
+      </div>
+
+      <div className="bracket-full-desktop-half bracket-full-desktop-right">
+        {[...KO_STAGE_ORDER].reverse().map((stage) => (
+          <div key={stage} className="bracket-full-desktop-column">
+            <div className="bracket-full-desktop-stage-title">
+              {STAGES.find((s) => s.key === stage)?.label}
+            </div>
+            <div className="bracket-full-desktop-matches">
+              {sides.right[stage].map((match) => (
+                <div key={match.id} className={`bracket-full-card-wrapper stage-${match.stage}`}>
+                  <CompactMatchCard match={match} onClick={onMatchClick} />
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Visualização mobile do bracket completo: 5 colunas horizontais com scroll. */
+function MobileFullBracket({
+  stageData,
+  onMatchClick,
+}: {
+  stageData: { byStage: Map<MatchStage, Match[]>; thirdPlace: Match[] };
+  onMatchClick: (match: Match) => void;
+}) {
+  return (
+    <div className="bracket-full-columns">
+      {STAGES.map((s) => {
+        const colMatches = stageData.byStage.get(s.key) ?? [];
+        const isLast = s.key === 'final';
+        return (
+          <div key={s.key} className="bracket-full-column">
+            <div className="bracket-full-column-title">{s.label}</div>
+            <div className={`bracket-full-column-matches${isLast ? ' is-final' : ''}`}>
+              {colMatches.map((match) => (
+                <div key={match.id} className={`bracket-full-card-wrapper stage-${match.stage}`}>
+                  <CompactMatchCard match={match} onClick={onMatchClick} />
+                </div>
+              ))}
+              {isLast &&
+                stageData.thirdPlace.map((match) => (
+                  <div key={match.id} className={`bracket-full-card-wrapper stage-${match.stage}`}>
+                    <CompactMatchCard match={match} onClick={onMatchClick} />
+                  </div>
+                ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export function Bracket({
   matches,
   onMatchClick,
 }: {
   matches: Match[];
-  onMatchClick?: (stage: MatchStage) => void;
+  onMatchClick?: (match: Match) => void;
 }) {
   const [viewMode, setViewMode] = useState<ViewMode>('focus');
   const [activeStage, setActiveStage] = useState<MatchStage>(() => getActiveStage(matches));
 
   const bracketOrder = useMemo(() => computeBracketOrder(matches), [matches]);
+  const nextById = useMemo(() => buildNextMatchMap(matches), [matches]);
+  const sides = useMemo(() => buildBracketSides(matches), [matches]);
 
   const stageData = useMemo(() => {
     const byStage = new Map<MatchStage, Match[]>();
@@ -301,7 +495,7 @@ export function Bracket({
   }, [matches, bracketOrder]);
 
   const handleMatchClick = (match: Match) => {
-    onMatchClick?.(match.stage);
+    onMatchClick?.(match);
   };
 
   const handleStageClick = (stage: MatchStage) => {
@@ -389,6 +583,7 @@ export function Bracket({
                     <FocusMatchCard
                       key={match.id}
                       match={match}
+                      nextMatch={nextById.get(match.id)}
                       onClick={handleMatchClick}
                     />
                   ))}
@@ -404,35 +599,11 @@ export function Bracket({
               exit="exit"
               className="bracket-full-view"
             >
-              <div className="bracket-full-columns">
-                {STAGES.map((s) => {
-                  const colMatches = stageData.byStage.get(s.key) ?? [];
-                  const isLast = s.key === 'final';
-                  return (
-                    <div key={s.key} className="bracket-full-column">
-                      <div className="bracket-full-column-title">{s.label}</div>
-                      <div className={`bracket-full-column-matches${isLast ? ' is-final' : ''}`}>
-                        {colMatches.map((match) => (
-                          <div key={match.id} className={`bracket-full-card-wrapper stage-${match.stage}`}>
-                            <CompactMatchCard
-                              match={match}
-                              onClick={handleMatchClick}
-                            />
-                          </div>
-                        ))}
-                        {isLast &&
-                          stageData.thirdPlace.map((match) => (
-                            <div key={match.id} className={`bracket-full-card-wrapper stage-${match.stage}`}>
-                              <CompactMatchCard
-                                match={match}
-                                onClick={handleMatchClick}
-                              />
-                            </div>
-                          ))}
-                      </div>
-                    </div>
-                  );
-                })}
+              <div className="bracket-full-mobile">
+                <MobileFullBracket stageData={stageData} onMatchClick={handleMatchClick} />
+              </div>
+              <div className="bracket-full-desktop">
+                <DesktopFullBracket sides={sides} onMatchClick={handleMatchClick} />
               </div>
             </motion.div>
           )}

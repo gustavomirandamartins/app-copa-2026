@@ -13,7 +13,10 @@ export function BracketCard({ matches }: { matches: Match[] }) {
   const router = useRouter();
   return (
     <div className="nx-card nx-bracket-card">
-      <Bracket matches={matches} onMatchClick={() => router.push('/jogos')} />
+      <Bracket
+        matches={matches}
+        onMatchClick={(match) => router.push(`/jogos#match-${match.id}`)}
+      />
     </div>
   );
 }

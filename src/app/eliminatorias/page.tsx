@@ -1,6 +1,6 @@
 import { Network } from 'lucide-react';
 import { getEnrichedMatches } from '@/lib/bolao/matches';
-import { Bracket } from '@/components/jogos/Bracket';
+import { EliminatoriasClient } from '@/components/jogos/EliminatoriasClient';
 
 export const revalidate = 0;
 
@@ -19,7 +19,7 @@ export default async function EliminatoriasPage() {
         </p>
       </section>
 
-      <Bracket matches={matches} />
+      <EliminatoriasClient matches={matches} />
     </div>
   );
 }
