@@ -704,6 +704,58 @@ a:hover { color: var(--copa-green-deep); }
   color: var(--text-tertiary);
 }
 
+/* ---- Match Card Expandido (página Jogos) ---- */
+.match-card-clickable {
+  cursor: pointer;
+}
+
+.match-card.expanded {
+  overflow: visible;
+}
+
+.match-card-expand-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-top: var(--space-sm);
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  transition: color var(--transition-fast);
+}
+
+.match-card-clickable:hover .match-card-expand-hint {
+  color: var(--text-secondary);
+}
+
+.match-card-expand-hint svg {
+  transition: transform 0.3s var(--ease);
+}
+
+.match-card-expand-hint svg.rotated {
+  transform: rotate(180deg);
+}
+
+.match-card-expanded {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding-top: var(--space-md);
+  margin-top: var(--space-md);
+  border-top: 1px solid var(--glass-border);
+}
+
+.match-card-wdw {
+  padding: 0 var(--space-xs);
+}
+
+/* O SelecaoCompare dentro do card expandido herda os estilos .nx-sel* do dashboard.css */
+.match-card-expanded .nx-sel {
+  border-radius: var(--radius-md);
+}
+
 /* ---- Standings Table ---- */
 .standings-table {
   width: 100%;
