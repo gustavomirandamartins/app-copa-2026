@@ -1,40 +1,27 @@
 'use client';
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { Maximize2 } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Trophy, Medal, Maximize2, Minimize2 } from 'lucide-react';
 import { getTeamById } from '@/data/teams';
 import { TeamFlag } from '@/components/ui/TeamFlag';
+import type { Match, MatchStage, MatchStatus } from '@/lib/types';
 import { formatKickoffDate, formatKickoffTime } from '@/lib/datetime';
-import type { Match, MatchStage } from '@/lib/types';
+import { AnimatePresence, motion } from 'framer-motion';
 import './bracket.css';
 
-type Transform = { scale: number; x: number; y: number };
-type Side = 'left' | 'right';
+type ViewMode = 'focus' | 'full';
 
-// Espaçamento de respiro ao enquadrar (em px do espaço de tela).
-const PAD = 48;
-// Escala alvo ao focar uma única partida (tamanho confortável de leitura).
-const MATCH_FOCUS_SCALE = 1.15;
+const STAGES: { key: MatchStage; label: string; short: string; count: number }[] = [
+  { key: 'round-of-32', label: '16 Avos', short: '16 Avos', count: 16 },
+  { key: 'round-of-16', label: 'Oitavas de Final', short: 'Oitavas', count: 8 },
+  { key: 'quarter-final', label: 'Quartas de Final', short: 'Quartas', count: 4 },
+  { key: 'semi-final', label: 'Semifinais', short: 'Semis', count: 2 },
+  { key: 'final', label: 'Final', short: 'Final', count: 1 },
+];
 
-const KO_STAGES: MatchStage[] = ['round-of-32', 'round-of-16', 'quarter-final', 'semi-final'];
-const STAGE_TITLES: Record<MatchStage, string> = {
-  group: 'Grupos',
-  'round-of-32': '16 Avos',
-  'round-of-16': 'Oitavas',
-  'quarter-final': 'Quartas',
-  'semi-final': 'Semifinais',
-  'third-place': '3º Lugar',
-  final: 'Final',
-};
+const STAGE_ORDER: MatchStage[] = STAGES.map((s) => s.key);
 
-interface BracketData {
-  /** Cada rodada, com os confrontos de cada metade do chaveamento já na
-   * ordem visual correta (pares que se alimentam do mesmo jogo seguinte
-   * ficam adjacentes). */
-  stages: Array<{ stage: MatchStage; title: string; left: Match[]; right: Match[] }>;
-  finalMatch: Match | null;
-  thirdPlace: Match | null;
-}
+const EASE_CUBIC: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
 function feederNum(placeholder?: string | null): number | null {
   if (!placeholder) return null;
@@ -42,412 +29,414 @@ function feederNum(placeholder?: string | null): number | null {
   return hit ? Number(hit[1]) : null;
 }
 
-/**
- * Constrói as duas metades do chaveamento (esquerda/direita), espelhadas e
- * convergindo para a Final ao centro — como um chaveamento de mata-mata
- * tradicional. Faz um traversal in-order da árvore a partir dos dois
- * alimentadores da Final (não por matchNumber, que reflete ordem
- * cronológica, não posição visual no bracket).
- */
-function buildBracketData(matches: Match[]): BracketData {
+function computeBracketOrder(matches: Match[]): Map<string, number> {
   const byNum = new Map(matches.map((m) => [m.matchNumber, m]));
-  const buckets: Record<Side, Record<string, Match[]>> = {
-    left: { 'round-of-32': [], 'round-of-16': [], 'quarter-final': [], 'semi-final': [] },
-    right: { 'round-of-32': [], 'round-of-16': [], 'quarter-final': [], 'semi-final': [] },
-  };
+  const order = new Map<string, number>();
+  let pos = 0;
 
-  function expand(matchNum: number, side: Side) {
+  function traverse(matchNum: number) {
     const m = byNum.get(matchNum);
     if (!m) return;
     const hn = feederNum(m.homeTeamPlaceholder);
     const an = feederNum(m.awayTeamPlaceholder);
-    if (hn) expand(hn, side);
-    buckets[side][m.stage]?.push(m);
-    if (an) expand(an, side);
+    if (hn) traverse(hn);
+    order.set(m.id, pos++);
+    if (an) traverse(an);
   }
 
-  const finalMatch = matches.find((m) => m.stage === 'final') ?? null;
-  if (finalMatch) {
-    const hn = feederNum(finalMatch.homeTeamPlaceholder);
-    const an = feederNum(finalMatch.awayTeamPlaceholder);
-    if (hn) expand(hn, 'left');
-    if (an) expand(an, 'right');
-  }
-  const thirdPlace = matches.find((m) => m.stage === 'third-place') ?? null;
+  const finalMatch = matches.find((m) => m.stage === 'final');
+  if (finalMatch) traverse(finalMatch.matchNumber);
 
-  const stages = KO_STAGES.map((stage) => ({
-    stage,
-    title: STAGE_TITLES[stage],
-    left: buckets.left[stage] ?? [],
-    right: buckets.right[stage] ?? [],
-  }));
+  const thirdPlace = matches.find((m) => m.stage === 'third-place');
+  if (thirdPlace && !order.has(thirdPlace.id)) order.set(thirdPlace.id, pos++);
 
-  return { stages, finalMatch, thirdPlace };
+  return order;
 }
 
-export function Bracket({ matches, onMatchClick }: { matches: Match[], onMatchClick?: (stage: MatchStage) => void }) {
-  const viewportRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<HTMLDivElement>(null);
-  const matchRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+function abbrevPlaceholder(placeholder?: string | null): string {
+  if (!placeholder) return 'TBD';
+  const win = placeholder.match(/^Vencedor do Jogo (\d+)$/i);
+  if (win) return `W${win[1]}`;
+  const lose = placeholder.match(/^Perdedor do Jogo (\d+)$/i);
+  if (lose) return `L${lose[1]}`;
+  return placeholder;
+}
 
-  // Evita mismatch de hidratação: data/hora formatada só depois de montar
-  // no client (mesmo padrão do DashboardClient).
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+function getActiveStage(matches: Match[]): MatchStage {
+  const stagesWithStatus = new Map<MatchStage, MatchStatus[]>();
+  for (const m of matches) {
+    if (!STAGE_ORDER.includes(m.stage)) continue;
+    const list = stagesWithStatus.get(m.stage) ?? [];
+    list.push(m.status);
+    stagesWithStatus.set(m.stage, list);
+  }
 
-  // Transform aplicado ao canvas. Espelhado num ref para leituras síncronas
-  // (medições com getBoundingClientRect precisam da escala corrente).
-  const [transform, setTransformState] = useState<Transform>({ scale: 1, x: 0, y: 0 });
-  const transformRef = useRef<Transform>(transform);
-  const setTransform = useCallback((t: Transform) => {
-    transformRef.current = t;
-    setTransformState(t);
-  }, []);
+  for (const stage of STAGE_ORDER) {
+    const statuses = stagesWithStatus.get(stage) ?? [];
+    if (statuses.includes('live')) return stage;
+  }
 
-  const [focused, setFocused] = useState<string | null>(null);
-  const [animating, setAnimating] = useState(false);
+  for (const stage of STAGE_ORDER) {
+    const statuses = stagesWithStatus.get(stage) ?? [];
+    if (statuses.some((s) => s !== 'finished')) return stage;
+  }
 
-  // --- Drag para deslocar livremente (sem pinça) ---
-  const dragRef = useRef<{
-    active: boolean; moved: boolean; startX: number; startY: number; baseX: number; baseY: number;
-  }>({ active: false, moved: false, startX: 0, startY: 0, baseX: 0, baseY: 0 });
+  return 'final';
+}
 
-  const data = useMemo(() => buildBracketData(matches), [matches]);
-
-  // Itens de navegação por rodada: as 4 fases de mata-mata (cada uma cobrindo
-  // os jogos das duas metades) + a Final/3º lugar ao centro.
-  const navItems = useMemo(() => {
-    const items = data.stages.map((s) => ({
-      title: s.title,
-      matchIds: [...s.left, ...s.right].map((m) => m.id),
-    }));
-    const finalIds = [data.finalMatch?.id, data.thirdPlace?.id].filter((id): id is string => !!id);
-    if (finalIds.length > 0) items.push({ title: 'Final / 3º Lugar', matchIds: finalIds });
-    return items;
-  }, [data]);
-
-  // Retângulo de um elemento no espaço de layout (sem transform) do canvas.
-  const localRect = useCallback((el: HTMLElement) => {
-    const canvas = canvasRef.current!;
-    const er = el.getBoundingClientRect();
-    const cr = canvas.getBoundingClientRect();
-    const s = transformRef.current.scale || 1;
-    return { x: (er.left - cr.left) / s, y: (er.top - cr.top) / s, w: er.width / s, h: er.height / s };
-  }, []);
-
-  // Calcula o transform que enquadra um retângulo local (centro no viewport)
-  // na escala desejada (limitada ao que cabe no viewport).
-  const frameRect = useCallback(
-    (rect: { x: number; y: number; w: number; h: number }, desiredScale: number) => {
-      const vp = viewportRef.current!;
-      const vpW = vp.clientWidth;
-      const vpH = vp.clientHeight;
-      const fit = Math.min((vpW - PAD) / rect.w, (vpH - PAD) / rect.h);
-      // Piso de segurança: se o viewport ainda não tiver altura/largura
-      // medida (ex.: primeiro layout antes do paint), vpW/vpH podem vir 0 e
-      // "fit" sair negativo — sem o piso, a escala negativa espelha e some
-      // com o bracket (e "gruda" nesse estado, já que localRect() divide
-      // pela escala corrente para desfazer o transform).
-      const scale = Math.max(0.05, Math.min(desiredScale, fit));
-      const cx = rect.x + rect.w / 2;
-      const cy = rect.y + rect.h / 2;
-      return { scale, x: vpW / 2 - cx * scale, y: vpH / 2 - cy * scale };
+const FOCUS_VARIANTS = {
+  container: {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.06, delayChildren: 0.05 },
     },
-    [],
+    exit: {
+      opacity: 0,
+      transition: { duration: 0.25, ease: EASE_CUBIC },
+    },
+  },
+  card: {
+    hidden: { opacity: 0, y: 24, scale: 0.97 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      transition: { duration: 0.45, ease: EASE_CUBIC },
+    },
+    exit: {
+      opacity: 0,
+      y: -16,
+      scale: 0.98,
+      transition: { duration: 0.25, ease: EASE_CUBIC },
+    },
+  },
+};
+
+const FULL_VARIANTS = {
+  container: {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.04, delayChildren: 0.02 },
+    },
+    exit: { opacity: 0, transition: { duration: 0.3 } },
+  },
+  card: {
+    hidden: { opacity: 0, x: -20 },
+    visible: {
+      opacity: 1,
+      x: 0,
+      transition: { duration: 0.4, ease: EASE_CUBIC },
+    },
+    exit: { opacity: 0, transition: { duration: 0.2 } },
+  },
+};
+
+function FocusMatchCard({
+  match,
+  isFinal,
+  isThird,
+  onClick,
+}: {
+  match: Match;
+  isFinal?: boolean;
+  isThird?: boolean;
+  onClick: (match: Match) => void;
+}) {
+  const home = match.homeTeamId ? getTeamById(match.homeTeamId) : null;
+  const away = match.awayTeamId ? getTeamById(match.awayTeamId) : null;
+
+  const teamRow = (
+    team: typeof home,
+    placeholder?: string,
+    goals: number | null = null,
+    penalties?: number | null,
+    isWinner?: boolean,
+  ) => (
+    <div className={`bracket-focus-team${isWinner ? ' winner' : ''}`}>
+      <div className="bracket-focus-team-left">
+        {team ? (
+          <>
+            <TeamFlag name={team.name} flagEmoji={team.flag} size={isFinal ? 40 : 32} />
+            <span className="bracket-focus-team-name">{team.name}</span>
+          </>
+        ) : (
+          <>
+            <span className="bracket-focus-flag-placeholder">🏳️</span>
+            <span className="bracket-focus-team-name placeholder">{placeholder || 'A definir'}</span>
+          </>
+        )}
+      </div>
+      <span className="bracket-focus-score">
+        {goals !== null ? goals : '—'}
+        {match.status === 'finished' && penalties != null && (
+          <span className="bracket-focus-pen">({penalties})</span>
+        )}
+      </span>
+    </div>
   );
 
-  const animateTo = useCallback((t: Transform) => {
-    setAnimating(true);
-    setTransform(t);
-    window.setTimeout(() => setAnimating(false), 650);
-  }, [setTransform]);
+  const homeWinner =
+    match.status === 'finished' && match.homeGoals != null && match.awayGoals != null
+      ? match.homeGoals > match.awayGoals ||
+        (match.homeGoals === match.awayGoals && (match.homePenalties ?? 0) > (match.awayPenalties ?? 0))
+      : false;
 
-  // Enquadra o bracket inteiro (visão geral).
-  const showOverview = useCallback(() => {
-    const canvas = canvasRef.current;
-    const vp = viewportRef.current;
-    if (!canvas || !vp) return;
-    // Se o viewport ainda não tiver altura medida (ex.: primeiro layout
-    // antes do CSS aplicar), tenta de novo no próximo frame em vez de
-    // enquadrar com dimensão 0 (produziria uma escala inválida).
-    if (vp.clientWidth === 0 || vp.clientHeight === 0) {
-      requestAnimationFrame(showOverview);
-      return;
+  const awayWinner =
+    match.status === 'finished' && match.homeGoals != null && match.awayGoals != null
+      ? match.awayGoals > match.homeGoals ||
+        (match.homeGoals === match.awayGoals && (match.awayPenalties ?? 0) > (match.homePenalties ?? 0))
+      : false;
+
+  return (
+    <motion.div
+      variants={FOCUS_VARIANTS.card}
+      className={`glass-card bracket-focus-card${isFinal ? ' bracket-final-card' : ''}${isThird ? ' bracket-third-card' : ''}`}
+      onClick={() => onClick(match)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => e.key === 'Enter' && onClick(match)}
+    >
+      {isFinal && (
+        <div className="bracket-final-ribbon">
+          <Trophy size={16} />
+          FINAL
+        </div>
+      )}
+      {isThird && (
+        <div className="bracket-third-ribbon">
+          <Medal size={14} />
+          3º Lugar
+        </div>
+      )}
+      <div className="bracket-focus-card-header">
+        <span className="bracket-focus-card-num">#{match.matchNumber}</span>
+        {match.status === 'live' && (
+          <span className="bracket-focus-live">
+            <span className="bracket-focus-live-dot" /> AO VIVO
+          </span>
+        )}
+        {match.status === 'finished' && (
+          <span className="bracket-focus-finished">Encerrado</span>
+        )}
+      </div>
+      <div className="bracket-focus-teams">
+        {teamRow(home, match.homeTeamPlaceholder, match.homeGoals, match.homePenalties, homeWinner)}
+        {teamRow(away, match.awayTeamPlaceholder, match.awayGoals, match.awayPenalties, awayWinner)}
+      </div>
+      <div className="bracket-focus-meta">
+        <span>{formatKickoffDate(match.dateUTC)}</span>
+        <span>·</span>
+        <span>{formatKickoffTime(match.dateUTC)}</span>
+      </div>
+    </motion.div>
+  );
+}
+
+function CompactMatchCard({ match, onClick }: { match: Match; onClick: (match: Match) => void }) {
+  const home = match.homeTeamId ? getTeamById(match.homeTeamId) : null;
+  const away = match.awayTeamId ? getTeamById(match.awayTeamId) : null;
+
+  const teamRow = (team: typeof home, placeholder?: string, goals: number | null = null) => (
+    <div className="bracket-full-team">
+      <div className="bracket-full-team-left">
+        {team ? (
+          <>
+            <TeamFlag name={team.name} flagEmoji={team.flag} size={20} />
+            <span className="bracket-full-code">{team.code}</span>
+          </>
+        ) : (
+          <>
+            <span className="bracket-full-flag-placeholder">🏳️</span>
+            <span className="bracket-full-code placeholder">{abbrevPlaceholder(placeholder)}</span>
+          </>
+        )}
+      </div>
+      <span className="bracket-full-score">{goals !== null ? goals : '—'}</span>
+    </div>
+  );
+
+  return (
+    <motion.div
+      variants={FULL_VARIANTS.card}
+      className={`glass-card bracket-full-card${match.stage === 'final' ? ' bracket-full-final' : ''}${match.stage === 'third-place' ? ' bracket-full-third' : ''}`}
+      onClick={() => onClick(match)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => e.key === 'Enter' && onClick(match)}
+    >
+      <div className="bracket-full-header">
+        <span>#{match.matchNumber}</span>
+        {match.status === 'live' && <span className="bracket-full-live">●</span>}
+      </div>
+      {teamRow(home, match.homeTeamPlaceholder, match.homeGoals)}
+      {teamRow(away, match.awayTeamPlaceholder, match.awayGoals)}
+    </motion.div>
+  );
+}
+
+export function Bracket({
+  matches,
+  onMatchClick,
+}: {
+  matches: Match[];
+  onMatchClick?: (stage: MatchStage) => void;
+}) {
+  const [viewMode, setViewMode] = useState<ViewMode>('focus');
+  const [activeStage, setActiveStage] = useState<MatchStage>(() => getActiveStage(matches));
+
+  const bracketOrder = useMemo(() => computeBracketOrder(matches), [matches]);
+
+  const stageData = useMemo(() => {
+    const byStage = new Map<MatchStage, Match[]>();
+    for (const stage of STAGE_ORDER) {
+      const list = matches
+        .filter((m) => m.stage === stage)
+        .sort((a, b) => (bracketOrder.get(a.id) ?? 0) - (bracketOrder.get(b.id) ?? 0));
+      byStage.set(stage, list);
     }
-    setFocused(null);
-    animateTo(frameRect({ x: 0, y: 0, w: canvas.offsetWidth, h: canvas.offsetHeight }, 1));
-  }, [animateTo, frameRect]);
-
-  const focusMatch = useCallback((id: string) => {
-    const el = matchRefs.current.get(id);
-    if (!el) return;
-    setFocused(id);
-    animateTo(frameRect(localRect(el), MATCH_FOCUS_SCALE));
-  }, [animateTo, frameRect, localRect]);
-
-  // Focar uma rodada: enquadra a CAIXA que envolve todos os jogos daquela
-  // rodada (as duas metades, quando aplicável), numa escala legível (até 1x).
-  const focusRound = useCallback((idx: number) => {
-    const ids = navItems[idx]?.matchIds ?? [];
-    const els = ids.map((id) => matchRefs.current.get(id)).filter(Boolean) as HTMLElement[];
-    if (!els.length) return;
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    els.forEach((el) => {
-      const r = localRect(el);
-      minX = Math.min(minX, r.x); minY = Math.min(minY, r.y);
-      maxX = Math.max(maxX, r.x + r.w); maxY = Math.max(maxY, r.y + r.h);
-    });
-    const rect = { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
-    const vp = viewportRef.current!;
-    const scale = Math.max(0.05, Math.min(1, (vp.clientWidth - PAD) / rect.w));
-    const cx = rect.x + rect.w / 2;
-    const x = vp.clientWidth / 2 - cx * scale;
-    const fitsHeight = rect.h * scale <= vp.clientHeight - PAD;
-    const y = fitsHeight
-      ? vp.clientHeight / 2 - (rect.y + rect.h / 2) * scale // centraliza
-      : PAD / 2 - rect.y * scale;                            // ancora no topo
-    setFocused(`round-${idx}`);
-    animateTo({ scale, x, y });
-  }, [animateTo, localRect, navItems]);
-
-  // Visão geral inicial + reenquadre ao redimensionar.
-  useLayoutEffect(() => {
-    showOverview();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Reaplica o foco atual; guardado num ref para o ResizeObserver assinar uma
-  // única vez (evita disconnect/observe a cada render e o laço de reenquadre).
-  const reframeRef = useRef<() => void>(() => {});
-  useEffect(() => {
-    reframeRef.current = () => {
-      if (focused && focused.startsWith('round-')) focusRound(Number(focused.slice(6)));
-      else if (focused) focusMatch(focused);
-      else showOverview();
-    };
-  });
-
-  useEffect(() => {
-    const vp = viewportRef.current;
-    if (!vp) return;
-    let first = true;
-    const ro = new ResizeObserver(() => {
-      if (first) { first = false; return; } // ignora o disparo inicial do observe
-      reframeRef.current();
-    });
-    ro.observe(vp);
-    return () => ro.disconnect();
-  }, []);
-
-  // --- Pointer drag (pan) ---
-  // Não usamos setPointerCapture: capturar o ponteiro no viewport redireciona
-  // os eventos de clique para ele e impede que os onClick dos cards disparem.
-  // Em vez disso, ouvimos move/up na window enquanto o arrasto está ativo.
-  const [dragging, setDragging] = useState(false);
-  const onPointerDown = (e: React.PointerEvent) => {
-    const t = transformRef.current;
-    dragRef.current = {
-      active: true, moved: false,
-      startX: e.clientX, startY: e.clientY, baseX: t.x, baseY: t.y,
-    };
-  };
-  useEffect(() => {
-    const onMove = (e: PointerEvent) => {
-      const d = dragRef.current;
-      if (!d.active) return;
-      const dx = e.clientX - d.startX;
-      const dy = e.clientY - d.startY;
-      if (!d.moved && Math.hypot(dx, dy) > 5) { d.moved = true; setDragging(true); }
-      if (d.moved) {
-        const t = transformRef.current;
-        setTransform({ scale: t.scale, x: d.baseX + dx, y: d.baseY + dy });
-      }
-    };
-    const onUp = () => {
-      const d = dragRef.current;
-      if (!d.active) return;
-      d.active = false;
-      if (d.moved) { setFocused(null); setDragging(false); }
-    };
-    window.addEventListener('pointermove', onMove);
-    window.addEventListener('pointerup', onUp);
-    return () => {
-      window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerup', onUp);
-    };
-  }, [setTransform]);
+    const thirdPlace = matches.filter((m) => m.stage === 'third-place');
+    return { byStage, thirdPlace };
+  }, [matches, bracketOrder]);
 
   const handleMatchClick = (match: Match) => {
-    if (dragRef.current.moved) return; // foi um arrasto, não um clique
-    if (focused === match.id) {
-      onMatchClick?.(match.stage); // segundo toque → abre a fase
-    } else {
-      focusMatch(match.id);
-    }
+    onMatchClick?.(match.stage);
   };
 
-  const renderCard = (match: Match) => {
-    const home = match.homeTeamId ? getTeamById(match.homeTeamId) : null;
-    const away = match.awayTeamId ? getTeamById(match.awayTeamId) : null;
-    const isActive = focused === match.id;
-    const isMuted = focused !== null && !focused.startsWith('round-') && focused !== match.id;
-
-    return (
-      <div
-        ref={(el) => { if (el) matchRefs.current.set(match.id, el); }}
-        className={`bracket-card glass-card ${isActive ? 'active' : ''} ${isMuted ? 'muted' : ''}`}
-        onClick={() => handleMatchClick(match)}
-        role="button"
-        tabIndex={0}
-      >
-        <div className="bracket-card-header">
-          <span className="match-num-group">
-            <span className="match-num">#{match.matchNumber}</span>
-            <span className="match-datetime">
-              {mounted
-                ? `${formatKickoffDate(match.dateUTC, { day: '2-digit', month: '2-digit', year: 'numeric' })}, ${formatKickoffTime(match.dateUTC)}`
-                : ''}
-            </span>
-          </span>
-          {match.status === 'live' && <span className="match-live">●</span>}
-        </div>
-
-        <div className="bracket-card-team">
-          {home ? (
-            <>
-              <TeamFlag name={home.name} flagEmoji={home.flag} size={20} />
-              <span className="team-name">{home.name}</span>
-            </>
-          ) : (
-            <>
-              <span className="team-flag-placeholder">🏳️</span>
-              <span className="team-name placeholder">{match.homeTeamPlaceholder || 'A definir'}</span>
-            </>
-          )}
-          <span className="team-score">
-            {match.homeGoals !== null ? match.homeGoals : '-'}
-            {match.status === 'finished' && match.homePenalties != null && (
-              <span style={{ fontSize: '0.7em', opacity: 0.7 }}> ({match.homePenalties})</span>
-            )}
-          </span>
-        </div>
-
-        <div className="bracket-card-team">
-          {away ? (
-            <>
-              <TeamFlag name={away.name} flagEmoji={away.flag} size={20} />
-              <span className="team-name">{away.name}</span>
-            </>
-          ) : (
-            <>
-              <span className="team-flag-placeholder">🏳️</span>
-              <span className="team-name placeholder">{match.awayTeamPlaceholder || 'A definir'}</span>
-            </>
-          )}
-          <span className="team-score">
-            {match.awayGoals !== null ? match.awayGoals : '-'}
-            {match.status === 'finished' && match.awayPenalties != null && (
-              <span style={{ fontSize: '0.7em', opacity: 0.7 }}> ({match.awayPenalties})</span>
-            )}
-          </span>
-        </div>
-      </div>
-    );
+  const handleStageClick = (stage: MatchStage) => {
+    setActiveStage(stage);
+    if (viewMode === 'full') setViewMode('focus');
   };
 
-  // Uma metade do chaveamento: 4 colunas (rodadas), cada uma com os slots de
-  // altura duplicada a cada rodada (técnica clássica de bracket em CSS puro —
-  // sem medir pixels via JS, o dobro de altura por rodada já alinha cada jogo
-  // exatamente no meio dos dois jogos que o alimentam).
-  const renderSide = (side: Side) => {
-    // Do lado direito, a rodada mais próxima do centro (Semis) vem primeiro
-    // no layout visual (mais perto do meio da tela).
-    const orderedStages = side === 'left' ? data.stages : [...data.stages].reverse();
-    return (
-      <div className={`bracket-side bracket-side-${side}`}>
-        {orderedStages.map((s) => {
-          const stageIdx = KO_STAGES.indexOf(s.stage); // 0=16avos .. 3=semis
-          const isOuter = stageIdx === 0; // sem linha de entrada
-          const isInner = stageIdx === 3; // conecta direto à Final, sem "cotovelo"
-          const roundMatches = side === 'left' ? s.left : s.right;
-          return (
-            <div
-              key={s.stage}
-              className={`bracket-col stage-idx-${stageIdx} ${isOuter ? 'is-outer' : ''} ${isInner ? 'is-inner' : ''}`}
-            >
-              <div className="bracket-col-title">{s.title}</div>
-              <div className="bracket-col-slots">
-                {roundMatches.map((match, i) => (
-                  <div
-                    key={match.id}
-                    className={`bracket-slot stage-h-${stageIdx} ${i % 2 === 0 ? 'slot-a' : 'slot-b'}`}
-                  >
-                    {renderCard(match)}
-                  </div>
-                ))}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
+  const currentMatches = stageData.byStage.get(activeStage) ?? [];
+  const isFinalStage = activeStage === 'final';
 
   return (
     <div className="bracket-shell">
       <div className="bracket-roundnav">
-        {navItems.map((item, i) => (
-          <button
-            key={item.title}
-            className={`bracket-roundnav-btn ${focused === `round-${i}` ? 'active' : ''}`}
-            onClick={() => focusRound(i)}
-          >
-            {item.title}
-          </button>
-        ))}
+        {STAGES.map((s) => {
+          const isActive = activeStage === s.key;
+          const hasMatches = (stageData.byStage.get(s.key)?.length ?? 0) > 0;
+          return (
+            <button
+              key={s.key}
+              className={`bracket-roundnav-btn${isActive ? ' active' : ''}${!hasMatches ? ' disabled' : ''}`}
+              onClick={() => hasMatches && handleStageClick(s.key)}
+              disabled={!hasMatches}
+            >
+              {viewMode === 'full' ? s.short : s.label}
+              <span className="bracket-roundnav-count">{s.count}</span>
+            </button>
+          );
+        })}
       </div>
 
-      <div
-        ref={viewportRef}
-        className={`bracket-viewport ${dragging ? 'dragging' : ''}`}
-        onPointerDown={onPointerDown}
+      <button
+        className="bracket-toggle-btn"
+        onClick={() => setViewMode(viewMode === 'focus' ? 'full' : 'focus')}
       >
-        <div
-          ref={canvasRef}
-          className={`bracket-canvas ${animating ? 'animating' : ''}`}
-          style={{
-            transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`,
-          }}
-        >
-          <div className="bracket-mirror">
-            {renderSide('left')}
-
-            <div className="bracket-center">
-              {data.finalMatch && (
-                <>
-                  <div className="bracket-col-title">Final</div>
-                  <div className="bracket-final-slot">{renderCard(data.finalMatch)}</div>
-                </>
-              )}
-            </div>
-
-            {renderSide('right')}
-          </div>
-
-          {data.thirdPlace && (
-            <div className="bracket-third-place">
-              <div className="bracket-col-title">Decisão do 3º lugar</div>
-              {renderCard(data.thirdPlace)}
-            </div>
-          )}
-        </div>
-
-        {focused !== null && (
-          <button className="bracket-overview-btn" onClick={showOverview}>
-            <Maximize2 size={16} />
-            Ver tudo
-          </button>
+        {viewMode === 'focus' ? (
+          <>
+            <Maximize2 size={14} /> Ver bracket completo
+          </>
+        ) : (
+          <>
+            <Minimize2 size={14} /> Focar etapa
+          </>
         )}
+      </button>
+
+      <div className="bracket-content">
+        <AnimatePresence mode="wait">
+          {viewMode === 'focus' ? (
+            <motion.div
+              key={`focus-${activeStage}`}
+              variants={FOCUS_VARIANTS.container}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              className="bracket-focus-view"
+            >
+              {isFinalStage ? (
+                <div className="bracket-focus-final-area">
+                  <div className="bracket-focus-final-wrapper">
+                    {currentMatches
+                      .filter((m) => m.stage === 'final')
+                      .map((match) => (
+                        <FocusMatchCard
+                          key={match.id}
+                          match={match}
+                          isFinal
+                          onClick={handleMatchClick}
+                        />
+                      ))}
+                  </div>
+                  <div className="bracket-focus-third-wrapper">
+                    {stageData.thirdPlace.map((match) => (
+                      <FocusMatchCard
+                        key={match.id}
+                        match={match}
+                        isThird
+                        onClick={handleMatchClick}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className={`bracket-focus-grid bracket-grid-${activeStage.replace(/-/g, '')}`}>
+                  {currentMatches.map((match) => (
+                    <FocusMatchCard
+                      key={match.id}
+                      match={match}
+                      onClick={handleMatchClick}
+                    />
+                  ))}
+                </div>
+              )}
+            </motion.div>
+          ) : (
+            <motion.div
+              key="full"
+              variants={FULL_VARIANTS.container}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              className="bracket-full-view"
+            >
+              <div className="bracket-full-columns">
+                {STAGES.map((s) => {
+                  const colMatches = stageData.byStage.get(s.key) ?? [];
+                  const isLast = s.key === 'final';
+                  return (
+                    <div key={s.key} className="bracket-full-column">
+                      <div className="bracket-full-column-title">{s.label}</div>
+                      <div className={`bracket-full-column-matches${isLast ? ' is-final' : ''}`}>
+                        {colMatches.map((match) => (
+                          <div key={match.id} className={`bracket-full-card-wrapper stage-${match.stage}`}>
+                            <CompactMatchCard
+                              match={match}
+                              onClick={handleMatchClick}
+                            />
+                          </div>
+                        ))}
+                        {isLast &&
+                          stageData.thirdPlace.map((match) => (
+                            <div key={match.id} className={`bracket-full-card-wrapper stage-${match.stage}`}>
+                              <CompactMatchCard
+                                match={match}
+                                onClick={handleMatchClick}
+                              />
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

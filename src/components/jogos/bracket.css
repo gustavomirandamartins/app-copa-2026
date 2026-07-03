@@ -2,19 +2,23 @@
   width: 100%;
   margin-top: var(--space-md);
   animation: fade-in-bracket 0.6s var(--ease) forwards;
+  position: relative;
 }
 
 @keyframes fade-in-bracket {
-  from { opacity: 0; transform: translateY(20px); }
+  from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Navegação por rodada (toque para enquadrar a coluna) */
+/* ================================================================
+   NAVEGAÇÃO POR ETAPA (pills)
+   ================================================================ */
 .bracket-roundnav {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-xs);
   margin-bottom: var(--space-md);
+  justify-content: center;
 }
 
 .bracket-roundnav-btn {
@@ -28,59 +32,52 @@
   border-radius: 999px;
   cursor: pointer;
   white-space: nowrap;
-  transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
-}
-
-.bracket-roundnav-btn:hover {
-  background: var(--glass-bg-hover);
-  color: var(--text-primary);
-}
-
-.bracket-roundnav-btn.active {
-  border-color: var(--copa-green);
-  color: var(--text-primary);
-  background: var(--glass-bg-hover);
-}
-
-/* Janela fixa que recorta o canvas transformado */
-.bracket-viewport {
-  position: relative;
-  width: 100%;
-  height: min(68vh, 620px);
-  overflow: hidden;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--glass-border);
-  touch-action: none;
-  cursor: grab;
-}
-
-.bracket-viewport.dragging {
-  cursor: grabbing;
-}
-
-/* Canvas posicionado em (0,0); animado via transform (escala + deslocamento) */
-.bracket-canvas {
-  position: absolute;
-  top: 0;
-  left: 0;
-  transform-origin: 0 0;
-  padding: var(--space-md) var(--space-xl);
-  width: max-content;
-}
-
-/* Transição estilo "spring" usada ao focar/enquadrar (não durante o arrasto) */
-.bracket-canvas.animating {
-  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.bracket-overview-btn {
-  position: absolute;
-  bottom: var(--space-md);
-  right: var(--space-md);
+  transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 14px;
+}
+
+.bracket-roundnav-btn:hover:not(:disabled) {
+  background: var(--glass-bg-hover);
+  color: var(--text-primary);
+  border-color: rgba(255,255,255,0.22);
+}
+
+.bracket-roundnav-btn.active {
+  border-color: var(--gold);
+  color: #fff;
+  background: rgba(224, 124, 0, 0.22);
+  box-shadow: 0 0 16px rgba(224, 124, 0, 0.20);
+}
+
+.bracket-roundnav-btn.disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.bracket-roundnav-count {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  background: rgba(255,255,255,0.08);
+  padding: 1px 6px;
+  border-radius: 999px;
+}
+
+.bracket-roundnav-btn.active .bracket-roundnav-count {
+  color: var(--gold);
+  background: rgba(224, 124, 0, 0.16);
+}
+
+/* ================================================================
+   BOTÃO TOGGLE FOCO ↔ COMPLETO
+   ================================================================ */
+.bracket-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
   border-radius: 999px;
   border: 1px solid var(--glass-border);
   background: var(--glass-bg);
@@ -90,305 +87,556 @@
   font-weight: 600;
   cursor: pointer;
   z-index: 10;
-  transition: background var(--transition-fast), transform var(--transition-fast);
+  transition: background var(--transition-fast), transform var(--transition-fast), border-color var(--transition-fast);
+  margin-bottom: var(--space-md);
 }
 
-.bracket-overview-btn:hover {
+.bracket-toggle-btn:hover {
   background: var(--glass-bg-hover);
-  transform: translateY(-1px);
+  border-color: rgba(255,255,255,0.22);
 }
 
-/* ════════════════════════════════════════════════════════════════
-   Chaveamento espelhado: duas metades (16avos → oitavas → quartas →
-   semis) convergindo para a Final ao centro, como um mata-mata
-   tradicional. Cada rodada usa uma coluna cuja altura de slot DOBRA a
-   cada rodada (--bracket-unit × 2^rodada) — truque clássico de bracket
-   em CSS puro: sem medir pixels via JS, o dobro de altura já alinha
-   cada jogo exatamente no meio dos dois jogos que o alimentam.
-   ════════════════════════════════════════════════════════════════ */
-/* O card (cabeçalho + 2 linhas de time + padding) renderiza a ~119px de
-   altura, medido — independe da largura da coluna. 140px dá ~21px de
-   distância mínima entre um card e o próximo, sem sobrepor. */
-:root {
-  --bracket-unit: 140px;
+.bracket-toggle-btn:active {
+  transform: scale(0.97);
 }
 
-.bracket-mirror {
-  display: flex;
-  align-items: stretch;
-  gap: 32px;
-}
-
-.bracket-side {
-  display: flex;
-  gap: 32px;
-}
-
-.bracket-col {
-  display: flex;
-  flex-direction: column;
-  width: 200px;
-  flex-shrink: 0;
-}
-
-.bracket-col-title {
-  text-align: center;
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: var(--space-xl);
-}
-
-.bracket-col-slots {
-  display: flex;
-  flex-direction: column;
-}
-
-.bracket-slot {
+/* ================================================================
+   CONTAINER DE CONTEÚDO
+   ================================================================ */
+.bracket-content {
   position: relative;
-  display: flex;
-  align-items: center;
+  min-height: 200px;
 }
 
-.bracket-slot.stage-h-0 { height: calc(var(--bracket-unit) * 1); }
-.bracket-slot.stage-h-1 { height: calc(var(--bracket-unit) * 2); }
-.bracket-slot.stage-h-2 { height: calc(var(--bracket-unit) * 4); }
-.bracket-slot.stage-h-3 { height: calc(var(--bracket-unit) * 8); }
+/* ================================================================
+   MODO FOCO — Grade de cards
+   ================================================================ */
+.bracket-focus-view {
+  width: 100%;
+}
 
-.bracket-slot .bracket-card { width: 100%; }
+.bracket-focus-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-md);
+}
 
-/* ── Coluna central: só a Final mora aqui. Estrutura idêntica a
-   `.bracket-col` (título + slot de 8 unidades) de propósito — é assim que o
-   card fica exatamente no meio da linha que liga as duas Semis: o título
-   "Final" ocupa o mesmo espaço que os títulos "Semifinais" ocupam nas
-   colunas ao lado, então o slot de 8 unidades abaixo começa na mesma altura
-   e centraliza o card no mesmo ponto em que as linhas convergem. Sem isso,
-   o grupo título+card seria centralizado como bloco e o card ficaria acima
-   do meio real. A Decisão do 3º lugar foi retirada daqui de propósito: fica
-   fora do chaveamento, sem nenhuma linha. ── */
-.bracket-center {
+@media (min-width: 640px) {
+  .bracket-focus-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .bracket-grid-semifinal {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+  .bracket-grid-quarterfinal {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 768px) {
+  .bracket-grid-roundof16 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .bracket-grid-roundof16 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .bracket-grid-roundof32 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* ── Área da Final + 3º Lugar ──────────────────────────────────── */
+.bracket-focus-final-area {
   display: flex;
   flex-direction: column;
-  width: 220px;
-  flex-shrink: 0;
-}
-
-.bracket-final-slot {
-  height: calc(var(--bracket-unit) * 8);
-  display: flex;
   align-items: center;
+  gap: var(--space-md);
+  max-width: 520px;
+  margin: 0 auto;
 }
 
-.bracket-final-slot .bracket-card { width: 100%; }
-
-/* ── Decisão do 3º lugar: fora do chaveamento, centralizada sob o bracket
-   inteiro, sem conectores. ── */
-.bracket-third-place {
-  width: 220px;
-  margin: var(--space-2xl) auto 0;
+.bracket-focus-final-wrapper {
+  width: 100%;
 }
 
-/* ── Linhas de conexão (metade esquerda: saem para a direita, entram
-   pela esquerda) ── */
-.bracket-side-left .bracket-col:not(.is-inner) .bracket-slot::after {
-  content: '';
-  position: absolute;
-  right: -16px;
-  width: 16px;
-  border-right: 3px solid rgba(255, 255, 255, 0.55);
-  border-top: 3px solid rgba(255, 255, 255, 0.55);
-  border-radius: 0 6px 0 0;
-  top: 50%;
-  bottom: -50%;
-}
-.bracket-side-left .bracket-col:not(.is-inner) .bracket-slot.slot-b::after {
-  top: -50%;
-  bottom: 50%;
-  border-top: none;
-  border-bottom: 3px solid rgba(255, 255, 255, 0.55);
-  border-radius: 0 0 6px 0;
-}
-.bracket-side-left .bracket-col.is-inner .bracket-slot::after {
-  content: '';
-  position: absolute;
-  right: -16px;
-  width: 16px;
-  top: 50%;
-  border-top: 3px solid rgba(255, 255, 255, 0.55);
-}
-.bracket-side-left .bracket-col:not(.is-outer) .bracket-slot::before {
-  content: '';
-  position: absolute;
-  left: -16px;
-  width: 16px;
-  top: 50%;
-  border-top: 3px solid rgba(255, 255, 255, 0.55);
+.bracket-focus-third-wrapper {
+  width: 100%;
+  max-width: 420px;
 }
 
-/* ── Linhas de conexão (metade direita: espelhadas — saem para a
-   esquerda, entram pela direita) ── */
-.bracket-side-right .bracket-col:not(.is-inner) .bracket-slot::before {
-  content: '';
-  position: absolute;
-  left: -16px;
-  width: 16px;
-  border-left: 3px solid rgba(255, 255, 255, 0.55);
-  border-top: 3px solid rgba(255, 255, 255, 0.55);
-  border-radius: 6px 0 0 0;
-  top: 50%;
-  bottom: -50%;
-}
-.bracket-side-right .bracket-col:not(.is-inner) .bracket-slot.slot-b::before {
-  top: -50%;
-  bottom: 50%;
-  border-top: none;
-  border-bottom: 3px solid rgba(255, 255, 255, 0.55);
-  border-radius: 0 0 0 6px;
-}
-.bracket-side-right .bracket-col.is-inner .bracket-slot::before {
-  content: '';
-  position: absolute;
-  left: -16px;
-  width: 16px;
-  top: 50%;
-  border-top: 3px solid rgba(255, 255, 255, 0.55);
-}
-.bracket-side-right .bracket-col:not(.is-outer) .bracket-slot::after {
-  content: '';
-  position: absolute;
-  right: -16px;
-  width: 16px;
-  top: 50%;
-  border-top: 3px solid rgba(255, 255, 255, 0.55);
-}
-
-@media (max-width: 640px) {
-  /* Só a largura encolhe no mobile — a altura do card não muda com a
-     largura da coluna (medido: ~119px nas duas), então --bracket-unit
-     precisa continuar igual para não voltar a sobrepor. */
-  .bracket-col { width: 168px; }
-  .bracket-center { width: 180px; }
-  .bracket-third-place { width: 180px; }
-}
-
-/* The card itself */
-.bracket-card {
-  padding: 10px 12px;
-  border-radius: var(--radius-md);
-  font-size: 0.85rem;
+/* ── Card de partida (Modo Foco) ───────────────────────────────── */
+.bracket-focus-card {
+  padding: var(--space-md);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
   position: relative;
-  z-index: 2;
-  transition: transform var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast), opacity var(--transition-fast);
-  cursor: default;
-  /* Staggered animation */
-  animation: slide-in-card 0.5s var(--ease) backwards;
+  overflow: hidden;
+  transition: border-color var(--transition-fast), background var(--transition-fast), box-shadow var(--transition-fast);
 }
 
-/* Add a slight stagger based on DOM order for a waterfall effect */
-.bracket-card:nth-child(1) { animation-delay: 0.05s; }
-.bracket-card:nth-child(2) { animation-delay: 0.1s; }
-.bracket-card:nth-child(3) { animation-delay: 0.15s; }
-.bracket-card:nth-child(4) { animation-delay: 0.2s; }
-.bracket-card:nth-child(5) { animation-delay: 0.25s; }
-
-@keyframes slide-in-card {
-  from { opacity: 0; transform: translateX(-15px); }
-  to { opacity: 1; transform: translateX(0); }
-}
-
-.bracket-card:hover {
-  transform: translateY(-2px) scale(1.02);
+.bracket-focus-card:hover {
   border-color: var(--glass-border-hover);
   background: var(--glass-bg-hover);
-  z-index: 3;
+  box-shadow: var(--shadow-lg), var(--shadow-glow-green);
 }
 
-/* Hover effect highlights */
-.bracket-card.active {
-  border-color: var(--copa-green);
-  box-shadow: var(--shadow-glow-green);
-}
-
-.bracket-card.muted {
-  opacity: 0.4;
-  filter: grayscale(80%);
-}
-
-.bracket-card-header {
+.bracket-focus-card-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 6px;
-  font-size: 0.75rem;
+  align-items: center;
+  margin-bottom: var(--space-sm);
+  font-size: 0.72rem;
+}
+
+.bracket-focus-card-num {
+  font-weight: 700;
   color: var(--text-tertiary);
 }
 
-.match-num-group {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 0;
-  flex: 1;
-}
-
-.match-num {
-  font-weight: 600;
-}
-
-.match-datetime {
-  font-size: 0.68rem;
-  font-weight: 400;
-  color: var(--text-tertiary);
-  opacity: 0.75;
-}
-
-.match-live {
-  flex-shrink: 0;
-}
-
-.match-live {
+.bracket-focus-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   color: var(--red);
+  font-weight: 700;
+  font-size: 0.68rem;
+  letter-spacing: 0.03em;
+}
+
+.bracket-focus-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--red);
   animation: pulse-live 1.5s infinite;
 }
 
 @keyframes pulse-live {
   0% { opacity: 1; }
-  50% { opacity: 0.5; }
+  50% { opacity: 0.4; }
   100% { opacity: 1; }
 }
 
-.bracket-card-team {
+.bracket-focus-finished {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  background: rgba(255,255,255,0.06);
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.bracket-focus-teams {
   display: flex;
-  align-items: center;
-  padding: 4px 0;
+  flex-direction: column;
   gap: 8px;
 }
 
-.bracket-card-team .team-name {
-  flex-grow: 1;
-  font-weight: 600;
+.bracket-focus-team {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+  gap: var(--space-sm);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.bracket-focus-team:last-child {
+  border-bottom: none;
+}
+
+.bracket-focus-team.winner {
+  background: rgba(0, 151, 57, 0.08);
+  margin: 0 calc(-1 * var(--space-md));
+  padding: 6px var(--space-md);
+  border-radius: var(--radius-sm);
+}
+
+.bracket-focus-team-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.bracket-focus-team-name {
+  font-weight: 700;
+  font-size: 0.92rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.bracket-card-team .team-name.placeholder {
-  font-weight: 400;
+.bracket-focus-team-name.placeholder {
+  font-weight: 500;
   color: var(--text-tertiary);
-  font-size: 0.8rem;
+  font-size: 0.82rem;
 }
 
-.team-flag-placeholder {
-  opacity: 0.3;
+.bracket-focus-flag-placeholder {
+  font-size: 1.6rem;
+  line-height: 1;
+  opacity: 0.35;
   filter: grayscale(1);
 }
 
-.team-score {
+.bracket-focus-score {
+  font-weight: 800;
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  background: rgba(0,0,0,0.18);
+  padding: 3px 10px;
+  border-radius: 6px;
+  min-width: 36px;
+  text-align: center;
+}
+
+.bracket-focus-pen {
+  font-size: 0.65em;
+  opacity: 0.7;
+  margin-left: 3px;
+  font-weight: 600;
+}
+
+.bracket-focus-meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: var(--space-sm);
+  font-size: 0.72rem;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
+/* ── Card da FINAL (exclusivo) ──────────────────────────────────── */
+.bracket-final-card {
+  border: 1.5px solid var(--gold);
+  background:
+    linear-gradient(160deg, rgba(224, 124, 0, 0.10), rgba(254, 221, 0, 0.04) 60%, transparent),
+    var(--glass-bg);
+  box-shadow: var(--shadow-lg), 0 0 32px rgba(224, 124, 0, 0.15);
+}
+
+.bracket-final-card:hover {
+  border-color: var(--gold);
+  box-shadow: var(--shadow-lg), 0 0 40px rgba(224, 124, 0, 0.25);
+}
+
+.bracket-final-ribbon {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: center;
+  margin-bottom: var(--space-sm);
+  padding: 4px 14px;
+  border-radius: 999px;
+  background: rgba(224, 124, 0, 0.18);
+  border: 1px solid rgba(224, 124, 0, 0.45);
+  color: #ffcf8a;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.bracket-final-card .bracket-focus-team-name {
+  font-size: 1.05rem;
+}
+
+.bracket-final-card .bracket-focus-score {
+  font-size: 1.35rem;
+  padding: 4px 14px;
+  border-radius: 8px;
+}
+
+.bracket-final-card .bracket-focus-meta {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* ── Card do 3º Lugar ─────────────────────────────────────────── */
+.bracket-third-card {
+  border: 1.5px solid rgba(205, 127, 50, 0.55);
+  background:
+    linear-gradient(160deg, rgba(205, 127, 50, 0.06), transparent 60%),
+    var(--glass-bg);
+}
+
+.bracket-third-card:hover {
+  border-color: rgba(205, 127, 50, 0.75);
+  box-shadow: var(--shadow-lg), 0 0 24px rgba(205, 127, 50, 0.12);
+}
+
+.bracket-third-ribbon {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  align-self: center;
+  margin-bottom: var(--space-sm);
+  padding: 3px 12px;
+  border-radius: 999px;
+  background: rgba(205, 127, 50, 0.14);
+  border: 1px solid rgba(205, 127, 50, 0.40);
+  color: rgba(255, 205, 160, 0.9);
+  font-size: 0.68rem;
   font-weight: 700;
-  font-family: monospace;
-  background: rgba(0,0,0,0.1);
-  padding: 2px 6px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.bracket-third-card .bracket-focus-team-name {
+  font-size: 0.88rem;
+}
+
+.bracket-third-card .bracket-focus-score {
+  font-size: 1rem;
+}
+
+/* ================================================================
+   MODO COMPLETO — Colunas horizontais com cards compactos
+   ================================================================ */
+.bracket-full-view {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: var(--space-sm);
+}
+
+.bracket-full-view::-webkit-scrollbar {
+  height: 5px;
+}
+.bracket-full-view::-webkit-scrollbar-track {
+  background: transparent;
+}
+.bracket-full-view::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.15);
+  border-radius: 3px;
+}
+
+.bracket-full-columns {
+  display: flex;
+  gap: 48px;
+  padding: var(--space-md) var(--space-md) var(--space-lg);
+  min-width: max-content;
+}
+
+.bracket-full-column {
+  display: flex;
+  flex-direction: column;
+  min-width: 170px;
+}
+
+.bracket-full-column-title {
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: var(--space-lg);
+}
+
+.bracket-full-column-matches {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  flex-grow: 1;
+  gap: var(--space-lg);
+}
+
+.bracket-full-column-matches.is-final {
+  justify-content: center;
+  gap: var(--space-xl);
+}
+
+/* ── Linhas de conexão entre colunas (modo completo) ───────────── */
+.bracket-full-column:not(:last-child) .bracket-full-card-wrapper::after {
+  content: '';
+  position: absolute;
+  right: -24px;
+  width: 24px;
+  border-right: 3px solid rgba(255, 255, 255, 0.6);
+  border-top: 3px solid rgba(255, 255, 255, 0.6);
+  border-radius: 0 6px 0 0;
+  opacity: 1;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.3));
+}
+
+.bracket-full-column:not(:last-child) .bracket-full-card-wrapper:nth-child(odd)::after {
+  top: 50%;
+  bottom: -50%;
+  border-top: 3px solid rgba(255, 255, 255, 0.6);
+  border-bottom: none;
+  border-radius: 0 6px 0 0;
+}
+
+.bracket-full-column:not(:last-child) .bracket-full-card-wrapper:nth-child(even)::after {
+  top: -50%;
+  bottom: 50%;
+  border-bottom: 3px solid rgba(255, 255, 255, 0.6);
+  border-top: none;
+  border-radius: 0 0 6px 0;
+}
+
+.bracket-full-column:not(:first-child) .bracket-full-card-wrapper::before {
+  content: '';
+  position: absolute;
+  left: -24px;
+  width: 24px;
+  top: 50%;
+  border-top: 3px solid rgba(255, 255, 255, 0.6);
+  opacity: 1;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.3));
+}
+
+.bracket-full-card-wrapper.stage-third-place::before,
+.bracket-full-card-wrapper.stage-third-place::after {
+  display: none !important;
+}
+
+.bracket-full-card-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex-grow: 1;
+}
+
+.bracket-full-column-matches.is-final .bracket-full-card-wrapper {
+  flex-grow: 0;
+}
+
+/* ── Card compacto (Modo Completo) ──────────────────────────────── */
+.bracket-full-card {
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  font-size: 0.78rem;
+  position: relative;
+  z-index: 2;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.bracket-full-card:hover {
+  border-color: var(--glass-border-hover);
+  background: var(--glass-bg-hover);
+  box-shadow: var(--shadow-md), var(--shadow-glow-green);
+}
+
+.bracket-full-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+  font-size: 0.68rem;
+  color: var(--text-tertiary);
+}
+
+.bracket-full-live {
+  color: var(--red);
+  animation: pulse-live 1.5s infinite;
+  font-size: 0.75rem;
+}
+
+.bracket-full-team {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px 0;
+  gap: 8px;
+}
+
+.bracket-full-team-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.bracket-full-code {
+  font-weight: 700;
+  font-size: 0.82rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bracket-full-code.placeholder {
+  font-weight: 500;
+  color: var(--text-tertiary);
+  font-size: 0.75rem;
+}
+
+.bracket-full-flag-placeholder {
+  font-size: 1.1rem;
+  line-height: 1;
+  opacity: 0.35;
+  filter: grayscale(1);
+}
+
+.bracket-full-score {
+  font-weight: 700;
+  font-family: var(--font-heading);
+  background: rgba(0,0,0,0.12);
+  padding: 1px 6px;
   border-radius: 4px;
+  font-size: 0.85rem;
+  min-width: 24px;
+  text-align: center;
+}
+
+.bracket-full-final {
+  border: 1.5px solid var(--gold);
+  background:
+    linear-gradient(160deg, rgba(224, 124, 0, 0.10), rgba(254, 221, 0, 0.04) 60%, transparent),
+    var(--glass-bg);
+}
+
+.bracket-full-final:hover {
+  border-color: var(--gold);
+  box-shadow: var(--shadow-md), 0 0 24px rgba(224, 124, 0, 0.18);
+}
+
+.bracket-full-third {
+  border: 1.5px solid rgba(205, 127, 50, 0.50);
+  background:
+    linear-gradient(160deg, rgba(205, 127, 50, 0.06), transparent 60%),
+    var(--glass-bg);
+}
+
+.bracket-full-third:hover {
+  border-color: rgba(205, 127, 50, 0.70);
+  box-shadow: var(--shadow-md), 0 0 16px rgba(205, 127, 50, 0.10);
+}
+
+/* ================================================================
+   RESPONSIVIDADE
+   ================================================================ */
+@media (max-width: 767px) {
+  .bracket-focus-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .bracket-focus-final-area {
+    max-width: 100%;
+  }
+
+  .bracket-full-columns {
+    gap: 32px;
+    padding: var(--space-sm) var(--space-sm) var(--space-md);
+  }
+
+  .bracket-full-column {
+    min-width: 150px;
+  }
+
+  .bracket-roundnav-btn {
+    font-size: 0.72rem;
+    padding: 5px 10px;
+  }
 }

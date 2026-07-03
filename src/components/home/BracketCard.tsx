@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { Bracket } from '@/components/jogos/Bracket';
 import type { Match } from '@/lib/types';
 
@@ -9,9 +10,10 @@ import type { Match } from '@/lib/types';
  * JogosClient, já client). Este limite client permite usá-lo no dashboard.
  */
 export function BracketCard({ matches }: { matches: Match[] }) {
+  const router = useRouter();
   return (
     <div className="nx-card nx-bracket-card">
-      <Bracket matches={matches} />
+      <Bracket matches={matches} onMatchClick={() => router.push('/jogos')} />
     </div>
   );
 }
