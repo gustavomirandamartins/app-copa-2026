@@ -490,7 +490,11 @@
    ================================================================ */
 @media (max-width: 767px) {
   .bracket-viewport {
-    height: min(68vh, 560px);
+    height: min(52vh, 420px);
+  }
+
+  .bracket-tree-col-matches {
+    height: 720px;
   }
 
   .bracket-tree-column {
