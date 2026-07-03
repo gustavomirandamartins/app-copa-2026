@@ -5,16 +5,12 @@ import Link from 'next/link';
 import { Calendar, MapPin, ChevronDown } from 'lucide-react';
 import { getTeamById } from '@/data/teams';
 import { getStadiumById } from '@/data/stadiums';
-import { getKeyPlayer } from '@/data/key-players';
 import { TeamFlag } from '@/components/ui/TeamFlag';
 import { SelecaoCompare } from '@/components/home/SelecaoCompare';
 import { winDrawWin, toPercentParts } from '@/lib/bolao/winProbability';
 import type { Match, MatchStage, Team, UfmgProbability } from '@/lib/types';
+import type { MatchWinProbability } from '@/lib/bolao/probabilities';
 import { formatKickoffTime, formatKickoffDate } from '@/lib/datetime';
-import { motion, AnimatePresence } from 'framer-motion';
-
-type TeamProbMap = Record<string, UfmgProbability>;
-type MatchProbMap = Record<number, { home: number; draw: number; away: number }>;
 
 const stageTabs: { key: MatchStage | 'all'; label: string }[] = [
   { key: 'group', label: 'Fase de Grupos' },
@@ -34,14 +30,62 @@ function MatchTimeChip({ dateUTC }: { dateUTC: string }) {
   return <span className="match-card-time-chip">{time}</span>;
 }
 
+function MatchWinBar({
+  home,
+  away,
+  matchNumber,
+  matchProbabilities,
+}: {
+  home: Team;
+  away: Team;
+  matchNumber: number;
+  matchProbabilities: Record<number, MatchWinProbability>;
+}) {
+  const prob = matchProbabilities[matchNumber];
+  const wdw = prob
+    ? { home: Math.round(prob.home), draw: Math.round(prob.draw), away: Math.round(prob.away) }
+    : toPercentParts(winDrawWin(home.fifaRanking, away.fifaRanking));
+
+  return (
+    <div className="nx-wdw">
+      <div
+        className="nx-wdw-bar"
+        role="img"
+        aria-label={`Probabilidade: ${home.name} ${wdw.home}%, empate ${wdw.draw}%, ${away.name} ${wdw.away}%`}
+      >
+        <span className="nx-wdw-seg nx-wdw-home" style={{ width: `${wdw.home}%` }}>
+          {wdw.home >= 12 && `${wdw.home}%`}
+        </span>
+        <span className="nx-wdw-seg nx-wdw-draw" style={{ width: `${wdw.draw}%` }}>
+          {wdw.draw >= 12 && `${wdw.draw}%`}
+        </span>
+        <span className="nx-wdw-seg nx-wdw-away" style={{ width: `${wdw.away}%` }}>
+          {wdw.away >= 12 && `${wdw.away}%`}
+        </span>
+      </div>
+      <div className="nx-wdw-legend">
+        <span>
+          <i className="nx-dot nx-dot-home" /> Vitória {home.name}
+        </span>
+        <span>
+          <i className="nx-dot nx-dot-draw" /> Empate
+        </span>
+        <span>
+          <i className="nx-dot nx-dot-away" /> Vitória {away.name}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export function JogosClient({
   matches,
-  teamProbabilities = {},
-  matchProbabilities = {},
+  probabilities,
+  matchProbabilities,
 }: {
   matches: Match[];
-  teamProbabilities?: TeamProbMap;
-  matchProbabilities?: MatchProbMap;
+  probabilities: Record<string, UfmgProbability>;
+  matchProbabilities: Record<number, MatchWinProbability>;
 }) {
   const [activeStage, setActiveStage] = useState<MatchStage | 'all'>('group');
   const [hasHandledHash, setHasHandledHash] = useState(false);
@@ -49,6 +93,7 @@ export function JogosClient({
 
   const filteredMatches = useMemo(() => {
     const list = activeStage === 'all' ? matches : matches.filter((m) => m.stage === activeStage);
+    // Ordena por horário de início (a ordem do array pode não ser cronológica).
     return [...list].sort(
       (a, b) => new Date(a.dateUTC).getTime() - new Date(b.dateUTC).getTime(),
     );
@@ -65,6 +110,8 @@ export function JogosClient({
     setGroupedByDate(groups);
   }, [filteredMatches]);
 
+  // Ao entrar com hash #match-{id} (vindo do bracket), ativa a aba da fase
+  // e rola até o card correspondente.
   useEffect(() => {
     if (hasHandledHash || typeof window === 'undefined') return;
     const hash = window.location.hash;
@@ -85,6 +132,10 @@ export function JogosClient({
     }, 350);
     return () => window.clearTimeout(timer);
   }, [hasHandledHash, matches]);
+
+  function toggleExpand(id: string) {
+    setExpandedId((prev) => (prev === id ? null : id));
+  }
 
   return (
     <div className="container">
@@ -112,51 +163,63 @@ export function JogosClient({
 
       <>
         {Array.from(groupedByDate.entries()).map(([dateLabel, dayMatches]) => (
-        <section key={dateLabel} className="animate-slide-up" style={{ marginBottom: 'var(--space-xl)' }}>
-          <h3 style={{
-            fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-tertiary)',
-            textTransform: 'capitalize', marginBottom: 'var(--space-md)',
-            paddingBottom: 'var(--space-sm)', borderBottom: '1px solid var(--glass-border)',
-          }}>
-            {dateLabel}
-          </h3>
-          <div className="grid-2">
-            {dayMatches.map((match) => {
-              const home = match.homeTeamId ? getTeamById(match.homeTeamId) : null;
-              const away = match.awayTeamId ? getTeamById(match.awayTeamId) : null;
-              const stadium = getStadiumById(match.stadiumId);
-              const isExpanded = expandedId === match.id;
+          <section key={dateLabel} className="animate-slide-up" style={{ marginBottom: 'var(--space-xl)' }}>
+            <h3
+              style={{
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                color: 'var(--text-tertiary)',
+                textTransform: 'capitalize',
+                marginBottom: 'var(--space-md)',
+                paddingBottom: 'var(--space-sm)',
+                borderBottom: '1px solid var(--glass-border)',
+              }}
+            >
+              {dateLabel}
+            </h3>
+            <div className="grid-2">
+              {dayMatches.map((match) => {
+                const home = match.homeTeamId ? getTeamById(match.homeTeamId) : null;
+                const away = match.awayTeamId ? getTeamById(match.awayTeamId) : null;
+                const stadium = getStadiumById(match.stadiumId);
+                const isExpanded = expandedId === match.id;
+                const canExpand = Boolean(home && away);
 
-              const wdw = (() => {
-                const mp = matchProbabilities[match.matchNumber];
-                if (mp) return { home: Math.round(mp.home), draw: Math.round(mp.draw), away: Math.round(mp.away) };
-                if (home && away) return toPercentParts(winDrawWin(home.fifaRanking, away.fifaRanking));
-                return null;
-              })();
-
-              return (
-                <div key={match.id} id={`match-${match.id}`} className={`glass-card match-card${isExpanded ? ' expanded' : ''}`}>
+                return (
                   <div
-                    className="match-card-clickable"
-                    onClick={() => setExpandedId(isExpanded ? null : match.id)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setExpandedId(isExpanded ? null : match.id)}
+                    key={match.id}
+                    id={`match-${match.id}`}
+                    className={`glass-card match-card ${canExpand ? 'match-card-expandable' : ''} ${
+                      isExpanded ? 'is-expanded' : ''
+                    }`}
+                    onClick={() => canExpand && toggleExpand(match.id)}
+                    role={canExpand ? 'button' : undefined}
+                    tabIndex={canExpand ? 0 : undefined}
+                    onKeyDown={(e) => {
+                      if (canExpand && (e.key === 'Enter' || e.key === ' ')) {
+                        e.preventDefault();
+                        toggleExpand(match.id);
+                      }
+                    }}
+                    aria-expanded={canExpand ? isExpanded : undefined}
                   >
                     <div className="match-card-header">
                       {match.group && <span className="badge badge-group">Grupo {match.group}</span>}
                       <span>
                         Jogo #{match.matchNumber}
-                        {match.status === 'live' && (
-                          <span className="match-live-dot"> ● AO VIVO</span>
-                        )}
+                        {match.status === 'live' && <span className="match-live-dot"> ● AO VIVO</span>}
                       </span>
                       <MatchTimeChip dateUTC={match.dateUTC} />
                     </div>
+
                     <div className="match-card-teams">
                       <div className="match-card-team">
                         {home ? (
-                          <Link href={`/selecoes/${match.homeTeamId}`} style={{ display: 'contents', textDecoration: 'none', color: 'inherit' }} onClick={(e) => e.stopPropagation()}>
+                          <Link
+                            href={`/selecoes/${match.homeTeamId}`}
+                            style={{ display: 'contents', textDecoration: 'none', color: 'inherit' }}
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             <TeamFlag name={home.name} flagEmoji={home.flag} size={40} />
                             <span className="name">{home.name}</span>
                           </Link>
@@ -167,6 +230,7 @@ export function JogosClient({
                           </>
                         )}
                       </div>
+
                       {match.status === 'finished' ? (
                         <div className="match-card-score">
                           <span>{match.homeGoals}</span>
@@ -184,9 +248,14 @@ export function JogosClient({
                           <span className="separator">×</span>
                         </div>
                       )}
+
                       <div className="match-card-team">
                         {away ? (
-                          <Link href={`/selecoes/${match.awayTeamId}`} style={{ display: 'contents', textDecoration: 'none', color: 'inherit' }} onClick={(e) => e.stopPropagation()}>
+                          <Link
+                            href={`/selecoes/${match.awayTeamId}`}
+                            style={{ display: 'contents', textDecoration: 'none', color: 'inherit' }}
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             <TeamFlag name={away.name} flagEmoji={away.flag} size={40} />
                             <span className="name">{away.name}</span>
                           </Link>
@@ -198,63 +267,65 @@ export function JogosClient({
                         )}
                       </div>
                     </div>
+
                     {match.status === 'finished' &&
                       match.homePenalties != null &&
                       match.awayPenalties != null && (
-                        <div style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: 'var(--space-xs)' }}>
+                        <div
+                          style={{
+                            textAlign: 'center',
+                            fontSize: '0.75rem',
+                            color: 'var(--text-tertiary)',
+                            marginTop: 'var(--space-xs)',
+                          }}
+                        >
                           Pênaltis: {match.homePenalties} × {match.awayPenalties}
                         </div>
                       )}
+
                     {stadium && (
                       <div className="match-card-footer">
                         <MapPin size={12} />
-                        <span>{stadium.name}, {stadium.city}</span>
+                        <span>
+                          {stadium.name}, {stadium.city}
+                        </span>
                       </div>
                     )}
-                    <div className="match-card-expand-hint">
-                      <ChevronDown size={14} className={isExpanded ? 'rotated' : ''} />
-                      <span>{isExpanded ? 'Recolher' : 'Detalhes'}</span>
-                    </div>
-                  </div>
 
-                  <AnimatePresence>
-                    {isExpanded && home && away && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                        className="match-card-expanded"
-                      >
-                        {wdw && (
-                          <div className="nx-wdw match-card-wdw">
-                            <div className="nx-wdw-bar" role="img" aria-label={`Probabilidade: ${home.name} ${wdw.home}%, empate ${wdw.draw}%, ${away.name} ${wdw.away}%`}>
-                              <span className="nx-wdw-seg nx-wdw-home" style={{ width: `${wdw.home}%` }}>{wdw.home >= 12 && `${wdw.home}%`}</span>
-                              <span className="nx-wdw-seg nx-wdw-draw" style={{ width: `${wdw.draw}%` }}>{wdw.draw >= 12 && `${wdw.draw}%`}</span>
-                              <span className="nx-wdw-seg nx-wdw-away" style={{ width: `${wdw.away}%` }}>{wdw.away >= 12 && `${wdw.away}%`}</span>
-                            </div>
-                            <div className="nx-wdw-legend">
-                              <span><i className="nx-dot nx-dot-home" /> Vitória {home.name}</span>
-                              <span><i className="nx-dot nx-dot-draw" /> Empate</span>
-                              <span><i className="nx-dot nx-dot-away" /> Vitória {away.name}</span>
-                            </div>
-                          </div>
-                        )}
-
-                        <SelecaoCompare home={home} away={away} probabilities={teamProbabilities} />
-                      </motion.div>
+                    {canExpand && (
+                      <div className="match-card-expand-hint" aria-hidden="true">
+                        <ChevronDown size={16} />
+                      </div>
                     )}
-                  </AnimatePresence>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      ))}
 
-      {filteredMatches.length === 0 && (
-        <div style={{ textAlign: 'center', padding: 'var(--space-3xl) 0', color: 'var(--text-tertiary)' }}>
-          <Calendar size={48} style={{ opacity: 0.3, marginBottom: 'var(--space-md)' }} />
+                    {isExpanded && home && away && (
+                      <div className="match-card-expanded">
+                        <div className="match-card-expanded-section">
+                          <h4 className="match-card-expanded-title">Probabilidades</h4>
+                          <MatchWinBar
+                            home={home}
+                            away={away}
+                            matchNumber={match.matchNumber}
+                            matchProbabilities={matchProbabilities}
+                          />
+                        </div>
+
+                        <div className="match-card-expanded-section">
+                          <h4 className="match-card-expanded-title">Conheça as seleções</h4>
+                          <SelecaoCompare home={home} away={away} probabilities={probabilities} />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        ))}
+
+        {filteredMatches.length === 0 && (
+          <div style={{ textAlign: 'center', padding: 'var(--space-3xl) 0', color: 'var(--text-tertiary)' }}>
+            <Calendar size={48} style={{ opacity: 0.3, marginBottom: 'var(--space-md)' }} />
             <p>Nenhum jogo nesta fase ainda.</p>
           </div>
         )}

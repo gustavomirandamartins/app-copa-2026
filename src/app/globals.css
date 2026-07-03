@@ -704,56 +704,79 @@ a:hover { color: var(--copa-green-deep); }
   color: var(--text-tertiary);
 }
 
-/* ---- Match Card Expandido (página Jogos) ---- */
-.match-card-clickable {
-  cursor: pointer;
+/* ---- Match Card Expandido (página /jogos) ---- */
+.match-card-expandable {
+  transition: border-color 180ms ease, box-shadow 180ms ease;
 }
 
-.match-card.expanded {
-  overflow: visible;
+.match-card-expandable:hover {
+  border-color: rgba(224, 124, 0, 0.45);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10), 0 18px 48px rgba(0, 0, 0, 0.34);
+}
+
+.match-card-expandable:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
 }
 
 .match-card-expand-hint {
   display: flex;
-  align-items: center;
   justify-content: center;
-  gap: 4px;
-  margin-top: var(--space-sm);
-  font-size: 0.68rem;
-  font-weight: 600;
+  margin-top: var(--space-xs);
   color: var(--text-tertiary);
-  transition: color var(--transition-fast);
+  transition: transform 220ms ease;
 }
 
-.match-card-clickable:hover .match-card-expand-hint {
-  color: var(--text-secondary);
-}
-
-.match-card-expand-hint svg {
-  transition: transform 0.3s var(--ease);
-}
-
-.match-card-expand-hint svg.rotated {
+.match-card.is-expanded .match-card-expand-hint {
   transform: rotate(180deg);
 }
 
 .match-card-expanded {
-  overflow: hidden;
+  margin-top: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--glass-border);
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
-  padding-top: var(--space-md);
-  margin-top: var(--space-md);
-  border-top: 1px solid var(--glass-border);
+  gap: var(--space-lg);
+  animation: match-card-expand-in 220ms ease forwards;
 }
 
-.match-card-wdw {
-  padding: 0 var(--space-xs);
+@keyframes match-card-expand-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-/* O SelecaoCompare dentro do card expandido herda os estilos .nx-sel* do dashboard.css */
+.match-card-expanded-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.match-card-expanded-title {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 0.01em;
+}
+
+/* Ajusta o SelecaoCompare quando está dentro de um card de jogo */
 .match-card-expanded .nx-sel {
-  border-radius: var(--radius-md);
+  padding: 0;
+  background: none;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.match-card-expanded .nx-sel-panel {
+  background: rgba(8, 6, 18, 0.24);
 }
 
 /* ---- Standings Table ---- */
