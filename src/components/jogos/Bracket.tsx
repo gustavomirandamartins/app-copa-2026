@@ -355,26 +355,22 @@ export function Bracket({
             {/* Centro: Final + 3º lugar */}
             <div className="bracket-tree-center">
               {sides.final && (
-                <div className="bracket-tree-match-wrapper" style={{ flexGrow: 16, flexBasis: 0 }}>
-                  <BracketCard
-                    match={sides.final}
-                    isFinal
-                    isMuted={isMuted(sides.final.id, 'final')}
-                    onClick={handleMatchClick}
-                    cardRef={(el) => { if (el) matchRefs.current.set(sides.final!.id, el); }}
-                  />
-                </div>
+                <BracketCard
+                  match={sides.final}
+                  isFinal
+                  isMuted={isMuted(sides.final.id, 'final')}
+                  onClick={handleMatchClick}
+                  cardRef={(el) => { if (el) matchRefs.current.set(sides.final!.id, el); }}
+                />
               )}
               {sides.thirdPlace && (
-                <div className="bracket-tree-match-wrapper" style={{ flexGrow: 4, flexBasis: 0 }}>
-                  <BracketCard
-                    match={sides.thirdPlace}
-                    isThird
-                    isMuted={isMuted(sides.thirdPlace.id, 'third-place')}
-                    onClick={handleMatchClick}
-                    cardRef={(el) => { if (el) matchRefs.current.set(sides.thirdPlace!.id, el); }}
-                  />
-                </div>
+                <BracketCard
+                  match={sides.thirdPlace}
+                  isThird
+                  isMuted={isMuted(sides.thirdPlace.id, 'third-place')}
+                  onClick={handleMatchClick}
+                  cardRef={(el) => { if (el) matchRefs.current.set(sides.thirdPlace!.id, el); }}
+                />
               )}
             </div>
 

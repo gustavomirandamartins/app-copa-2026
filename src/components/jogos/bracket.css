@@ -134,10 +134,13 @@
   flex-shrink: 0;
 }
 
+/* Altura fixa: comporta 16 partidas da R32 (~60px cada). O flex-grow
+   dos wrappers distribui as partidas uniformemente dentro desta altura,
+   garantindo alinhamento vertical perfeito entre as colunas. */
 .bracket-tree-col-matches {
   display: flex;
   flex-direction: column;
-  flex-grow: 1;
+  height: 960px;
 }
 
 /* ── Wrapper de cada partida ────────────────────────────────────── */
@@ -149,17 +152,16 @@
   align-items: center;
   justify-content: center;
   position: relative;
-  min-height: 0;
 }
 
 /* ── Centro: Final + 3º lugar ──────────────────────────────────── */
 .bracket-tree-center {
   display: flex;
   flex-direction: column;
-  align-items: stretch;
+  align-items: center;
   justify-content: center;
   min-width: 150px;
-  gap: var(--space-md);
+  gap: var(--space-lg);
 }
 
 /* ================================================================
