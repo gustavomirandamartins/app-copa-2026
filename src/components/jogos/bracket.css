@@ -110,7 +110,6 @@
 
 /* ================================================================
    MODO FOCO — Bracket horizontal com a etapa selecionada em destaque
-   (estilo Apple Sports)
    ================================================================ */
 .bracket-focus-view {
   width: 100%;
@@ -118,7 +117,7 @@
 
 .bracket-focus-track {
   display: flex;
-  gap: 32px;
+  gap: 48px;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
@@ -152,7 +151,7 @@
 .bracket-stage-matches {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: space-evenly;
   flex-grow: 1;
   gap: var(--space-lg);
 }
@@ -178,6 +177,58 @@
 
 .bracket-focus-view .bracket-stage-column.is-selected .bracket-stage-title {
   color: var(--gold);
+}
+
+/* ================================================================
+   LINHAS DE CONEXÃO — Modo Foco e Modo Completo mobile
+   ================================================================ */
+.bracket-focus-view .bracket-stage-column:not(:last-child) .bracket-full-card-wrapper::after,
+.bracket-full-mobile .bracket-stage-column:not(:last-child) .bracket-full-card-wrapper::after {
+  content: '';
+  position: absolute;
+  right: -28px;
+  width: 28px;
+  border-right: 3px solid rgba(255, 255, 255, 0.6);
+  border-top: 3px solid rgba(255, 255, 255, 0.6);
+  border-radius: 0 8px 0 0;
+  opacity: 1;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.3));
+}
+
+.bracket-focus-view .bracket-stage-column:not(:last-child) .bracket-full-card-wrapper:nth-child(odd)::after,
+.bracket-full-mobile .bracket-stage-column:not(:last-child) .bracket-full-card-wrapper:nth-child(odd)::after {
+  top: 50%;
+  bottom: -50%;
+  border-top: 3px solid rgba(255, 255, 255, 0.6);
+  border-bottom: none;
+  border-radius: 0 8px 0 0;
+}
+
+.bracket-focus-view .bracket-stage-column:not(:last-child) .bracket-full-card-wrapper:nth-child(even)::after,
+.bracket-full-mobile .bracket-stage-column:not(:last-child) .bracket-full-card-wrapper:nth-child(even)::after {
+  top: -50%;
+  bottom: 50%;
+  border-bottom: 3px solid rgba(255, 255, 255, 0.6);
+  border-top: none;
+  border-radius: 0 0 8px 0;
+}
+
+.bracket-focus-view .bracket-stage-column:not(:first-child) .bracket-full-card-wrapper::before,
+.bracket-full-mobile .bracket-stage-column:not(:first-child) .bracket-full-card-wrapper::before {
+  content: '';
+  position: absolute;
+  left: -28px;
+  width: 28px;
+  top: 50%;
+  border-top: 3px solid rgba(255, 255, 255, 0.6);
+  opacity: 1;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.3));
+}
+
+/* 3º lugar sem linhas de entrada/saída */
+.bracket-full-card-wrapper.stage-third-place::before,
+.bracket-full-card-wrapper.stage-third-place::after {
+  display: none !important;
 }
 
 /* ================================================================
@@ -235,32 +286,26 @@
   .bracket-full-desktop {
     display: grid;
     grid-template-columns: 1fr auto 1fr;
-    gap: var(--space-lg);
-    align-items: center;
+    gap: 40px;
+    align-items: stretch;
+    min-height: 720px;
     padding: var(--space-md) 0;
   }
 
   .bracket-full-desktop-half {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: var(--space-md);
-    align-items: center;
-  }
-
-  .bracket-full-desktop-left {
-    direction: rtl;
-  }
-
-  .bracket-full-desktop-left > * {
-    direction: ltr;
+    gap: 28px;
+    align-items: stretch;
+    height: 100%;
   }
 
   .bracket-full-desktop-column {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: var(--space-lg);
     min-width: 170px;
+    height: 100%;
   }
 
   .bracket-full-desktop-stage-title {
@@ -276,8 +321,18 @@
   .bracket-full-desktop-matches {
     display: flex;
     flex-direction: column;
+    justify-content: space-between;
+    flex-grow: 1;
+    height: 100%;
+  }
+
+  .bracket-full-desktop .bracket-full-card-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
     justify-content: center;
-    gap: var(--space-lg);
+    flex: 1;
+    min-height: 0;
   }
 
   .bracket-full-desktop-center {
@@ -287,107 +342,106 @@
     justify-content: center;
     gap: var(--space-xl);
     min-width: 180px;
+    height: 100%;
   }
-}
 
-/* ================================================================
-   LINHAS DE CONEXÃO ENTRE COLUNAS
-   ================================================================ */
+  .bracket-full-desktop-center .bracket-full-card-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 100%;
+  }
 
-/* Mobile / colunas verticais */
-.bracket-full-column:not(:last-child) .bracket-full-card-wrapper::after,
-.bracket-full-mobile .bracket-stage-column:not(:last-child) .bracket-full-card-wrapper::after {
-  content: '';
-  position: absolute;
-  right: -24px;
-  width: 24px;
-  border-right: 3px solid rgba(255, 255, 255, 0.6);
-  border-top: 3px solid rgba(255, 255, 255, 0.6);
-  border-radius: 0 6px 0 0;
-  opacity: 1;
-  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.3));
-}
-
-.bracket-full-column:not(:last-child) .bracket-full-card-wrapper:nth-child(odd)::after,
-.bracket-full-mobile .bracket-stage-column:not(:last-child) .bracket-full-card-wrapper:nth-child(odd)::after {
-  top: 50%;
-  bottom: -50%;
-  border-top: 3px solid rgba(255, 255, 255, 0.6);
-  border-bottom: none;
-  border-radius: 0 6px 0 0;
-}
-
-.bracket-full-column:not(:last-child) .bracket-full-card-wrapper:nth-child(even)::after,
-.bracket-full-mobile .bracket-stage-column:not(:last-child) .bracket-full-card-wrapper:nth-child(even)::after {
-  top: -50%;
-  bottom: 50%;
-  border-bottom: 3px solid rgba(255, 255, 255, 0.6);
-  border-top: none;
-  border-radius: 0 0 6px 0;
-}
-
-.bracket-full-column:not(:first-child) .bracket-full-card-wrapper::before,
-.bracket-full-mobile .bracket-stage-column:not(:first-child) .bracket-full-card-wrapper::before {
-  content: '';
-  position: absolute;
-  left: -24px;
-  width: 24px;
-  top: 50%;
-  border-top: 3px solid rgba(255, 255, 255, 0.6);
-  opacity: 1;
-  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.3));
-}
-
-/* 3º lugar sem linhas de entrada/saída */
-.bracket-full-card-wrapper.stage-third-place::before,
-.bracket-full-card-wrapper.stage-third-place::after {
-  display: none !important;
-}
-
-/* Desktop: linhas saindo das metades para o centro */
-@media (min-width: 1024px) {
+  /* Linhas no desktop — metade esquerda (fork abre para a direita) */
   .bracket-full-desktop-left .bracket-full-card-wrapper::after {
     content: '';
     position: absolute;
-    left: -20px;
-    width: 20px;
+    right: -18px;
+    width: 18px;
     top: 50%;
     border-top: 3px solid rgba(255, 255, 255, 0.6);
     filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.3));
   }
 
+  .bracket-full-desktop-left .bracket-full-card-wrapper:nth-child(odd)::after {
+    top: 50%;
+    bottom: -50%;
+    border-right: 3px solid rgba(255, 255, 255, 0.6);
+    border-top: 3px solid rgba(255, 255, 255, 0.6);
+    border-radius: 0 8px 0 0;
+  }
+
+  .bracket-full-desktop-left .bracket-full-card-wrapper:nth-child(even)::after {
+    top: -50%;
+    bottom: 50%;
+    border-right: 3px solid rgba(255, 255, 255, 0.6);
+    border-bottom: 3px solid rgba(255, 255, 255, 0.6);
+    border-radius: 0 0 8px 0;
+  }
+
+  /* Última coluna da esquerda: linha horizontal até o centro */
+  .bracket-full-desktop-left .bracket-full-desktop-column:last-child .bracket-full-card-wrapper::after {
+    right: -22px;
+    width: 22px;
+    top: 50%;
+    bottom: auto;
+    border-right: none;
+    border-bottom: none;
+    border-radius: 0;
+    border-top: 3px solid rgba(255, 255, 255, 0.6);
+  }
+
+  /* Linhas no desktop — metade direita (fork abre para a esquerda) */
   .bracket-full-desktop-right .bracket-full-card-wrapper::after {
     content: '';
     position: absolute;
-    right: -20px;
-    width: 20px;
+    left: -18px;
+    width: 18px;
     top: 50%;
     border-top: 3px solid rgba(255, 255, 255, 0.6);
     filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.3));
   }
 
-  .bracket-full-desktop-center .bracket-full-card-wrapper::before {
+  .bracket-full-desktop-right .bracket-full-card-wrapper:nth-child(odd)::after {
+    top: 50%;
+    bottom: -50%;
+    border-left: 3px solid rgba(255, 255, 255, 0.6);
+    border-top: 3px solid rgba(255, 255, 255, 0.6);
+    border-radius: 8px 0 0 0;
+  }
+
+  .bracket-full-desktop-right .bracket-full-card-wrapper:nth-child(even)::after {
+    top: -50%;
+    bottom: 50%;
+    border-left: 3px solid rgba(255, 255, 255, 0.6);
+    border-bottom: 3px solid rgba(255, 255, 255, 0.6);
+    border-radius: 0 0 0 8px;
+  }
+
+  /* Última coluna da direita: linha horizontal até o centro */
+  .bracket-full-desktop-right .bracket-full-desktop-column:last-child .bracket-full-card-wrapper::after {
+    left: -22px;
+    width: 22px;
+    top: 50%;
+    bottom: auto;
+    border-left: none;
+    border-bottom: none;
+    border-radius: 0;
+    border-top: 3px solid rgba(255, 255, 255, 0.6);
+  }
+
+  /* Linha vertical entre Final e 3º lugar no centro */
+  .bracket-full-desktop-center .bracket-full-card-wrapper:nth-child(2)::before {
     content: '';
     position: absolute;
     left: 50%;
-    top: -24px;
+    top: -32px;
     width: 3px;
-    height: 24px;
+    height: 32px;
     background: rgba(255, 255, 255, 0.6);
     filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.3));
   }
-
-  .bracket-full-desktop-center .bracket-full-card-wrapper:first-child::before {
-    display: none;
-  }
-}
-
-.bracket-full-card-wrapper {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  flex-grow: 1;
 }
 
 /* ================================================================
@@ -521,7 +575,7 @@
    ================================================================ */
 @media (max-width: 767px) {
   .bracket-focus-track {
-    gap: 20px;
+    gap: 32px;
     padding: var(--space-sm) var(--space-sm) var(--space-lg);
   }
 

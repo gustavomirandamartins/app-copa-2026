@@ -126,10 +126,6 @@ function buildBracketSides(matches: Match[]): BracketSides {
     if (an) expand(an, 'right');
   }
 
-  for (const stage of KO_STAGE_ORDER) {
-    right[stage].reverse();
-  }
-
   const thirdPlace = matches.find((m) => m.stage === 'third-place') ?? null;
   return { left, right, final: finalMatch, thirdPlace };
 }
@@ -268,7 +264,7 @@ function DesktopFullBracket({
   return (
     <div className="bracket-full-desktop">
       <div className="bracket-full-desktop-half bracket-full-desktop-left">
-        {KO_STAGE_ORDER.map((stage) => (
+        {[...KO_STAGE_ORDER].reverse().map((stage) => (
           <div key={stage} className="bracket-full-desktop-column">
             <div className="bracket-full-desktop-stage-title">
               {STAGES.find((s) => s.key === stage)?.label}
