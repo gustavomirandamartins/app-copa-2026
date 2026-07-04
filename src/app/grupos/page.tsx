@@ -6,6 +6,7 @@ import { teams } from '@/data/teams';
 import {
   allGroups,
   computeStandings,
+  computeAllThirdsRanked,
   computeQualifiedThirds,
   groupStageMatchIds,
   isGroupStageComplete,
@@ -57,12 +58,14 @@ export default async function GruposPage() {
 
   // Calcula os melhores terceiros ANTES de renderizar as tabelas de cada
   // grupo, para poder destacar a linha do 3º colocado já nessa tabela (e não
-  // só na tabela consolidada do rodapé).
+  // só na tabela consolidada do rodapé). A tabela consolidada mostra todos os
+  // terceiros disponíveis (até 12); o selo "Classificado" marca só os 8
+  // melhores (qualifiedThirdTeamIds).
+  const allThirds = computeAllThirdsRanked(standingsByGroup);
   const thirds = computeQualifiedThirds(standingsByGroup);
   const qualifiedThirdTeamIds = new Set(thirds.map((r) => r.team_id));
-  // computeQualifiedThirds já retorna só os 8 melhores — nunca chega a 12,
-  // então a condição para exibir o selo precisa checar a fase de grupos
-  // como um todo, não o tamanho dessa lista já filtrada.
+  // O selo só aparece quando a fase de grupos está completa — antes disso,
+  // o top-8 dos terceiros ainda pode mudar.
   const groupStageComplete = isGroupStageComplete(standingsByGroup);
 
   return (
@@ -171,14 +174,14 @@ export default async function GruposPage() {
       </div>
 
       {/* ── Melhores terceiros colocados ───────────────────────────────── */}
-      {thirds.length > 0 && (
+      {allThirds.length > 0 && (
         <section style={{ marginTop: 'var(--space-2xl)' }}>
           <h2 style={{ fontSize: '1.1rem', marginBottom: 'var(--space-xs)' }}>
             Melhores terceiros colocados
           </h2>
           <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: 'var(--space-md)' }}>
             Os 8 melhores 3ºs colocados avançam para os 16 avos de final. Critérios: pontos → saldo de gols → gols pró → fair play.
-            {thirds.length < 12 && ` (${12 - thirds.length} grupo${12 - thirds.length > 1 ? 's' : ''} ainda sem 3º colocado)`}
+            {allThirds.length < 12 && ` (${12 - allThirds.length} grupo${12 - allThirds.length > 1 ? 's' : ''} ainda sem 3º colocado)`}
           </p>
           <div className="glass-card-static" style={{ padding: 0, overflow: 'hidden' }}>
             <div style={{ overflowX: 'auto' }}>
@@ -199,7 +202,7 @@ export default async function GruposPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {thirds.map((row, i) => {
+                  {allThirds.map((row, i) => {
                     const team = teams.find((t) => t.id === row.team_id);
                     if (!team) return null;
                     const isQualified = qualifiedThirdTeamIds.has(row.team_id);
@@ -212,7 +215,7 @@ export default async function GruposPage() {
                             <Link href={`/selecoes/${team.id}`} style={{ textDecoration: 'none', color: 'var(--text-primary)', fontWeight: 600 }}>
                               {team.name}
                             </Link>
-                            {isQualified && thirds.length === 12 && (
+                            {isQualified && groupStageComplete && (
                               <span style={{ fontSize: '0.68rem', padding: '2px 7px', borderRadius: 999, background: 'rgba(0,200,83,0.15)', color: 'var(--copa-green)', fontWeight: 700, marginLeft: 4 }}>
                                 Classificado
                               </span>

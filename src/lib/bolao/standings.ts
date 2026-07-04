@@ -128,13 +128,14 @@ export function computeStandings(finishedMatches: FinishedMatch[]): Map<GroupId,
 }
 
 /**
- * Melhores 8 terceiros colocados que avançam para os 16 avos de final.
- * Critérios oficiais FIFA (não há confronto direto — times de grupos
- * diferentes não se enfrentaram): pontos → saldo de gols → gols pró →
- * fair play → sorteio. Sem dados de cartões/sorteio disponíveis, o
- * desempate final cai no id do time apenas para manter ordem estável.
+ * Ordena os terceiros colocados de cada grupo pelos critérios oficiais FIFA
+ * (não há confronto direto — times de grupos diferentes não se enfrentaram):
+ * pontos → saldo de gols → gols pró → fair play → sorteio. Sem dados de
+ * cartões/sorteio disponíveis, o desempate final cai no id do time apenas
+ * para manter ordem estável. Retorna todos os terceiros disponíveis (até 12),
+ * sem cortar para os 8 classificados.
  */
-export function computeQualifiedThirds(
+export function computeAllThirdsRanked(
   standingsByGroup: Map<GroupId, StandingRow[]>,
 ): Array<StandingRow & { groupId: GroupId }> {
   const thirds: Array<StandingRow & { groupId: GroupId }> = [];
@@ -152,7 +153,14 @@ export function computeQualifiedThirds(
     a.team_id.localeCompare(b.team_id),
   );
 
-  return thirds.slice(0, 8);
+  return thirds;
+}
+
+/** Melhores 8 terceiros colocados que avançam para os 16 avos de final. */
+export function computeQualifiedThirds(
+  standingsByGroup: Map<GroupId, StandingRow[]>,
+): Array<StandingRow & { groupId: GroupId }> {
+  return computeAllThirdsRanked(standingsByGroup).slice(0, 8);
 }
 
 /** Fase de grupos totalmente decidida: todos os times de todos os grupos já jogaram as 3 rodadas. */
