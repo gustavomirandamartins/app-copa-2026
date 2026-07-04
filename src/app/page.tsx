@@ -104,7 +104,7 @@ export default async function HomePage() {
         // ordenava por total_score, sem aplicar os critérios de desempate.
         computeGeneralRanking(adminForRanking),
         supabase.from('match_settings').select('match_id, score_multiplier').gt('score_multiplier', 1),
-        supabase.from('matches').select('id, status, home_score, away_score, home_penalties, away_penalties'),
+        supabase.from('matches').select('id, status, home_score, away_score, home_penalties, away_penalties, home_team_id, away_team_id'),
       ]);
 
     rankRows = generalRanking.map((u) => ({ full_name: u.full_name, total_score: u.total_score }));
@@ -118,6 +118,8 @@ export default async function HomePage() {
         awayScore: m.away_score as number | null,
         homePenalties: m.home_penalties as number | null,
         awayPenalties: m.away_penalties as number | null,
+        homeTeamId: m.home_team_id as string | null,
+        awayTeamId: m.away_team_id as string | null,
       };
     }
 

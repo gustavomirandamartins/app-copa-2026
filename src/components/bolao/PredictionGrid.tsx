@@ -110,19 +110,25 @@ function boostLabel(m: number): string {
   return names[m] ?? `Pontos × ${m}!`;
 }
 
-/** Locked = teams not set, already started/finished, or kickoff passed. */
-function isLocked(match: Match, status: MatchStatus, now: number | null): boolean {
-  if (!match.homeTeamId || !match.awayTeamId) return true;
+/**
+ * Locked = teams not set, already started/finished, or kickoff passed.
+ * Recebe os ids JÁ mesclados com o banco (result?.homeTeamId ?? match.homeTeamId)
+ * — nunca os do array estático `matches`, que fica com homeTeamId/awayTeamId
+ * null pra todo jogo de mata-mata até o próximo deploy (é o app.advancement()
+ * do sync que resolve isso em tempo real na tabela `matches` do Supabase).
+ */
+function isLocked(homeTeamId: string | null, awayTeamId: string | null, dateUTC: string, status: MatchStatus, now: number | null): boolean {
+  if (!homeTeamId || !awayTeamId) return true;
   if (status !== 'scheduled') return true;
-  if (now !== null && new Date(match.dateUTC).getTime() <= now) return true;
+  if (now !== null && new Date(dateUTC).getTime() <= now) return true;
   return false;
 }
 
 /** Match starts within the next 24 h and hasn't started yet. */
-function isUpcoming(match: Match, status: MatchStatus, now: number | null): boolean {
+function isUpcoming(homeTeamId: string | null, awayTeamId: string | null, dateUTC: string, status: MatchStatus, now: number | null): boolean {
   if (!now || status !== 'scheduled') return false;
-  if (!match.homeTeamId || !match.awayTeamId) return false;
-  const t = new Date(match.dateUTC).getTime();
+  if (!homeTeamId || !awayTeamId) return false;
+  const t = new Date(dateUTC).getTime();
   return t > now && t - now <= UPCOMING_WINDOW_MS;
 }
 
@@ -247,15 +253,15 @@ export function PredictionGrid({
               {dayMatches.map((match) => {
                 const result = results[match.id];
                 const status: MatchStatus = result?.status ?? match.status;
-                const locked = isLocked(match, status, now) || !canEdit;
-                const upcoming = isUpcoming(match, status, now);
+                const homeTeamId = result?.homeTeamId ?? match.homeTeamId;
+                const awayTeamId = result?.awayTeamId ?? match.awayTeamId;
+                const locked = isLocked(homeTeamId, awayTeamId, match.dateUTC, status, now) || !canEdit;
+                const upcoming = isUpcoming(homeTeamId, awayTeamId, match.dateUTC, status, now);
                 const finished = status === 'finished';
                 const live = status === 'live';
                 const value = values.get(match.id);
                 const multiplier = multipliers[match.id] ?? 1;
                 const boosted = multiplier > 1;
-                const homeTeamId = result?.homeTeamId ?? match.homeTeamId;
-                const awayTeamId = result?.awayTeamId ?? match.awayTeamId;
                 const teamA = homeTeamId ? getTeamById(homeTeamId) : null;
                 const teamB = awayTeamId ? getTeamById(awayTeamId) : null;
                 const isBrazil = homeTeamId === BRAZIL_ID || awayTeamId === BRAZIL_ID;

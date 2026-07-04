@@ -91,9 +91,18 @@ export function DashboardClient({
   const canEdit = profile.is_premium === true && agreed;
 
   // Jogos ainda abertos (não começaram nem encerraram), em ordem cronológica.
+  // homeTeamId/awayTeamId vêm mesclados com o banco: o array estático
+  // `matches` tem null pra todo jogo de mata-mata até o próximo deploy —
+  // quem resolve isso em tempo real é o applyKnockoutAdvancement() do sync,
+  // gravado direto na tabela `matches` do Supabase (results aqui).
   const openMatches = useMemo(() => {
     const now = Date.now();
     return allMatches
+      .map((mt) => ({
+        ...mt,
+        homeTeamId: results[mt.id]?.homeTeamId ?? mt.homeTeamId,
+        awayTeamId: results[mt.id]?.awayTeamId ?? mt.awayTeamId,
+      }))
       .filter((mt) => {
         if (!mt.homeTeamId || !mt.awayTeamId) return false;
         const status = results[mt.id]?.status ?? mt.status;
