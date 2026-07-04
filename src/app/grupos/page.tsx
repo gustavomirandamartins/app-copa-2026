@@ -8,6 +8,7 @@ import {
   computeStandings,
   computeQualifiedThirds,
   groupStageMatchIds,
+  isGroupStageComplete,
   type StandingRow,
 } from '@/lib/bolao/standings';
 
@@ -59,6 +60,10 @@ export default async function GruposPage() {
   // só na tabela consolidada do rodapé).
   const thirds = computeQualifiedThirds(standingsByGroup);
   const qualifiedThirdTeamIds = new Set(thirds.map((r) => r.team_id));
+  // computeQualifiedThirds já retorna só os 8 melhores — nunca chega a 12,
+  // então a condição para exibir o selo precisa checar a fase de grupos
+  // como um todo, não o tamanho dessa lista já filtrada.
+  const groupStageComplete = isGroupStageComplete(standingsByGroup);
 
   return (
     <div className="container">
@@ -127,9 +132,9 @@ export default async function GruposPage() {
                       const isTop2 = standing.position <= 2 && standing.played >= 3;
                       const isQualifiedThird = standing.position === 3 && qualifiedThirdTeamIds.has(team.id);
                       const qualified = isTop2 || isQualifiedThird;
-                      // O badge de texto só aparece quando os 12 grupos já têm 3º
-                      // colocado decidido — antes disso, o top-8 ainda pode mudar.
-                      const showBadge = isTop2 || (isQualifiedThird && thirds.length === 12);
+                      // O badge de texto só aparece quando a fase de grupos está
+                      // completa — antes disso, o top-8 dos terceiros ainda pode mudar.
+                      const showBadge = isTop2 || (isQualifiedThird && groupStageComplete);
                       return (
                       <tr key={team.id} className={qualified ? 'qualified' : ''}>
                         <td>

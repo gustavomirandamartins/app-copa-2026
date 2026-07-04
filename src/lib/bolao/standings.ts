@@ -129,7 +129,10 @@ export function computeStandings(finishedMatches: FinishedMatch[]): Map<GroupId,
 
 /**
  * Melhores 8 terceiros colocados que avançam para os 16 avos de final.
- * Critérios (sem dados de fair play/sorteio): pontos → saldo → gols pró → vitórias → menos derrotas.
+ * Critérios oficiais FIFA (não há confronto direto — times de grupos
+ * diferentes não se enfrentaram): pontos → saldo de gols → gols pró →
+ * fair play → sorteio. Sem dados de cartões/sorteio disponíveis, o
+ * desempate final cai no id do time apenas para manter ordem estável.
  */
 export function computeQualifiedThirds(
   standingsByGroup: Map<GroupId, StandingRow[]>,
@@ -146,8 +149,6 @@ export function computeQualifiedThirds(
     b.points - a.points ||
     b.goal_difference - a.goal_difference ||
     b.goals_for - a.goals_for ||
-    b.won - a.won ||
-    a.lost - b.lost ||
     a.team_id.localeCompare(b.team_id),
   );
 
