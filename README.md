@@ -63,8 +63,9 @@ Produção: [bolao.mindubier.com](https://bolao.mindubier.com)
   - Matriz palpites × partidas (paginada).
   - Conceder/revogar Premium, ajustar pontuação, atualizar nome.
   - Configurar multiplicadores por jogo (`/admin/jogos`).
-  - Disparar sync football-data e refresh de probabilidades.
+  - Disparar sync football-data.org e refresh de probabilidades.
 - **Sincronização diária**: Vercel Cron `0 6 * * *` chama `/api/sync/football` (protegido por `CRON_SECRET`).
+- **Polling ao vivo**: `/api/sync/football/live` (mesmo bearer `CRON_SECRET`) chamado via `pg_cron`/`pg_net` do Supabase a cada 1-5min — Vercel Hobby só permite Cron 1x/dia, por isso o agendador é externo. A football-data.org não tem teto diário (só 10 req/min), então só sonda quando há um jogo na janela ao vivo, sem precisar de controle de cota.
 - **PWA**: `manifest.ts`, apple-touch-icon, theme color, card de instalação na home.
 - **Modo demo**: com Supabase não configurado, várias páginas caem em dados estáticos (`isSupabaseConfigured()` em `src/lib/supabase/config.ts`).
 
@@ -92,7 +93,8 @@ src/
 │   ├── simulador/           # Aposentado → redireciona para /bolao
 │   └── api/
 │       ├── checkout/           # POST: cria Stripe Checkout Session
-│       ├── sync/football/      # GET: sync cron (bearer CRON_SECRET)
+│       ├── sync/football/      # GET: sync diário (bearer CRON_SECRET)
+│       │   └── live/           # GET: polling ao vivo (pg_cron/pg_net do Supabase)
 │       └── webhooks/stripe/    # POST: concede Premium
 ├── components/               # 13 pastas de feature (admin, auth, bolao, ...)
 ├── data/                     # Datasets estáticos (teams, matches, stadiums, ...)
@@ -160,7 +162,7 @@ STRIPE_SECRET_KEY=
 STRIPE_WEBHOOK_SECRET=
 
 # Cron / sync
-CRON_SECRET=              # bearer para /api/sync/football
+CRON_SECRET=              # bearer para /api/sync/football e /api/sync/football/live
 FOOTBALL_DATA_TOKEN=      # X-Auth-Token football-data.org
 NEXT_PUBLIC_SITE_URL=https://bolao.mindubier.com
 
