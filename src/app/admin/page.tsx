@@ -125,12 +125,18 @@ export default async function AdminPage() {
   // Status + placar de cada jogo + todos os palpites.
   const { data: matchRows } = await admin
     .from('matches')
-    .select('id, status, home_score, away_score');
+    .select('id, status, home_score, away_score, home_team_id, away_team_id');
   const finishedSet = new Set(
     (matchRows ?? []).filter((m) => m.status === 'finished').map((m) => m.id),
   );
   const scoreById = new Map(
     (matchRows ?? []).map((m) => [m.id, { home: m.home_score as number | null, away: m.away_score as number | null }]),
+  );
+  const teamIdsById = new Map(
+    (matchRows ?? []).map((m) => [
+      m.id,
+      { home: m.home_team_id as string | null, away: m.away_team_id as string | null },
+    ]),
   );
 
   // Paginado: o PostgREST corta em 1000 linhas e a tabela de palpites já
@@ -156,8 +162,11 @@ export default async function AdminPage() {
   const matrixColumns: MatrixColumn[] = [...matches]
     .sort((a, b) => a.matchNumber - b.matchNumber)
     .map((m) => {
-      const homeCode = m.homeTeamId ? teamCode.get(m.homeTeamId) ?? '?' : '?';
-      const awayCode = m.awayTeamId ? teamCode.get(m.awayTeamId) ?? '?' : '?';
+      const ids = teamIdsById.get(m.id);
+      const homeTeamId = ids?.home ?? m.homeTeamId;
+      const awayTeamId = ids?.away ?? m.awayTeamId;
+      const homeCode = homeTeamId ? teamCode.get(homeTeamId) ?? '?' : '?';
+      const awayCode = awayTeamId ? teamCode.get(awayTeamId) ?? '?' : '?';
       const sc = scoreById.get(m.id);
       return {
         matchId: m.id,

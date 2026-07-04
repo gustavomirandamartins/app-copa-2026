@@ -5,14 +5,10 @@ import Link from 'next/link';
 import { Trophy, Medal, History, Globe2, Star, ArrowUpRight } from 'lucide-react';
 import { getKeyPlayer } from '@/data/key-players';
 import { TeamFlag } from '@/components/ui/TeamFlag';
+import { formatPct } from '@/lib/format';
 import type { Team, UfmgProbability } from '@/lib/types';
 
 type ProbMap = Record<string, UfmgProbability>;
-
-/** Formata percentual com 1 casa decimal e vírgula (pt-BR): 3.7 → "3,7". */
-function formatPct(n: number): string {
-  return n.toFixed(1).replace('.', ',');
-}
 
 function stages(prob: UfmgProbability | undefined) {
   if (!prob) return [];

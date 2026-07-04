@@ -252,8 +252,10 @@ export default async function GruposPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {orderedTeams.map(({ standing, team }) => (
-                      <tr key={team.id}>
+                    {orderedTeams.map(({ standing, team }) => {
+                      const qualified = standing.position <= 2 && standing.played >= 3;
+                      return (
+                      <tr key={team.id} className={qualified ? 'qualified' : ''}>
                         <td>
                           <div className="team-cell">
                             <span className="pos">{standing.position}</span>
@@ -261,6 +263,11 @@ export default async function GruposPage() {
                             <Link href={`/selecoes/${team.id}`} style={{ textDecoration: 'none', color: 'var(--text-primary)', fontWeight: 600 }}>
                               {team.name}
                             </Link>
+                            {qualified && (
+                              <span style={{ fontSize: '0.68rem', padding: '2px 7px', borderRadius: 999, background: 'rgba(0,200,83,0.15)', color: 'var(--copa-green)', fontWeight: 700, marginLeft: 4 }}>
+                                Classificado
+                              </span>
+                            )}
                           </div>
                         </td>
                         <td className="pts">{standing.points}</td>
@@ -272,7 +279,8 @@ export default async function GruposPage() {
                         <td>{standing.goals_against}</td>
                         <td>{standing.goal_difference}</td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

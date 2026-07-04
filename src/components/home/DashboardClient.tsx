@@ -7,6 +7,7 @@ import { getTeamById } from '@/data/teams';
 import { getStadiumById } from '@/data/stadiums';
 import { savePredictions } from '@/app/bolao/actions';
 import { formatKickoffDate, formatKickoffTime } from '@/lib/datetime';
+import { formatPct } from '@/lib/format';
 import { winDrawWin, toPercentParts } from '@/lib/bolao/winProbability';
 import { TeamFlag } from '@/components/ui/TeamFlag';
 import { SelecaoCompare } from '@/components/home/SelecaoCompare';
@@ -179,7 +180,7 @@ export function DashboardClient({
   // estimativa por ranking FIFA.
   const featuredProb = matchProbabilities?.[featured.matchNumber];
   const wdw = featuredProb
-    ? { home: Math.round(featuredProb.home), draw: Math.round(featuredProb.draw), away: Math.round(featuredProb.away) }
+    ? { home: featuredProb.home, draw: featuredProb.draw, away: featuredProb.away }
     : fHome && fAway
       ? toPercentParts(winDrawWin(fHome.fifaRanking, fAway.fifaRanking))
       : null;
@@ -263,10 +264,10 @@ export function DashboardClient({
         {/* Barra Vitória — Empate — Vitória */}
         {wdw && (
           <div className="nx-wdw">
-            <div className="nx-wdw-bar" role="img" aria-label={`Probabilidade: ${fHome?.name} ${wdw.home}%, empate ${wdw.draw}%, ${fAway?.name} ${wdw.away}%`}>
-              <span className="nx-wdw-seg nx-wdw-home" style={{ width: `${wdw.home}%` }}>{wdw.home >= 12 && `${wdw.home}%`}</span>
-              <span className="nx-wdw-seg nx-wdw-draw" style={{ width: `${wdw.draw}%` }}>{wdw.draw >= 12 && `${wdw.draw}%`}</span>
-              <span className="nx-wdw-seg nx-wdw-away" style={{ width: `${wdw.away}%` }}>{wdw.away >= 12 && `${wdw.away}%`}</span>
+            <div className="nx-wdw-bar" role="img" aria-label={`Probabilidade: ${fHome?.name} ${formatPct(wdw.home)}%, empate ${formatPct(wdw.draw)}%, ${fAway?.name} ${formatPct(wdw.away)}%`}>
+              <span className="nx-wdw-seg nx-wdw-home" style={{ width: `${wdw.home}%` }}>{wdw.home >= 12 && `${formatPct(wdw.home)}%`}</span>
+              <span className="nx-wdw-seg nx-wdw-draw" style={{ width: `${wdw.draw}%` }}>{wdw.draw >= 12 && `${formatPct(wdw.draw)}%`}</span>
+              <span className="nx-wdw-seg nx-wdw-away" style={{ width: `${wdw.away}%` }}>{wdw.away >= 12 && `${formatPct(wdw.away)}%`}</span>
             </div>
             <div className="nx-wdw-legend">
               <span><i className="nx-dot nx-dot-home" /> Vitória {fHome?.name}</span>

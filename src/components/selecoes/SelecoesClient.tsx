@@ -5,7 +5,21 @@ import Link from 'next/link';
 import { Users, Search, Trophy } from 'lucide-react';
 import { teams } from '@/data/teams';
 import { TeamFlag } from '@/components/ui/TeamFlag';
+import { formatPct } from '@/lib/format';
 import type { Confederation, UfmgProbability } from '@/lib/types';
+
+/** Time eliminado: probabilidades zeradas em todas as fases após a queda. */
+function isEliminated(prob: UfmgProbability | undefined): boolean {
+  if (!prob) return false;
+  return (
+    prob.champion === 0 &&
+    prob.final === 0 &&
+    prob.semifinal === 0 &&
+    prob.quarterFinal === 0 &&
+    prob.roundOf16 === 0 &&
+    prob.roundOf32 === 0
+  );
+}
 
 const confTabs: { key: Confederation | 'all'; label: string }[] = [
   { key: 'all', label: 'Todas' },
@@ -76,10 +90,11 @@ export function SelecoesClient({ probabilities }: Props) {
       <div className="grid-4">
         {filtered.map((team, i) => {
           const prob = probabilities[team.id];
+          const eliminated = isEliminated(prob);
           return (
             <Link key={team.id} href={`/selecoes/${team.id}`} style={{ textDecoration: 'none' }}>
               <div
-                className="glass-card animate-slide-up"
+                className={`glass-card animate-slide-up${eliminated ? ' team-card-eliminated' : ''}`}
                 style={{
                   padding: 'var(--space-lg)',
                   borderLeft: `3px solid ${team.primaryColor}`,
@@ -113,7 +128,7 @@ export function SelecoesClient({ probabilities }: Props) {
                   }}>
                     <Trophy size={12} color="var(--gold)" />
                     <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                      Chance de título: <strong style={{ color: 'var(--gold)' }}>{prob.champion}%</strong>
+                      Chance de título: <strong style={{ color: 'var(--gold)' }}>{formatPct(prob.champion)}%</strong>
                     </span>
                   </div>
                 )}

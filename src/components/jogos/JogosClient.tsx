@@ -11,6 +11,7 @@ import { winDrawWin, toPercentParts } from '@/lib/bolao/winProbability';
 import type { Match, MatchStage, Team, UfmgProbability } from '@/lib/types';
 import type { MatchWinProbability } from '@/lib/bolao/probabilities';
 import { formatKickoffTime, formatKickoffDate } from '@/lib/datetime';
+import { formatPct } from '@/lib/format';
 
 const stageTabs: { key: MatchStage | 'all'; label: string }[] = [
   { key: 'group', label: 'Fase de Grupos' },
@@ -43,7 +44,7 @@ function MatchWinBar({
 }) {
   const prob = matchProbabilities[matchNumber];
   const wdw = prob
-    ? { home: Math.round(prob.home), draw: Math.round(prob.draw), away: Math.round(prob.away) }
+    ? { home: prob.home, draw: prob.draw, away: prob.away }
     : toPercentParts(winDrawWin(home.fifaRanking, away.fifaRanking));
 
   return (
@@ -51,16 +52,16 @@ function MatchWinBar({
       <div
         className="nx-wdw-bar"
         role="img"
-        aria-label={`Probabilidade: ${home.name} ${wdw.home}%, empate ${wdw.draw}%, ${away.name} ${wdw.away}%`}
+        aria-label={`Probabilidade: ${home.name} ${formatPct(wdw.home)}%, empate ${formatPct(wdw.draw)}%, ${away.name} ${formatPct(wdw.away)}%`}
       >
         <span className="nx-wdw-seg nx-wdw-home" style={{ width: `${wdw.home}%` }}>
-          {wdw.home >= 12 && `${wdw.home}%`}
+          {wdw.home >= 12 && `${formatPct(wdw.home)}%`}
         </span>
         <span className="nx-wdw-seg nx-wdw-draw" style={{ width: `${wdw.draw}%` }}>
-          {wdw.draw >= 12 && `${wdw.draw}%`}
+          {wdw.draw >= 12 && `${formatPct(wdw.draw)}%`}
         </span>
         <span className="nx-wdw-seg nx-wdw-away" style={{ width: `${wdw.away}%` }}>
-          {wdw.away >= 12 && `${wdw.away}%`}
+          {wdw.away >= 12 && `${formatPct(wdw.away)}%`}
         </span>
       </div>
       <div className="nx-wdw-legend">

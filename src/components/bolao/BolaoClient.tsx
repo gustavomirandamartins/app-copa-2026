@@ -117,13 +117,17 @@ export function BolaoClient({
     setValues((prev) => {
       const next = new Map(prev);
       for (const match of allMatches) {
-        if (!match.homeTeamId || !match.awayTeamId) continue;
+        // Times reais (banco) têm prioridade sobre o array estático, que
+        // ainda tem null para confrontos de mata-mata não decididos em build-time.
+        const homeTeamId = results[match.id]?.homeTeamId ?? match.homeTeamId;
+        const awayTeamId = results[match.id]?.awayTeamId ?? match.awayTeamId;
+        if (!homeTeamId || !awayTeamId) continue;
         // Status real do banco tem prioridade sobre o estático ('scheduled').
         const liveStatus = results[match.id]?.status ?? match.status;
         if (liveStatus !== 'scheduled') continue;
         if (new Date(match.dateUTC).getTime() <= Date.now()) continue;
-        const home = getTeamById(match.homeTeamId);
-        const away = getTeamById(match.awayTeamId);
+        const home = getTeamById(homeTeamId);
+        const away = getTeamById(awayTeamId);
         if (!home || !away) continue;
         const score = simulateScore(home.fifaRanking, away.fifaRanking);
         next.set(match.id, { home: score.home, away: score.away, autofilled: true });

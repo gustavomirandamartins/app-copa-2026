@@ -341,6 +341,16 @@ a:hover { color: var(--copa-green-deep); }
   box-shadow: var(--shadow-lg), var(--shadow-glow-green);
 }
 
+/* Seleção eliminada: esmaece o card sem tocar transform/backdrop-filter. */
+.team-card-eliminated {
+  opacity: 0.5;
+  filter: grayscale(70%);
+}
+
+.team-card-eliminated:hover {
+  opacity: 0.75;
+}
+
 .glass-card-static {
   background: var(--glass-bg);
   /* Só a propriedade padrão — o Lightning CSS adiciona o -webkit- para

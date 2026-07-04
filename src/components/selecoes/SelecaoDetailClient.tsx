@@ -10,6 +10,7 @@ import { getKeyPlayer } from '@/data/key-players';
 import { TeamFlag } from '@/components/ui/TeamFlag';
 import { SquadDropdown } from '@/components/selecoes/SquadDropdown';
 import { formatKickoffTime } from '@/lib/datetime';
+import { formatPct } from '@/lib/format';
 import { createBrowserSupabaseClient } from '@/lib/supabase/client';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
 import type { MatchStatus, UfmgProbability } from '@/lib/types';
@@ -209,7 +210,7 @@ export function SelecaoDetailClient({ teamId, prob }: Props) {
                 background: 'var(--gradient-gold)', WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent', backgroundClip: 'text',
               }}>
-                {prob.champion}%
+                {formatPct(prob.champion)}%
               </div>
               <div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>
                 Chance de título
@@ -295,7 +296,7 @@ export function SelecaoDetailClient({ teamId, prob }: Props) {
                     fontSize: '1.25rem', fontWeight: 800, fontFamily: 'var(--font-heading)',
                     color: s.label === 'Campeão' ? 'var(--gold)' : 'var(--text-primary)',
                   }}>
-                    {s.value}%
+                    {formatPct(s.value)}%
                   </div>
                   <div style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>{s.label}</div>
                 </div>
