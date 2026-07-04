@@ -8,19 +8,6 @@ import { TeamFlag } from '@/components/ui/TeamFlag';
 import { formatPct } from '@/lib/format';
 import type { Confederation, UfmgProbability } from '@/lib/types';
 
-/** Time eliminado: probabilidades zeradas em todas as fases após a queda. */
-function isEliminated(prob: UfmgProbability | undefined): boolean {
-  if (!prob) return false;
-  return (
-    prob.champion === 0 &&
-    prob.final === 0 &&
-    prob.semifinal === 0 &&
-    prob.quarterFinal === 0 &&
-    prob.roundOf16 === 0 &&
-    prob.roundOf32 === 0
-  );
-}
-
 const confTabs: { key: Confederation | 'all'; label: string }[] = [
   { key: 'all', label: 'Todas' },
   { key: 'UEFA', label: 'UEFA' },
@@ -33,11 +20,13 @@ const confTabs: { key: Confederation | 'all'; label: string }[] = [
 
 interface Props {
   probabilities: Record<string, UfmgProbability>;
+  eliminatedTeamIds: string[];
 }
 
-export function SelecoesClient({ probabilities }: Props) {
+export function SelecoesClient({ probabilities, eliminatedTeamIds }: Props) {
   const [search, setSearch] = useState('');
   const [conf, setConf] = useState<Confederation | 'all'>('all');
+  const eliminatedSet = useMemo(() => new Set(eliminatedTeamIds), [eliminatedTeamIds]);
 
   const filtered = useMemo(() => {
     return teams
@@ -90,7 +79,7 @@ export function SelecoesClient({ probabilities }: Props) {
       <div className="grid-4">
         {filtered.map((team, i) => {
           const prob = probabilities[team.id];
-          const eliminated = isEliminated(prob);
+          const eliminated = eliminatedSet.has(team.id);
           return (
             <Link key={team.id} href={`/selecoes/${team.id}`} style={{ textDecoration: 'none' }}>
               <div

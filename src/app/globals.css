@@ -886,6 +886,9 @@ a:hover { color: var(--copa-green-deep); }
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--space-md);
+  /* Sem isto, expandir um card de jogo estica a altura da linha inteira do
+     grid e o card vizinho ganha espaço em branco embaixo mesmo fechado. */
+  align-items: start;
 }
 
 .grid-3 {

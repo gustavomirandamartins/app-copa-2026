@@ -3,7 +3,7 @@ import { matches as staticMatches } from '@/data/matches';
 
 type Admin = ReturnType<typeof createAdminClient>;
 
-interface MatchRow {
+export interface MatchRow {
   id: string;
   status: string;
   home_score: number | null;
@@ -20,7 +20,7 @@ interface MatchRow {
  * away_penalties, derivados em extractScore). Enquanto não houver resultado
  * decisivo, retorna null — o avanço só acontece quando a vaga está definida.
  */
-function decide(m: MatchRow): { winner: string | null; loser: string | null } {
+export function decide(m: MatchRow): { winner: string | null; loser: string | null } {
   if (m.status !== 'finished' || m.home_score == null || m.away_score == null) {
     return { winner: null, loser: null };
   }
