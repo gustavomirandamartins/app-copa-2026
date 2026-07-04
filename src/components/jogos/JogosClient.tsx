@@ -2,11 +2,14 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { Calendar, MapPin } from 'lucide-react';
+import { Calendar, MapPin, ChevronDown } from 'lucide-react';
 import { getTeamById } from '@/data/teams';
 import { getStadiumById } from '@/data/stadiums';
 import { TeamFlag } from '@/components/ui/TeamFlag';
-import type { Match, MatchStage } from '@/lib/types';
+import { SelecaoCompare } from '@/components/home/SelecaoCompare';
+import { winDrawWin, toPercentParts } from '@/lib/bolao/winProbability';
+import type { Match, MatchStage, Team, UfmgProbability } from '@/lib/types';
+import type { MatchWinProbability } from '@/lib/bolao/probabilities';
 import { formatKickoffTime, formatKickoffDate } from '@/lib/datetime';
 
 const stageTabs: { key: MatchStage | 'all'; label: string }[] = [
@@ -27,8 +30,66 @@ function MatchTimeChip({ dateUTC }: { dateUTC: string }) {
   return <span className="match-card-time-chip">{time}</span>;
 }
 
-export function JogosClient({ matches }: { matches: Match[] }) {
+function MatchWinBar({
+  home,
+  away,
+  matchNumber,
+  matchProbabilities,
+}: {
+  home: Team;
+  away: Team;
+  matchNumber: number;
+  matchProbabilities: Record<number, MatchWinProbability>;
+}) {
+  const prob = matchProbabilities[matchNumber];
+  const wdw = prob
+    ? { home: Math.round(prob.home), draw: Math.round(prob.draw), away: Math.round(prob.away) }
+    : toPercentParts(winDrawWin(home.fifaRanking, away.fifaRanking));
+
+  return (
+    <div className="nx-wdw">
+      <div
+        className="nx-wdw-bar"
+        role="img"
+        aria-label={`Probabilidade: ${home.name} ${wdw.home}%, empate ${wdw.draw}%, ${away.name} ${wdw.away}%`}
+      >
+        <span className="nx-wdw-seg nx-wdw-home" style={{ width: `${wdw.home}%` }}>
+          {wdw.home >= 12 && `${wdw.home}%`}
+        </span>
+        <span className="nx-wdw-seg nx-wdw-draw" style={{ width: `${wdw.draw}%` }}>
+          {wdw.draw >= 12 && `${wdw.draw}%`}
+        </span>
+        <span className="nx-wdw-seg nx-wdw-away" style={{ width: `${wdw.away}%` }}>
+          {wdw.away >= 12 && `${wdw.away}%`}
+        </span>
+      </div>
+      <div className="nx-wdw-legend">
+        <span>
+          <i className="nx-dot nx-dot-home" /> Vitória {home.name}
+        </span>
+        <span>
+          <i className="nx-dot nx-dot-draw" /> Empate
+        </span>
+        <span>
+          <i className="nx-dot nx-dot-away" /> Vitória {away.name}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+export function JogosClient({
+  matches,
+  probabilities,
+  matchProbabilities,
+}: {
+  matches: Match[];
+  probabilities: Record<string, UfmgProbability>;
+  matchProbabilities: Record<number, MatchWinProbability>;
+}) {
   const [activeStage, setActiveStage] = useState<MatchStage | 'all'>('group');
+  const [hasHandledHash, setHasHandledHash] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const filteredMatches = useMemo(() => {
     const list = activeStage === 'all' ? matches : matches.filter((m) => m.stage === activeStage);
@@ -48,6 +109,33 @@ export function JogosClient({ matches }: { matches: Match[] }) {
     });
     setGroupedByDate(groups);
   }, [filteredMatches]);
+
+  // Ao entrar com hash #match-{id} (vindo do bracket), ativa a aba da fase
+  // e rola até o card correspondente.
+  useEffect(() => {
+    if (hasHandledHash || typeof window === 'undefined') return;
+    const hash = window.location.hash;
+    if (!hash.startsWith('#match-')) return;
+    const matchId = hash.slice('#match-'.length);
+    const match = matches.find((m) => m.id === matchId);
+    if (!match) return;
+    setActiveStage(match.stage);
+    setHasHandledHash(true);
+    window.location.hash = '';
+    const timer = window.setTimeout(() => {
+      const el = document.getElementById(`match-${matchId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.add('match-card-highlight');
+        window.setTimeout(() => el.classList.remove('match-card-highlight'), 1800);
+      }
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [hasHandledHash, matches]);
+
+  function toggleExpand(id: string) {
+    setExpandedId((prev) => (prev === id ? null : id));
+  }
 
   return (
     <div className="container">
@@ -75,106 +163,169 @@ export function JogosClient({ matches }: { matches: Match[] }) {
 
       <>
         {Array.from(groupedByDate.entries()).map(([dateLabel, dayMatches]) => (
-        <section key={dateLabel} className="animate-slide-up" style={{ marginBottom: 'var(--space-xl)' }}>
-          <h3 style={{
-            fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-tertiary)',
-            textTransform: 'capitalize', marginBottom: 'var(--space-md)',
-            paddingBottom: 'var(--space-sm)', borderBottom: '1px solid var(--glass-border)',
-          }}>
-            {dateLabel}
-          </h3>
-          <div className="grid-2">
-            {dayMatches.map((match) => {
-              const home = match.homeTeamId ? getTeamById(match.homeTeamId) : null;
-              const away = match.awayTeamId ? getTeamById(match.awayTeamId) : null;
-              const stadium = getStadiumById(match.stadiumId);
-              return (
-                <div key={match.id} className="glass-card match-card">
-                  <div className="match-card-header">
-                    {match.group && <span className="badge badge-group">Grupo {match.group}</span>}
-                    <span>
-                      Jogo #{match.matchNumber}
-                      {match.status === 'live' && (
-                        <span className="match-live-dot"> ● AO VIVO</span>
-                      )}
-                    </span>
-                    <MatchTimeChip dateUTC={match.dateUTC} />
-                  </div>
-                  <div className="match-card-teams">
-                    <div className="match-card-team">
-                      {home ? (
-                        <Link href={`/selecoes/${match.homeTeamId}`} style={{ display: 'contents', textDecoration: 'none', color: 'inherit' }}>
-                          <TeamFlag name={home.name} flagEmoji={home.flag} size={40} />
-                          <span className="name">{home.name}</span>
-                        </Link>
-                      ) : (
-                        <>
-                          <span className="flag">🏳️</span>
-                          <span className="name">{match.homeTeamPlaceholder || 'A definir'}</span>
-                        </>
-                      )}
-                    </div>
-                    {match.status === 'finished' ? (
-                      <div className="match-card-score">
-                        <span>{match.homeGoals}</span>
-                        <span className="separator">×</span>
-                        <span>{match.awayGoals}</span>
-                      </div>
-                    ) : match.status === 'live' ? (
-                      <div className="match-card-score" style={{ color: 'var(--copa-green)' }}>
-                        <span>{match.homeGoals ?? 0}</span>
-                        <span className="separator">×</span>
-                        <span>{match.awayGoals ?? 0}</span>
-                      </div>
-                    ) : (
-                      <div className="match-card-score match-card-score-vs">
-                        <span className="separator">×</span>
-                      </div>
-                    )}
-                    <div className="match-card-team">
-                      {away ? (
-                        <Link href={`/selecoes/${match.awayTeamId}`} style={{ display: 'contents', textDecoration: 'none', color: 'inherit' }}>
-                          <TeamFlag name={away.name} flagEmoji={away.flag} size={40} />
-                          <span className="name">{away.name}</span>
-                        </Link>
-                      ) : (
-                        <>
-                          <span className="flag">🏳️</span>
-                          <span className="name">{match.awayTeamPlaceholder || 'A definir'}</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  {match.status === 'finished' &&
-                    match.homePenalties != null &&
-                    match.awayPenalties != null && (
-                      <div
-                        style={{
-                          textAlign: 'center',
-                          fontSize: '0.75rem',
-                          color: 'var(--text-tertiary)',
-                          marginTop: 'var(--space-xs)',
-                        }}
-                      >
-                        Pênaltis: {match.homePenalties} × {match.awayPenalties}
-                      </div>
-                    )}
-                  {stadium && (
-                    <div className="match-card-footer">
-                      <MapPin size={12} />
-                      <span>{stadium.name}, {stadium.city}</span>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      ))}
+          <section key={dateLabel} className="animate-slide-up" style={{ marginBottom: 'var(--space-xl)' }}>
+            <h3
+              style={{
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                color: 'var(--text-tertiary)',
+                textTransform: 'capitalize',
+                marginBottom: 'var(--space-md)',
+                paddingBottom: 'var(--space-sm)',
+                borderBottom: '1px solid var(--glass-border)',
+              }}
+            >
+              {dateLabel}
+            </h3>
+            <div className="grid-2">
+              {dayMatches.map((match) => {
+                const home = match.homeTeamId ? getTeamById(match.homeTeamId) : null;
+                const away = match.awayTeamId ? getTeamById(match.awayTeamId) : null;
+                const stadium = getStadiumById(match.stadiumId);
+                const isExpanded = expandedId === match.id;
+                const canExpand = Boolean(home && away);
 
-      {filteredMatches.length === 0 && (
-        <div style={{ textAlign: 'center', padding: 'var(--space-3xl) 0', color: 'var(--text-tertiary)' }}>
-          <Calendar size={48} style={{ opacity: 0.3, marginBottom: 'var(--space-md)' }} />
+                return (
+                  <div
+                    key={match.id}
+                    id={`match-${match.id}`}
+                    className={`glass-card match-card ${canExpand ? 'match-card-expandable' : ''} ${
+                      isExpanded ? 'is-expanded' : ''
+                    }`}
+                    onClick={() => canExpand && toggleExpand(match.id)}
+                    role={canExpand ? 'button' : undefined}
+                    tabIndex={canExpand ? 0 : undefined}
+                    onKeyDown={(e) => {
+                      if (canExpand && (e.key === 'Enter' || e.key === ' ')) {
+                        e.preventDefault();
+                        toggleExpand(match.id);
+                      }
+                    }}
+                    aria-expanded={canExpand ? isExpanded : undefined}
+                  >
+                    <div className="match-card-header">
+                      {match.group && <span className="badge badge-group">Grupo {match.group}</span>}
+                      <span>
+                        Jogo #{match.matchNumber}
+                        {match.status === 'live' && <span className="match-live-dot"> ● AO VIVO</span>}
+                      </span>
+                      <MatchTimeChip dateUTC={match.dateUTC} />
+                    </div>
+
+                    <div className="match-card-teams">
+                      <div className="match-card-team">
+                        {home ? (
+                          <Link
+                            href={`/selecoes/${match.homeTeamId}`}
+                            style={{ display: 'contents', textDecoration: 'none', color: 'inherit' }}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <TeamFlag name={home.name} flagEmoji={home.flag} size={40} />
+                            <span className="name">{home.name}</span>
+                          </Link>
+                        ) : (
+                          <>
+                            <span className="flag">🏳️</span>
+                            <span className="name">{match.homeTeamPlaceholder || 'A definir'}</span>
+                          </>
+                        )}
+                      </div>
+
+                      {match.status === 'finished' ? (
+                        <div className="match-card-score">
+                          <span>{match.homeGoals}</span>
+                          <span className="separator">×</span>
+                          <span>{match.awayGoals}</span>
+                        </div>
+                      ) : match.status === 'live' ? (
+                        <div className="match-card-score" style={{ color: 'var(--copa-green)' }}>
+                          <span>{match.homeGoals ?? 0}</span>
+                          <span className="separator">×</span>
+                          <span>{match.awayGoals ?? 0}</span>
+                        </div>
+                      ) : (
+                        <div className="match-card-score match-card-score-vs">
+                          <span className="separator">×</span>
+                        </div>
+                      )}
+
+                      <div className="match-card-team">
+                        {away ? (
+                          <Link
+                            href={`/selecoes/${match.awayTeamId}`}
+                            style={{ display: 'contents', textDecoration: 'none', color: 'inherit' }}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <TeamFlag name={away.name} flagEmoji={away.flag} size={40} />
+                            <span className="name">{away.name}</span>
+                          </Link>
+                        ) : (
+                          <>
+                            <span className="flag">🏳️</span>
+                            <span className="name">{match.awayTeamPlaceholder || 'A definir'}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    {match.status === 'finished' &&
+                      match.homePenalties != null &&
+                      match.awayPenalties != null && (
+                        <div
+                          style={{
+                            textAlign: 'center',
+                            fontSize: '0.75rem',
+                            color: 'var(--text-tertiary)',
+                            marginTop: 'var(--space-xs)',
+                          }}
+                        >
+                          Pênaltis: {match.homePenalties} × {match.awayPenalties}
+                        </div>
+                      )}
+
+                    {stadium && (
+                      <div className="match-card-footer">
+                        <MapPin size={12} />
+                        <span>
+                          {stadium.name}, {stadium.city}
+                        </span>
+                      </div>
+                    )}
+
+                    {canExpand && (
+                      <div className="match-card-expand-hint" aria-hidden="true">
+                        <ChevronDown size={16} />
+                      </div>
+                    )}
+
+                    {isExpanded && home && away && (
+                      <div className="match-card-expanded">
+                        <div className="match-card-expanded-section">
+                          <h4 className="match-card-expanded-title">Probabilidades</h4>
+                          <MatchWinBar
+                            home={home}
+                            away={away}
+                            matchNumber={match.matchNumber}
+                            matchProbabilities={matchProbabilities}
+                          />
+                        </div>
+
+                        <div className="match-card-expanded-section">
+                          <h4 className="match-card-expanded-title">Conheça as seleções</h4>
+                          <SelecaoCompare home={home} away={away} probabilities={probabilities} />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        ))}
+
+        {filteredMatches.length === 0 && (
+          <div style={{ textAlign: 'center', padding: 'var(--space-3xl) 0', color: 'var(--text-tertiary)' }}>
+            <Calendar size={48} style={{ opacity: 0.3, marginBottom: 'var(--space-md)' }} />
             <p>Nenhum jogo nesta fase ainda.</p>
           </div>
         )}

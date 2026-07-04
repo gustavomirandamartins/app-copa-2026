@@ -2,19 +2,24 @@
   width: 100%;
   margin-top: var(--space-md);
   animation: fade-in-bracket 0.6s var(--ease) forwards;
+  position: relative;
 }
 
 @keyframes fade-in-bracket {
-  from { opacity: 0; transform: translateY(20px); }
+  from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Navegação por rodada (toque para enquadrar a coluna) */
+/* ================================================================
+   NAVEGAÇÃO — pills + Ver tudo
+   ================================================================ */
 .bracket-roundnav {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-xs);
   margin-bottom: var(--space-md);
+  justify-content: center;
+  align-items: center;
 }
 
 .bracket-roundnav-btn {
@@ -24,371 +29,506 @@
   color: var(--text-secondary);
   font-size: 0.78rem;
   font-weight: 600;
-  padding: 6px 12px;
+  padding: 6px 14px;
   border-radius: 999px;
   cursor: pointer;
   white-space: nowrap;
-  transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+  transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .bracket-roundnav-btn:hover {
   background: var(--glass-bg-hover);
   color: var(--text-primary);
+  border-color: rgba(255,255,255,0.22);
 }
 
 .bracket-roundnav-btn.active {
-  border-color: var(--copa-green);
-  color: var(--text-primary);
-  background: var(--glass-bg-hover);
-}
-
-/* Janela fixa que recorta o canvas transformado */
-.bracket-viewport {
-  position: relative;
-  width: 100%;
-  height: min(68vh, 620px);
-  overflow: hidden;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--glass-border);
-  touch-action: none;
-  cursor: grab;
-}
-
-.bracket-viewport.dragging {
-  cursor: grabbing;
-}
-
-/* Canvas posicionado em (0,0); animado via transform (escala + deslocamento) */
-.bracket-canvas {
-  position: absolute;
-  top: 0;
-  left: 0;
-  transform-origin: 0 0;
-  padding: var(--space-md) var(--space-xl);
-  width: max-content;
-}
-
-/* Transição estilo "spring" usada ao focar/enquadrar (não durante o arrasto) */
-.bracket-canvas.animating {
-  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  border-color: var(--gold);
+  color: #fff;
+  background: rgba(224, 124, 0, 0.22);
+  box-shadow: 0 0 16px rgba(224, 124, 0, 0.20);
 }
 
 .bracket-overview-btn {
-  position: absolute;
-  bottom: var(--space-md);
-  right: var(--space-md);
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
+  gap: 5px;
+  padding: 6px 12px;
   border-radius: 999px;
   border: 1px solid var(--glass-border);
   background: var(--glass-bg);
-  backdrop-filter: blur(12px);
   color: var(--text-primary);
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
-  z-index: 10;
-  transition: background var(--transition-fast), transform var(--transition-fast);
+  transition: background var(--transition-fast), border-color var(--transition-fast);
 }
 
 .bracket-overview-btn:hover {
   background: var(--glass-bg-hover);
-  transform: translateY(-1px);
+  border-color: rgba(255,255,255,0.22);
 }
 
-/* ════════════════════════════════════════════════════════════════
-   Chaveamento espelhado: duas metades (16avos → oitavas → quartas →
-   semis) convergindo para a Final ao centro, como um mata-mata
-   tradicional. Cada rodada usa uma coluna cuja altura de slot DOBRA a
-   cada rodada (--bracket-unit × 2^rodada) — truque clássico de bracket
-   em CSS puro: sem medir pixels via JS, o dobro de altura já alinha
-   cada jogo exatamente no meio dos dois jogos que o alimentam.
-   ════════════════════════════════════════════════════════════════ */
-/* O card (cabeçalho + 2 linhas de time + padding) renderiza a ~119px de
-   altura, medido — independe da largura da coluna. 140px dá ~21px de
-   distância mínima entre um card e o próximo, sem sobrepor. */
-:root {
-  --bracket-unit: 140px;
-}
-
-.bracket-mirror {
-  display: flex;
-  align-items: stretch;
-  gap: 32px;
-}
-
-.bracket-side {
-  display: flex;
-  gap: 32px;
-}
-
-.bracket-col {
-  display: flex;
-  flex-direction: column;
-  width: 200px;
-  flex-shrink: 0;
-}
-
-.bracket-col-title {
-  text-align: center;
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: var(--space-xl);
-}
-
-.bracket-col-slots {
-  display: flex;
-  flex-direction: column;
-}
-
-.bracket-slot {
+/* ================================================================
+   VIEWPORT
+   ================================================================ */
+.bracket-viewport {
   position: relative;
-  display: flex;
-  align-items: center;
+  width: 100%;
+  height: min(72vh, 640px);
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--glass-border);
+  background: rgba(8, 6, 18, 0.22);
 }
 
-.bracket-slot.stage-h-0 { height: calc(var(--bracket-unit) * 1); }
-.bracket-slot.stage-h-1 { height: calc(var(--bracket-unit) * 2); }
-.bracket-slot.stage-h-2 { height: calc(var(--bracket-unit) * 4); }
-.bracket-slot.stage-h-3 { height: calc(var(--bracket-unit) * 8); }
+/* ================================================================
+   CANVAS — animado por framer-motion spring
+   ================================================================ */
+.bracket-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: var(--space-lg) var(--space-xl) var(--space-2xl);
+  will-change: transform;
+}
 
-.bracket-slot .bracket-card { width: 100%; }
+/* ================================================================
+   ÁRVORE — layout das três seções
+   ================================================================ */
+.bracket-tree {
+  display: flex;
+  gap: 0;
+  align-items: stretch;
+}
 
-/* ── Coluna central: só a Final mora aqui. Estrutura idêntica a
-   `.bracket-col` (título + slot de 8 unidades) de propósito — é assim que o
-   card fica exatamente no meio da linha que liga as duas Semis: o título
-   "Final" ocupa o mesmo espaço que os títulos "Semifinais" ocupam nas
-   colunas ao lado, então o slot de 8 unidades abaixo começa na mesma altura
-   e centraliza o card no mesmo ponto em que as linhas convergem. Sem isso,
-   o grupo título+card seria centralizado como bloco e o card ficaria acima
-   do meio real. A Decisão do 3º lugar foi retirada daqui de propósito: fica
-   fora do chaveamento, sem nenhuma linha. ── */
-.bracket-center {
+.bracket-tree-half {
+  display: flex;
+  gap: 0;
+  align-items: stretch;
+}
+
+.bracket-tree-left {
+  flex-direction: row;
+}
+
+.bracket-tree-right {
+  flex-direction: row;
+}
+
+/* ── Coluna de uma etapa ────────────────────────────────────────── */
+.bracket-tree-column {
   display: flex;
   flex-direction: column;
-  width: 220px;
+  min-width: 140px;
+}
+
+.bracket-tree-col-title {
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.64rem;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding-bottom: var(--space-sm);
   flex-shrink: 0;
 }
 
-.bracket-final-slot {
-  height: calc(var(--bracket-unit) * 8);
+/* Altura fixa: comporta 16 partidas da R32 (~60px cada). O flex-grow
+   dos wrappers distribui as partidas uniformemente dentro desta altura,
+   garantindo alinhamento vertical perfeito entre as colunas. */
+.bracket-tree-col-matches {
+  display: flex;
+  flex-direction: column;
+  height: 960px;
+}
+
+/* ── Wrapper de cada partida ────────────────────────────────────── */
+/* O flexGrow é setado inline (1=R32, 2=R16, 4=QF, 8=SF) garantindo
+   que todas as colunas tenham a mesma altura e cada partida fique
+   centrada em relação aos seus alimentadores. */
+.bracket-tree-match-wrapper {
   display: flex;
   align-items: center;
+  justify-content: center;
+  position: relative;
 }
 
-.bracket-final-slot .bracket-card { width: 100%; }
-
-/* ── Decisão do 3º lugar: fora do chaveamento, centralizada sob o bracket
-   inteiro, sem conectores. ── */
-.bracket-third-place {
-  width: 220px;
-  margin: var(--space-2xl) auto 0;
+/* ── Centro: Final + 3º lugar ──────────────────────────────────── */
+.bracket-tree-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 150px;
+  margin: 0 28px;
+  gap: var(--space-lg);
 }
 
-/* ── Linhas de conexão (metade esquerda: saem para a direita, entram
-   pela esquerda) ── */
-.bracket-side-left .bracket-col:not(.is-inner) .bracket-slot::after {
-  content: '';
-  position: absolute;
-  right: -16px;
-  width: 16px;
-  border-right: 3px solid rgba(255, 255, 255, 0.55);
-  border-top: 3px solid rgba(255, 255, 255, 0.55);
-  border-radius: 0 6px 0 0;
-  top: 50%;
-  bottom: -50%;
-}
-.bracket-side-left .bracket-col:not(.is-inner) .bracket-slot.slot-b::after {
-  top: -50%;
-  bottom: 50%;
-  border-top: none;
-  border-bottom: 3px solid rgba(255, 255, 255, 0.55);
-  border-radius: 0 0 6px 0;
-}
-.bracket-side-left .bracket-col.is-inner .bracket-slot::after {
-  content: '';
-  position: absolute;
-  right: -16px;
-  width: 16px;
-  top: 50%;
-  border-top: 3px solid rgba(255, 255, 255, 0.55);
-}
-.bracket-side-left .bracket-col:not(.is-outer) .bracket-slot::before {
-  content: '';
-  position: absolute;
-  left: -16px;
-  width: 16px;
-  top: 50%;
-  border-top: 3px solid rgba(255, 255, 255, 0.55);
-}
-
-/* ── Linhas de conexão (metade direita: espelhadas — saem para a
-   esquerda, entram pela direita) ── */
-.bracket-side-right .bracket-col:not(.is-inner) .bracket-slot::before {
-  content: '';
-  position: absolute;
-  left: -16px;
-  width: 16px;
-  border-left: 3px solid rgba(255, 255, 255, 0.55);
-  border-top: 3px solid rgba(255, 255, 255, 0.55);
-  border-radius: 6px 0 0 0;
-  top: 50%;
-  bottom: -50%;
-}
-.bracket-side-right .bracket-col:not(.is-inner) .bracket-slot.slot-b::before {
-  top: -50%;
-  bottom: 50%;
-  border-top: none;
-  border-bottom: 3px solid rgba(255, 255, 255, 0.55);
-  border-radius: 0 0 0 6px;
-}
-.bracket-side-right .bracket-col.is-inner .bracket-slot::before {
-  content: '';
-  position: absolute;
-  left: -16px;
-  width: 16px;
-  top: 50%;
-  border-top: 3px solid rgba(255, 255, 255, 0.55);
-}
-.bracket-side-right .bracket-col:not(.is-outer) .bracket-slot::after {
-  content: '';
-  position: absolute;
-  right: -16px;
-  width: 16px;
-  top: 50%;
-  border-top: 3px solid rgba(255, 255, 255, 0.55);
-}
-
-@media (max-width: 640px) {
-  /* Só a largura encolhe no mobile — a altura do card não muda com a
-     largura da coluna (medido: ~119px nas duas), então --bracket-unit
-     precisa continuar igual para não voltar a sobrepor. */
-  .bracket-col { width: 168px; }
-  .bracket-center { width: 180px; }
-  .bracket-third-place { width: 180px; }
-}
-
-/* The card itself */
-.bracket-card {
-  padding: 10px 12px;
+/* ================================================================
+   CARD — glassmorphism compacto
+   ================================================================ */
+.bracket-tree-card {
+  width: 100%;
+  padding: 7px 10px;
   border-radius: var(--radius-md);
-  font-size: 0.85rem;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+  border: 1px solid var(--glass-border);
+  cursor: pointer;
   position: relative;
   z-index: 2;
-  transition: transform var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast), opacity var(--transition-fast);
-  cursor: default;
-  /* Staggered animation */
-  animation: slide-in-card 0.5s var(--ease) backwards;
+  transition: border-color var(--transition-fast), background var(--transition-fast), box-shadow var(--transition-fast), opacity var(--transition-fast), filter var(--transition-fast);
 }
 
-/* Add a slight stagger based on DOM order for a waterfall effect */
-.bracket-card:nth-child(1) { animation-delay: 0.05s; }
-.bracket-card:nth-child(2) { animation-delay: 0.1s; }
-.bracket-card:nth-child(3) { animation-delay: 0.15s; }
-.bracket-card:nth-child(4) { animation-delay: 0.2s; }
-.bracket-card:nth-child(5) { animation-delay: 0.25s; }
-
-@keyframes slide-in-card {
-  from { opacity: 0; transform: translateX(-15px); }
-  to { opacity: 1; transform: translateX(0); }
-}
-
-.bracket-card:hover {
-  transform: translateY(-2px) scale(1.02);
+.bracket-tree-card:hover {
   border-color: var(--glass-border-hover);
   background: var(--glass-bg-hover);
-  z-index: 3;
+  box-shadow: var(--shadow-sm), var(--shadow-glow-green);
 }
 
-/* Hover effect highlights */
-.bracket-card.active {
-  border-color: var(--copa-green);
-  box-shadow: var(--shadow-glow-green);
+.bracket-tree-card.muted {
+  opacity: 0.25;
+  filter: grayscale(0.7);
 }
 
-.bracket-card.muted {
-  opacity: 0.4;
-  filter: grayscale(80%);
-}
-
-.bracket-card-header {
+.bracket-tree-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 6px;
-  font-size: 0.75rem;
+  align-items: center;
+  margin-bottom: 4px;
+  font-size: 0.62rem;
   color: var(--text-tertiary);
 }
 
-.match-num-group {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 0;
-  flex: 1;
-}
-
-.match-num {
-  font-weight: 600;
-}
-
-.match-datetime {
-  font-size: 0.68rem;
-  font-weight: 400;
-  color: var(--text-tertiary);
-  opacity: 0.75;
-}
-
-.match-live {
-  flex-shrink: 0;
-}
-
-.match-live {
+.bracket-tree-live {
   color: var(--red);
   animation: pulse-live 1.5s infinite;
+  font-size: 0.7rem;
 }
 
 @keyframes pulse-live {
   0% { opacity: 1; }
-  50% { opacity: 0.5; }
+  50% { opacity: 0.4; }
   100% { opacity: 1; }
 }
 
-.bracket-card-team {
+.bracket-tree-team {
   display: flex;
   align-items: center;
-  padding: 4px 0;
-  gap: 8px;
+  justify-content: space-between;
+  padding: 2px 0;
+  gap: 6px;
 }
 
-.bracket-card-team .team-name {
-  flex-grow: 1;
-  font-weight: 600;
+.bracket-tree-team-left {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+.bracket-tree-code {
+  font-weight: 700;
+  font-size: 0.72rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: #fff;
 }
 
-.bracket-card-team .team-name.placeholder {
-  font-weight: 400;
+.bracket-tree-code.placeholder {
+  font-weight: 500;
   color: var(--text-tertiary);
-  font-size: 0.8rem;
+  font-size: 0.68rem;
 }
 
-.team-flag-placeholder {
-  opacity: 0.3;
+.bracket-tree-flag-placeholder {
+  font-size: 0.85rem;
+  line-height: 1;
+  opacity: 0.35;
   filter: grayscale(1);
 }
 
-.team-score {
+.bracket-tree-score {
   font-weight: 700;
-  font-family: monospace;
-  background: rgba(0,0,0,0.1);
-  padding: 2px 6px;
+  font-family: var(--font-heading);
+  background: rgba(0,0,0,0.15);
+  padding: 1px 5px;
   border-radius: 4px;
+  font-size: 0.78rem;
+  min-width: 22px;
+  text-align: center;
+}
+
+/* ================================================================
+   CARD DA FINAL — dourado
+   ================================================================ */
+.bracket-tree-card.is-final {
+  border: 1.5px solid var(--gold);
+  background:
+    linear-gradient(160deg, rgba(224, 124, 0, 0.14), rgba(254, 221, 0, 0.05) 60%, transparent),
+    var(--glass-bg);
+  box-shadow: 0 0 28px rgba(224, 124, 0, 0.18);
+  padding: 10px 12px;
+}
+
+.bracket-tree-card.is-final:hover {
+  border-color: var(--gold);
+  box-shadow: 0 0 36px rgba(224, 124, 0, 0.30);
+}
+
+.bracket-tree-final-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-bottom: 5px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(224, 124, 0, 0.20);
+  border: 1px solid rgba(224, 124, 0, 0.45);
+  color: #ffcf8a;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.bracket-tree-card.is-final .bracket-tree-code {
+  font-size: 0.82rem;
+}
+
+.bracket-tree-card.is-final .bracket-tree-score {
+  font-size: 0.95rem;
+  padding: 2px 8px;
+}
+
+/* ================================================================
+   CARD DO 3º LUGAR — bronze
+   ================================================================ */
+.bracket-tree-card.is-third {
+  border: 1.5px solid rgba(205, 127, 50, 0.50);
+  background:
+    linear-gradient(160deg, rgba(205, 127, 50, 0.08), transparent 60%),
+    var(--glass-bg);
+}
+
+.bracket-tree-card.is-third:hover {
+  border-color: rgba(205, 127, 50, 0.75);
+  box-shadow: 0 0 20px rgba(205, 127, 50, 0.12);
+}
+
+.bracket-tree-third-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  margin-bottom: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(205, 127, 50, 0.16);
+  border: 1px solid rgba(205, 127, 50, 0.38);
+  color: rgba(255, 205, 160, 0.9);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+/* ================================================================
+   LINHAS DE CONEXÃO — técnica de bracket com flex sizing
+   ================================================================ */
+
+/* ── Margens das colunas para espaço das linhas ─────────────────── */
+.bracket-tree-left .bracket-tree-column {
+  margin-right: 28px;
+}
+
+.bracket-tree-right .bracket-tree-column {
+  margin-right: 28px;
+}
+
+/* Extremidades externas não precisam de margem (não há conector para fora) */
+.bracket-tree-left .bracket-tree-column:first-child {
+  margin-left: 0;
+}
+
+.bracket-tree-right .bracket-tree-column:last-child {
+  margin-right: 0;
+}
+
+/* ── Lado ESQUERDO: linhas saem pela direita do card ────────────── */
+
+/* Linha horizontal saindo do card para a direita (para o próximo round) */
+.bracket-tree-left .bracket-tree-match-wrapper:not(:last-child) .bracket-tree-card::after {
+  content: '';
+  position: absolute;
+  left: 100%;
+  width: 14px;
+  top: 50%;
+  border-top: 2px solid rgba(255, 255, 255, 0.45);
+  z-index: 1;
+}
+
+/* Par TOP: linha vertical descendo do meio direito até o par de baixo */
+.bracket-tree-left .bracket-tree-match-wrapper.pair-top::after {
+  content: '';
+  position: absolute;
+  left: 100%;
+  width: 14px;
+  top: 50%;
+  bottom: 0;
+  border-right: 2px solid rgba(255, 255, 255, 0.45);
+  border-top: 2px solid rgba(255, 255, 255, 0.45);
+  border-radius: 0 4px 4px 0;
+  z-index: 1;
+}
+
+/* Par BOTTOM: linha vertical subindo do meio direito até o par de cima,
+   + linha horizontal entrando do próximo round (esquerda) */
+.bracket-tree-left .bracket-tree-match-wrapper.pair-bot::after {
+  content: '';
+  position: absolute;
+  left: 100%;
+  width: 14px;
+  top: 0;
+  height: 50%;
+  border-right: 2px solid rgba(255, 255, 255, 0.45);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.45);
+  border-radius: 0 0 4px 0;
+  z-index: 1;
+}
+
+/* Linha horizontal entrando pela esquerda (do round anterior) */
+.bracket-tree-left .bracket-tree-column:not(:first-child) .bracket-tree-match-wrapper .bracket-tree-card::before {
+  content: '';
+  position: absolute;
+  right: 100%;
+  width: 14px;
+  top: 50%;
+  border-top: 2px solid rgba(255, 255, 255, 0.45);
+  z-index: 1;
+}
+
+/* ── Lado DIREITO: linhas saem pela esquerda do card (espelhado) ── */
+/* Com flex-direction: row e [SF, QF, R16, R32]: first-child = SF (esquerda,
+   próximo ao centro), last-child = R32 (direita, extremidade). */
+
+/* Linha horizontal saindo do card para a esquerda (em direção ao centro) */
+.bracket-tree-right .bracket-tree-match-wrapper:not(:first-child) .bracket-tree-card::after {
+  content: '';
+  position: absolute;
+  right: 100%;
+  width: 14px;
+  top: 50%;
+  border-top: 2px solid rgba(255, 255, 255, 0.45);
+  z-index: 1;
+}
+
+/* Par TOP: linha vertical descendo */
+.bracket-tree-right .bracket-tree-match-wrapper.pair-top::after {
+  content: '';
+  position: absolute;
+  right: 100%;
+  width: 14px;
+  top: 50%;
+  bottom: 0;
+  border-left: 2px solid rgba(255, 255, 255, 0.45);
+  border-top: 2px solid rgba(255, 255, 255, 0.45);
+  border-radius: 4px 0 0 4px;
+  z-index: 1;
+}
+
+/* Par BOTTOM: linha vertical subindo */
+.bracket-tree-right .bracket-tree-match-wrapper.pair-bot::after {
+  content: '';
+  position: absolute;
+  right: 100%;
+  width: 14px;
+  top: 0;
+  height: 50%;
+  border-left: 2px solid rgba(255, 255, 255, 0.45);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.45);
+  border-radius: 0 0 0 4px;
+  z-index: 1;
+}
+
+/* Linha horizontal entrando pela direita (do round anterior, que está à direita) */
+.bracket-tree-right .bracket-tree-column:not(:last-child) .bracket-tree-match-wrapper .bracket-tree-card::before {
+  content: '';
+  position: absolute;
+  left: 100%;
+  width: 14px;
+  top: 50%;
+  border-top: 2px solid rgba(255, 255, 255, 0.45);
+  z-index: 1;
+}
+
+/* ── Centro sem linhas ──────────────────────────────────────────── */
+.bracket-tree-center .bracket-tree-card::before,
+.bracket-tree-center .bracket-tree-card::after {
+  display: none;
+}
+
+/* ── Esconde linhas de saída (::after) nas colunas que conectam ao centro ─ */
+/* Esquerda: última coluna (SF, direita → centro). Direita: primeira coluna (SF, esquerda → centro). */
+.bracket-tree-left .bracket-tree-column:last-child .bracket-tree-match-wrapper::after,
+.bracket-tree-left .bracket-tree-column:last-child .bracket-tree-card::after,
+.bracket-tree-right .bracket-tree-column:first-child .bracket-tree-match-wrapper::after,
+.bracket-tree-right .bracket-tree-column:first-child .bracket-tree-card::after {
+  display: none;
+}
+
+/* ── Esconde linhas de entrada (::before) nas colunas externas ───── */
+/* Esquerda: primeira coluna (R32, esquerda → sem round anterior). Direita: última coluna (R32, direita → sem round anterior). */
+.bracket-tree-left .bracket-tree-column:first-child .bracket-tree-card::before,
+.bracket-tree-right .bracket-tree-column:last-child .bracket-tree-card::before {
+  display: none;
+}
+
+/* ================================================================
+   RESPONSIVIDADE
+   ================================================================ */
+@media (max-width: 767px) {
+  .bracket-viewport {
+    height: min(52vh, 420px);
+  }
+
+  .bracket-tree-col-matches {
+    height: 720px;
+  }
+
+  .bracket-tree-column {
+    min-width: 100px;
+  }
+
+  .bracket-tree-center {
+    min-width: 110px;
+  }
+
+  .bracket-tree-left .bracket-tree-column {
+    margin-right: 18px;
+  }
+
+  .bracket-tree-right .bracket-tree-column {
+    margin-right: 18px;
+  }
+
+  .bracket-roundnav-btn {
+    font-size: 0.72rem;
+    padding: 5px 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .bracket-tree-column {
+    min-width: 84px;
+  }
+
+  .bracket-tree-center {
+    min-width: 96px;
+  }
+
+  .bracket-tree-code {
+    font-size: 0.66rem;
+  }
 }

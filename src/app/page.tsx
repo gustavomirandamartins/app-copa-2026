@@ -28,7 +28,6 @@ import { ScrollReveal } from '@/components/ui/ScrollReveal';
 import { JoinThermometer } from '@/components/home/JoinThermometer';
 import { RankingSnapshot } from '@/components/home/RankingSnapshot';
 import { AuthPanel } from '@/components/auth/AuthPanel';
-import { ReferralCard } from '@/components/bolao/ReferralCard';
 import { type MatchResult } from '@/components/bolao/BolaoClient';
 import { DashboardClient } from '@/components/home/DashboardClient';
 import { BracketCard } from '@/components/home/BracketCard';
@@ -268,14 +267,6 @@ export default async function HomePage() {
             meRoundPoints={meRoundPoints}
           />
         </section>
-
-        {/* ── Indique e ganhe pontos ─────────────────────────── */}
-        {profile.referral_code && (
-          <section className="nx-section">
-            <h2 className="nx-h2"><Users size={18} /> Indique e ganhe pontos</h2>
-            <ReferralCard code={profile.referral_code} bonus={profile.referral_bonus ?? 0} />
-          </section>
-        )}
       </div>
     );
   }

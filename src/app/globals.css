@@ -704,6 +704,81 @@ a:hover { color: var(--copa-green-deep); }
   color: var(--text-tertiary);
 }
 
+/* ---- Match Card Expandido (página /jogos) ---- */
+.match-card-expandable {
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.match-card-expandable:hover {
+  border-color: rgba(224, 124, 0, 0.45);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10), 0 18px 48px rgba(0, 0, 0, 0.34);
+}
+
+.match-card-expandable:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.match-card-expand-hint {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--space-xs);
+  color: var(--text-tertiary);
+  transition: transform 220ms ease;
+}
+
+.match-card.is-expanded .match-card-expand-hint {
+  transform: rotate(180deg);
+}
+
+.match-card-expanded {
+  margin-top: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--glass-border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  animation: match-card-expand-in 220ms ease forwards;
+}
+
+@keyframes match-card-expand-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.match-card-expanded-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.match-card-expanded-title {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 0.01em;
+}
+
+/* Ajusta o SelecaoCompare quando está dentro de um card de jogo */
+.match-card-expanded .nx-sel {
+  padding: 0;
+  background: none;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.match-card-expanded .nx-sel-panel {
+  background: rgba(8, 6, 18, 0.24);
+}
+
 /* ---- Standings Table ---- */
 .standings-table {
   width: 100%;
