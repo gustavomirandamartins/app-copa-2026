@@ -30,13 +30,13 @@
 
 .squad-chevron {
   color: var(--text-tertiary);
-  transition: transform 0.25s ease;
+  transition: transform var(--dur-3) var(--ease-spring);
   flex-shrink: 0;
 }
 
 .squad-panel {
   margin-top: var(--space-sm);
-  animation: squad-reveal 0.25s ease;
+  animation: squad-reveal var(--dur-3) var(--ease);
 }
 
 @keyframes squad-reveal {

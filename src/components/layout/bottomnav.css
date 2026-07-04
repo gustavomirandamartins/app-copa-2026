@@ -37,7 +37,8 @@
   cursor: pointer;
   text-decoration: none;
   font-family: inherit;
-  transition: background 0.2s ease, color 0.2s ease, padding 0.2s ease;
+  /* Padding com --ease-spring: a pill ativa "assenta" com um snap sutil. */
+  transition: background var(--dur-2) var(--ease), color var(--dur-2) var(--ease), padding var(--dur-3) var(--ease-spring);
   -webkit-tap-highlight-color: transparent;
 }
 

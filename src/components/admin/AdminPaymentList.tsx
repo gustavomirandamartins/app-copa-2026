@@ -170,7 +170,7 @@ export function AdminPaymentHistory({
         <ChevronDown
           size={18}
           style={{
-            transition: 'transform 0.2s ease',
+            transition: 'transform var(--dur-3) var(--ease-spring)',
             transform: showHistory ? 'rotate(180deg)' : 'none',
             color: 'var(--text-tertiary)',
           }}

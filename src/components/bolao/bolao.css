@@ -534,6 +534,14 @@
   padding: var(--space-lg);
   background: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(8px);
+  /* Entrada: só opacidade + backwards (overlay e modal têm vidro — a
+     convenção glass-safe do globals.css vale aqui também). */
+  animation: bolao-overlay-in var(--dur-3) var(--ease) backwards;
+}
+
+@keyframes bolao-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 /* Fallback de blur p/ WebKit legado — ver nota em globals.css */
@@ -615,7 +623,7 @@
 .bolao-guide-chevron {
   color: var(--text-tertiary);
   flex-shrink: 0;
-  transition: transform 0.25s ease;
+  transition: transform var(--dur-3) var(--ease-spring);
 }
 .bolao-guide[open] .bolao-guide-chevron {
   transform: rotate(180deg);

@@ -91,7 +91,7 @@ export function Header() {
         zIndex: isOpen ? 130 : 100,
         display: 'flex',
         alignItems: 'center',
-        transition: 'background 0.45s ease, box-shadow 0.45s ease',
+        transition: 'background var(--dur-4) var(--ease), box-shadow var(--dur-4) var(--ease)',
       }}
     >
       <div
@@ -145,7 +145,7 @@ export function Header() {
                   background:
                     active ? 'rgba(255, 255, 255, 0.12)' : 'transparent',
                   textShadow: '0 1px 10px rgba(0, 0, 0, 0.40)',
-                  transition: 'color 0.3s ease, background 0.3s ease',
+                  transition: 'color var(--dur-2) var(--ease), background var(--dur-2) var(--ease)',
                   textDecoration: 'none',
                 }}
               >
@@ -167,7 +167,7 @@ export function Header() {
                   border: 'none',
                   cursor: 'pointer',
                   textShadow: '0 1px 10px rgba(0, 0, 0, 0.40)',
-                  transition: 'color 0.3s ease, background 0.3s ease',
+                  transition: 'color var(--dur-2) var(--ease), background var(--dur-2) var(--ease)',
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '4px',
@@ -195,7 +195,7 @@ export function Header() {
             cursor: 'pointer',
             padding: 8,
             filter: isOpen ? 'none' : 'drop-shadow(0 1px 6px rgba(0,0,0,0.45))',
-            transition: 'color 0.3s ease',
+            transition: 'color var(--dur-2) var(--ease)',
           }}
         >
           {isOpen ? <X size={24} /> : <Menu size={24} />}
@@ -216,7 +216,7 @@ export function Header() {
           background: 'rgba(0, 0, 0, 0.45)',
           opacity: isOpen ? 1 : 0,
           pointerEvents: isOpen ? 'auto' : 'none',
-          transition: 'opacity 0.3s ease',
+          transition: 'opacity var(--dur-3) var(--ease)',
           zIndex: 110,
         }}
       />
@@ -242,7 +242,7 @@ export function Header() {
           flexDirection: 'column',
           gap: '4px',
           transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
-          transition: 'transform 0.34s cubic-bezier(0.22, 1, 0.36, 1)',
+          transition: 'transform var(--dur-3) var(--ease-out)',
           zIndex: 120,
         }}
       >

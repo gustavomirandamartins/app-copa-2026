@@ -77,11 +77,30 @@
   --font-body:    'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-heading: 'Outfit', 'Nunito Sans', sans-serif;
 
-  /* Animation */
+  /* ── Motion design system ─────────────────────────────────────────
+     Escala de duração: quanto maior a distância/superfície, mais longo.
+       --dur-1  feedback imediato (press, toggle pequeno)
+       --dur-2  micro-interações (hover, chevron, tab)
+       --dur-3  transições médias (accordion, painel, modal)
+       --dur-4  entradas de página/seção
+       --dur-5  ênfase (barras de progresso, termômetro)
+     Curvas:
+       --ease        saída expressiva (padrão do app — desacelera forte)
+       --ease-out    saída suave (drawers, painéis que deslizam)
+       --ease-in-out movimentos reversíveis (mesma cara indo e voltando)
+       --ease-spring leve overshoot físico (chevrons, pills, detalhes) */
+  --dur-1: 120ms;
+  --dur-2: 200ms;
+  --dur-3: 320ms;
+  --dur-4: 500ms;
+  --dur-5: 900ms;
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
-  --transition-fast: 150ms var(--ease);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --transition-fast: var(--dur-2) var(--ease);
   --transition-base: 250ms var(--ease);
-  --transition-slow: 400ms var(--ease);
+  --transition-slow: var(--dur-4) var(--ease);
 
   /* Layout */
   --header-height:     64px;
@@ -477,7 +496,9 @@ a:hover { color: var(--copa-green-deep); }
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all var(--transition-base);
+  /* transform separado com --ease-spring: o soltar do press (scale 0.97→1)
+     volta com um overshoot sutil, em vez do mesmo ease do hover. */
+  transition: all var(--transition-base), transform var(--dur-3) var(--ease-spring);
   text-decoration: none;
   white-space: nowrap;
 }
@@ -569,7 +590,7 @@ a:hover { color: var(--copa-green-deep); }
   height: 100%;
   border-radius: var(--radius-full);
   background: var(--gradient-primary);
-  transition: width 1s var(--ease);
+  transition: width var(--dur-5) var(--ease);
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -706,7 +727,7 @@ a:hover { color: var(--copa-green-deep); }
 
 /* ---- Match Card Expandido (página /jogos) ---- */
 .match-card-expandable {
-  transition: border-color 180ms ease, box-shadow 180ms ease;
+  transition: border-color var(--dur-2) var(--ease), box-shadow var(--dur-2) var(--ease);
 }
 
 .match-card-expandable:hover {
@@ -724,7 +745,7 @@ a:hover { color: var(--copa-green-deep); }
   justify-content: center;
   margin-top: var(--space-xs);
   color: var(--text-tertiary);
-  transition: transform 220ms ease;
+  transition: transform var(--dur-3) var(--ease-spring);
 }
 
 .match-card.is-expanded .match-card-expand-hint {
@@ -738,7 +759,7 @@ a:hover { color: var(--copa-green-deep); }
   display: flex;
   flex-direction: column;
   gap: var(--space-lg);
-  animation: match-card-expand-in 220ms ease forwards;
+  animation: match-card-expand-in var(--dur-3) var(--ease) forwards;
 }
 
 @keyframes match-card-expand-in {
@@ -1209,10 +1230,12 @@ a:hover { color: var(--copa-green-deep); }
   }
 }
 
-/* ---- Button press ---- */
+/* ---- Button press ----
+   Entrada do press instantânea (--dur-1); o retorno usa a transition
+   normal do .btn (transform com --ease-spring), dando o "snap" físico. */
 .btn:active {
   transform: scale(0.97) !important;
-  transition: transform 80ms ease !important;
+  transition: transform var(--dur-1) ease !important;
 }
 
 /* ---- Section link arrow nudge ---- */
@@ -1378,5 +1401,38 @@ a:hover { color: var(--copa-green-deep); }
   .btn-secondary,
   .search-input {
     -webkit-backdrop-filter: blur(12px);
+  }
+}
+
+/* ---- Spinner canônico ------------------------------------------------
+   Vários componentes usam `animation: 'spin 1s linear infinite'` inline
+   (Loader2 etc). O keyframe PRECISA viver aqui no globals — antes ele só
+   existia em bolao.css/admin.css, então o spinner só girava nas páginas
+   que por acaso carregavam um desses arquivos. */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ---- Foco visível consistente (teclado) -------------------------------
+   Só em :focus-visible — clique/toque não ganham anel. */
+:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gold) 75%, transparent);
+  outline-offset: 2px;
+}
+
+/* ---- Acessibilidade: prefers-reduced-motion ---------------------------
+   Colapsa TODA animação/transição do app para quem pediu menos movimento.
+   Duração ~0 (e não `none`) mantém os eventos transitionend/animationend
+   disparando, então lógica JS que espera o fim da animação não trava.
+   Estados finais continuam corretos: entradas com fill-mode backwards
+   pulam direto pro estado natural, ScrollReveal "aparece" instantâneo. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

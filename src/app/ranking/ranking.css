@@ -33,7 +33,7 @@
 .prizes-chevron {
   color: var(--text-tertiary);
   flex-shrink: 0;
-  transition: transform 0.25s ease;
+  transition: transform var(--dur-3) var(--ease-spring);
 }
 
 .prizes-dropdown[open] .prizes-chevron {
@@ -253,7 +253,7 @@ details.champion-card > summary {
 details.champion-card > summary::-webkit-details-marker { display: none; }
 
 .champion-chevron {
-  transition: transform 0.2s ease;
+  transition: transform var(--dur-3) var(--ease-spring);
   color: var(--text-tertiary);
   flex-shrink: 0;
   margin-top: 3px;
@@ -618,7 +618,7 @@ details.champion-card[open] .champion-chevron {
 .ranking-chevron {
   color: var(--text-tertiary);
   flex-shrink: 0;
-  transition: transform 0.25s ease;
+  transition: transform var(--dur-3) var(--ease-spring);
 }
 .ranking-chevron.rotated {
   transform: rotate(180deg);
@@ -635,7 +635,7 @@ details.champion-card[open] .champion-chevron {
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
-  animation: breakdown-in 0.18s ease;
+  animation: breakdown-in var(--dur-2) var(--ease);
   /* As variáveis de texto precisam ser redeclaradas aqui, assim como no glass-card-static */
   --text-primary:   #ffffff;
   --text-secondary: rgba(255, 255, 255, 0.75);

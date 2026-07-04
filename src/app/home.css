@@ -432,7 +432,7 @@
   font-weight: 700;
   color: var(--text-tertiary);
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: background var(--dur-2) var(--ease), color var(--dur-2) var(--ease);
   white-space: nowrap;
 }
 .dash-rank-tab.active {
