@@ -1,13 +1,17 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Lock, Dices, Zap, Trophy } from 'lucide-react';
+import { Lock, Dices, Zap, Trophy, MapPin, ChevronDown } from 'lucide-react';
 import { matches as allMatches } from '@/data/matches';
 import { getTeamById } from '@/data/teams';
+import { getStadiumById } from '@/data/stadiums';
 import { TeamFlag } from '@/components/ui/TeamFlag';
+import { MatchWinBar } from '@/components/ui/MatchWinBar';
+import { SelecaoCompare } from '@/components/home/SelecaoCompare';
 import { formatKickoffTime, formatKickoffDate } from '@/lib/datetime';
 import type { MatchResult } from './BolaoClient';
-import type { Match, MatchStage, MatchStatus } from '@/lib/types';
+import type { Match, MatchStage, MatchStatus, UfmgProbability } from '@/lib/types';
+import type { MatchWinProbability } from '@/lib/bolao/probabilities';
 
 const BRAZIL_ID = 'bra';
 const UPCOMING_WINDOW_MS = 24 * 60 * 60 * 1000; // 24 h
@@ -77,6 +81,8 @@ interface Props {
   multipliers?: Record<string, number>;
   results?: Record<string, MatchResult>;
   pointsByMatch?: Record<string, number>;
+  probabilities?: Record<string, UfmgProbability>;
+  matchProbabilities?: Record<number, MatchWinProbability>;
 }
 
 /** Mensagem contextual de resultado após a partida. */
@@ -194,10 +200,13 @@ export function PredictionGrid({
   multipliers = {},
   results = {},
   pointsByMatch = {},
+  probabilities = {},
+  matchProbabilities = {},
 }: Props) {
   const [activeTab, setActiveTab] = useState<TabKey>(() => vigenteTab(results));
   const [now, setNow] = useState<number | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
     const tick = () => setNow(Date.now());
@@ -267,6 +276,9 @@ export function PredictionGrid({
                 const isBrazil = homeTeamId === BRAZIL_ID || awayTeamId === BRAZIL_ID;
                 const points = pointsByMatch[match.id];
                 const hasGuess = value?.home != null && value?.away != null;
+                const stadium = getStadiumById(match.stadiumId);
+                const canExpand = Boolean(teamA && teamB);
+                const isExpanded = expandedId === match.id;
 
                 return (
                   <div
@@ -413,6 +425,46 @@ export function PredictionGrid({
                           )}
                         </div>
                       </>
+                    )}
+
+                    {/* Mesmo conteúdo adicional dos cards da página Jogos:
+                        estádio + probabilidades + comparação das seleções. */}
+                    {stadium && (
+                      <div className="bolao-card-stadium">
+                        <MapPin size={12} />
+                        <span>{stadium.name}, {stadium.city}</span>
+                      </div>
+                    )}
+
+                    {canExpand && (
+                      <button
+                        type="button"
+                        className={`bolao-expand-toggle${isExpanded ? ' is-open' : ''}`}
+                        onClick={() => setExpandedId((prev) => (prev === match.id ? null : match.id))}
+                        aria-expanded={isExpanded}
+                        aria-label={isExpanded ? 'Ocultar detalhes do confronto' : 'Ver detalhes do confronto'}
+                      >
+                        <ChevronDown size={15} />
+                      </button>
+                    )}
+
+                    {isExpanded && teamA && teamB && (
+                      <div className="match-card-expanded">
+                        <div className="match-card-expanded-section">
+                          <h4 className="match-card-expanded-title">Probabilidades</h4>
+                          <MatchWinBar
+                            home={teamA}
+                            away={teamB}
+                            matchNumber={match.matchNumber}
+                            matchProbabilities={matchProbabilities}
+                          />
+                        </div>
+
+                        <div className="match-card-expanded-section">
+                          <h4 className="match-card-expanded-title">Conheça as seleções</h4>
+                          <SelecaoCompare home={teamA} away={teamB} probabilities={probabilities} />
+                        </div>
+                      </div>
                     )}
 
                     {locked && !finished && !live && (

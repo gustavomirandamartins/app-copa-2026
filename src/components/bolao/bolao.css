@@ -803,3 +803,38 @@
   font-weight: 800;
   color: var(--gold);
 }
+
+/* ── Conteúdo adicional do card (paridade com os cards de /jogos) ────── */
+.bolao-card-stadium {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  margin-top: var(--space-sm);
+  font-size: 0.72rem;
+  color: var(--text-tertiary);
+}
+
+/* Toggle de expandir: botão explícito (o card tem inputs, não pode ser
+   clicável inteiro como em /jogos). Chevron gira ao abrir — transform em
+   folha, não afeta o vidro do card. */
+.bolao-expand-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin-top: var(--space-xs);
+  padding: 2px 0;
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: color var(--dur-2) var(--ease);
+}
+.bolao-expand-toggle:hover { color: var(--text-primary); }
+.bolao-expand-toggle svg {
+  transition: transform var(--dur-3) var(--ease-spring);
+}
+.bolao-expand-toggle.is-open svg {
+  transform: rotate(180deg);
+}

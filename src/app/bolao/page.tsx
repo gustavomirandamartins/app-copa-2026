@@ -2,10 +2,14 @@
 import { redirect } from 'next/navigation';
 import { Trophy } from 'lucide-react';
 import '@/components/bolao/bolao.css';
+// Estilos da barra V-E-V (nx-wdw) e da comparação de seleções, compartilhados
+// com /jogos — os cards do bolão agora têm o mesmo conteúdo expandido.
+import '@/app/dashboard.css';
 import { createClient } from '@/lib/supabase/server';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
 import { isProfileComplete } from '@/lib/bolao/profile';
 import type { Profile, PredictionInput } from '@/lib/bolao/types';
+import { loadTeamProbabilities, loadMatchProbabilities } from '@/lib/bolao/probabilities';
 import { BolaoClient, type MatchResult } from '@/components/bolao/BolaoClient';
 
 import { AuthPanel } from '@/components/auth/AuthPanel';
@@ -137,6 +141,8 @@ export default async function BolaoPage({
           multipliers={multipliers}
           results={results}
           pointsByMatch={pointsByMatch}
+          probabilities={await loadTeamProbabilities()}
+          matchProbabilities={await loadMatchProbabilities()}
         />
       )}
     </div>

@@ -354,6 +354,14 @@ export function Bracket({
 
             {/* Centro: Final + 3º lugar */}
             <div className="bracket-tree-center">
+              {/* eslint-disable-next-line @next/next/no-img-element -- asset
+                  decorativo pequeno do Supabase Storage; next/image exigiria
+                  dimensões fixas/loader sem ganho real aqui. */}
+              <img
+                src="https://sdyilmgixyynnmczsnhc.supabase.co/storage/v1/object/public/logos/trofeufifa.avif"
+                alt="Troféu da Copa do Mundo FIFA"
+                className="bracket-tree-trophy"
+              />
               {sides.final && (
                 <BracketCard
                   match={sides.final}

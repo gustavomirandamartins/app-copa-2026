@@ -8,8 +8,9 @@ import { matches as allMatches } from '@/data/matches';
 import { getTeamById } from '@/data/teams';
 import { simulateScore } from '@/lib/bolao/autofill';
 import { savePredictions } from '@/app/bolao/actions';
-import type { MatchStatus } from '@/lib/types';
+import type { MatchStatus, UfmgProbability } from '@/lib/types';
 import type { Profile, PredictionInput } from '@/lib/bolao/types';
+import type { MatchWinProbability } from '@/lib/bolao/probabilities';
 import { PredictionGrid, type PredictionValue } from './PredictionGrid';
 import { RankingConsentModal } from './RankingConsentModal';
 import './bolao.css';
@@ -33,6 +34,8 @@ interface Props {
   multipliers?: Record<string, number>;
   results?: Record<string, MatchResult>;
   pointsByMatch?: Record<string, number>;
+  probabilities?: Record<string, UfmgProbability>;
+  matchProbabilities?: Record<number, MatchWinProbability>;
 }
 
 function seedValues(existing: PredictionInput[]): Map<string, PredictionValue> {
@@ -56,6 +59,8 @@ export function BolaoClient({
   multipliers = {},
   results = {},
   pointsByMatch = {},
+  probabilities = {},
+  matchProbabilities = {},
 }: Props) {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -228,6 +233,8 @@ export function BolaoClient({
         multipliers={multipliers}
         results={results}
         pointsByMatch={pointsByMatch}
+        probabilities={probabilities}
+        matchProbabilities={matchProbabilities}
       />
 
       <div className="bolao-savebar">
