@@ -7,9 +7,13 @@ interface Props {
   className?: string;
   variant?: 'up' | 'left' | 'right' | 'scale';
   delay?: number;
+  /** Revela os FILHOS em cascata (classe sr-group no globals.css) em vez do
+   *  bloco inteiro de uma vez. Os filhos não podem conter vidro aninhado —
+   *  a cascata usa transform neles. Ver [[transform-breaks-backdrop-filter]]. */
+  group?: boolean;
 }
 
-export function ScrollReveal({ children, className = '', variant = 'up', delay = 0 }: Props) {
+export function ScrollReveal({ children, className = '', variant = 'up', delay = 0, group = false }: Props) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -31,8 +35,9 @@ export function ScrollReveal({ children, className = '', variant = 'up', delay =
     return () => observer.disconnect();
   }, [delay]);
 
+  const base = group ? 'sr-group' : `sr-${variant}`;
   return (
-    <div ref={ref} className={`sr-${variant}${className ? ` ${className}` : ''}`}>
+    <div ref={ref} className={`${base}${className ? ` ${className}` : ''}`}>
       {children}
     </div>
   );

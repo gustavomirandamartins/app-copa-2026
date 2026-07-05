@@ -75,6 +75,9 @@ export function Header() {
     <>
     <header
       style={{
+        // Âncora nas view transitions: o header não desliza junto com o
+        // conteúdo na navegação (regras ::view-transition-*(site-header)).
+        viewTransitionName: 'site-header',
         position: 'fixed',
         top: 0,
         left: 0,

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ViewTransition } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Trophy, Calendar, BarChart3 } from 'lucide-react';
 import { teams, getTeamById } from '@/data/teams';
@@ -176,7 +176,12 @@ export function SelecaoDetailClient({ teamId, prob }: Props) {
         borderLeft: `4px solid ${team.primaryColor}`,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-lg)', flexWrap: 'wrap', position: 'relative' }}>
-          <TeamFlag name={team.name} flagEmoji={team.flag} size={72} style={{ borderRadius: 6 }} />
+          {/* Morph compartilhado com o card da lista (/selecoes). SÓ o hero
+              leva a name — a bandeira do próprio time repete nas linhas de
+              jogos abaixo, e names duplicadas abortam a view transition. */}
+          <ViewTransition name={`team-flag-${team.id}`} share="morph">
+            <TeamFlag name={team.name} flagEmoji={team.flag} size={72} style={{ borderRadius: 6 }} />
+          </ViewTransition>
           <div style={{ flex: 1 }}>
             <h1 style={{ marginBottom: 4 }}>{team.name}</h1>
             <div style={{ display: 'flex', gap: 'var(--space-md)', alignItems: 'center', flexWrap: 'wrap' }}>

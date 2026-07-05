@@ -309,7 +309,9 @@ a:hover { color: var(--copa-green-deep); }
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
-  transition: all var(--transition-base);
+  /* transform separado com --ease-spring: hover-lift e o soltar do press
+     retornam com física sutil, em vez do ease genérico do restante. */
+  transition: all var(--transition-base), transform var(--dur-3) var(--ease-spring);
   position: relative;
   overflow: hidden;
 }
@@ -337,8 +339,18 @@ a:hover { color: var(--copa-green-deep); }
 .glass-card:hover {
   background: var(--glass-bg-hover);
   border-color: var(--glass-border-hover);
-  transform: translateY(-2px);
+  /* Lift + escala sutil (spec: 1.01–1.02 para cards). Transform NO PRÓPRIO
+     elemento de vidro é seguro — o que quebra backdrop-filter é transform
+     em ANCESTRAL de vidro aninhado; cards com vidro interno usam
+     .glass-card-static (sem transform). Ver [[transform-breaks-backdrop-filter]]. */
+  transform: translateY(-2px) scale(1.015);
   box-shadow: var(--shadow-lg), var(--shadow-glow-green);
+}
+
+/* Press: compressão rápida; o retorno usa a transition spring do .glass-card. */
+.glass-card:active {
+  transform: translateY(0) scale(0.985);
+  transition: transform var(--dur-1) ease;
 }
 
 /* Seleção eliminada: esmaece o card sem tocar transform/backdrop-filter. */
@@ -961,11 +973,24 @@ a:hover { color: var(--copa-green-deep); }
   background: rgba(255, 255, 255, 0.10);
 }
 
+.tab:active {
+  transform: scale(0.95);
+  transition: transform var(--dur-1) ease;
+}
+
 .tab.active {
   background: var(--gold);
   color: #fff;
   box-shadow: 0 2px 10px rgba(224, 124, 0, 0.35);
   border: 1px solid var(--gold);
+  /* Pop físico ao ativar — transform em .tab (folha) não afeta o blur
+     do container .tabs. */
+  animation: tab-pop var(--dur-3) var(--ease-spring);
+}
+
+@keyframes tab-pop {
+  from { transform: scale(0.92); }
+  to   { transform: scale(1); }
 }
 
 /* ---- Score Input ---- */
@@ -987,13 +1012,19 @@ a:hover { color: var(--copa-green-deep); }
   color: var(--text-primary);
   font-size: 1rem;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all var(--transition-fast), transform var(--dur-3) var(--ease-spring);
 }
 
 .score-input-btn:hover {
   background: rgba(254, 221, 0, 0.18);
   border-color: var(--copa-green);
   color: var(--copa-green);
+  transform: scale(1.08);
+}
+
+.score-input-btn:active {
+  transform: scale(0.88);
+  transition: transform var(--dur-1) ease;
 }
 
 .score-input-value {
@@ -1433,6 +1464,108 @@ a:hover { color: var(--copa-green-deep); }
   outline-offset: 2px;
 }
 
+/* ---- Page reveal (template.tsx) ---------------------------------------
+   Aplicado pelo src/app/template.tsx, que REMONTA a cada navegação — a
+   animação de entrada toca de novo em toda troca de página. SÓ opacidade:
+   transform ou filter aqui criariam um "backdrop root" no ancestral de TODO
+   o app e quebrariam o vidro inteiro. Ver [[transform-breaks-backdrop-filter]].
+   fill-mode backwards (não forwards) pelo mesmo motivo dos .animate-*. */
+.page-reveal {
+  animation: fade-in 0.42s var(--ease) backwards;
+}
+
+/* ---- Stagger em cascata para grids/listas -----------------------------
+   Filhos entram um a um (fade puro, vidro-safe). Cap no 12º filho: além
+   disso os itens já estão abaixo da dobra; entram todos com o delay máximo.
+   Usa fade-in com backwards — mesma mecânica dos .animate-*. */
+.stagger-grid > * {
+  animation: fade-in 0.5s var(--ease) backwards;
+}
+.stagger-grid > :nth-child(1)  { animation-delay: 0.05s; }
+.stagger-grid > :nth-child(2)  { animation-delay: 0.10s; }
+.stagger-grid > :nth-child(3)  { animation-delay: 0.15s; }
+.stagger-grid > :nth-child(4)  { animation-delay: 0.20s; }
+.stagger-grid > :nth-child(5)  { animation-delay: 0.25s; }
+.stagger-grid > :nth-child(6)  { animation-delay: 0.30s; }
+.stagger-grid > :nth-child(7)  { animation-delay: 0.35s; }
+.stagger-grid > :nth-child(8)  { animation-delay: 0.40s; }
+.stagger-grid > :nth-child(9)  { animation-delay: 0.45s; }
+.stagger-grid > :nth-child(10) { animation-delay: 0.50s; }
+.stagger-grid > :nth-child(11) { animation-delay: 0.55s; }
+.stagger-grid > :nth-child(n+12) { animation-delay: 0.60s; }
+
+/* Linhas de tabela entram em cascata (opacidade pura — tr com transform
+   quebraria em engines que achatam table layout, além do vidro). */
+.standings-table tbody tr {
+  animation: fade-in 0.4s var(--ease) backwards;
+}
+.standings-table tbody tr:nth-child(1) { animation-delay: 0.04s; }
+.standings-table tbody tr:nth-child(2) { animation-delay: 0.08s; }
+.standings-table tbody tr:nth-child(3) { animation-delay: 0.12s; }
+.standings-table tbody tr:nth-child(4) { animation-delay: 0.16s; }
+.standings-table tbody tr:nth-child(5) { animation-delay: 0.20s; }
+.standings-table tbody tr:nth-child(6) { animation-delay: 0.24s; }
+.standings-table tbody tr:nth-child(7) { animation-delay: 0.28s; }
+.standings-table tbody tr:nth-child(8) { animation-delay: 0.32s; }
+.standings-table tbody tr:nth-child(9) { animation-delay: 0.36s; }
+.standings-table tbody tr:nth-child(n+10) { animation-delay: 0.40s; }
+
+/* Stagger group revelado por viewport (ScrollReveal group): filhos sobem
+   14px em cascata. transform nos FILHOS é seguro contanto que eles não
+   contenham vidro aninhado; sr-visible devolve transform: none (settle). */
+.sr-group > * {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.55s var(--ease), transform 0.55s var(--ease);
+}
+.sr-group > :nth-child(1)  { transition-delay: 0.00s; }
+.sr-group > :nth-child(2)  { transition-delay: 0.05s; }
+.sr-group > :nth-child(3)  { transition-delay: 0.10s; }
+.sr-group > :nth-child(4)  { transition-delay: 0.15s; }
+.sr-group > :nth-child(5)  { transition-delay: 0.20s; }
+.sr-group > :nth-child(6)  { transition-delay: 0.25s; }
+.sr-group > :nth-child(7)  { transition-delay: 0.30s; }
+.sr-group > :nth-child(8)  { transition-delay: 0.35s; }
+.sr-group > :nth-child(n+9) { transition-delay: 0.40s; }
+.sr-group.sr-visible > * {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---- View Transitions (navegação entre páginas) ------------------------
+   experimental.viewTransition no next.config + <ViewTransition> do React.
+   Crossfade curto na raiz; header e bottom-nav ancorados (não deslizam —
+   o usuário precisa de referência fixa pra entender que o CONTEÚDO mudou).
+   Degrada graciosamente: sem suporte do browser, navegação normal. */
+::view-transition-old(root) {
+  animation-duration: 180ms;
+  animation-timing-function: var(--ease);
+}
+::view-transition-new(root) {
+  animation-duration: 260ms;
+  animation-timing-function: var(--ease);
+}
+
+::view-transition-group(site-header),
+::view-transition-group(bottom-nav) {
+  animation: none;
+  z-index: 100;
+}
+::view-transition-old(site-header),
+::view-transition-old(bottom-nav) {
+  display: none;
+}
+::view-transition-new(site-header),
+::view-transition-new(bottom-nav) {
+  animation: none;
+}
+
+/* Morph de elemento compartilhado (bandeira lista → hero da seleção). */
+::view-transition-group(.morph) {
+  animation-duration: 380ms;
+  animation-timing-function: var(--ease);
+}
+
 /* ---- Acessibilidade: prefers-reduced-motion ---------------------------
    Colapsa TODA animação/transição do app para quem pediu menos movimento.
    Duração ~0 (e não `none`) mantém os eventos transitionend/animationend
@@ -1447,5 +1580,13 @@ a:hover { color: var(--copa-green-deep); }
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+
+  /* View transitions: troca instantânea (comportamento nativo do browser). */
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
   }
 }

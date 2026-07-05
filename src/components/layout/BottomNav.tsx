@@ -25,7 +25,12 @@ export function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="hide-desktop floating-nav" aria-label="Navegação principal">
+    <nav
+      className="hide-desktop floating-nav"
+      aria-label="Navegação principal"
+      // Âncora nas view transitions (par do site-header no globals.css).
+      style={{ viewTransitionName: 'bottom-nav' }}
+    >
       {tabs.map((tab) => {
         const active = tab.match(pathname);
         const Icon = tab.icon;

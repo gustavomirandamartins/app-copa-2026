@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, ViewTransition } from 'react';
 import Link from 'next/link';
 import { Users, Search, Trophy } from 'lucide-react';
 import { teams } from '@/data/teams';
@@ -92,7 +92,11 @@ export function SelecoesClient({ probabilities, eliminatedTeamIds }: Props) {
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 'var(--space-sm)' }}>
-                  <TeamFlag name={team.name} flagEmoji={team.flag} size={40} style={{ borderRadius: 4 }} />
+                  {/* Morph compartilhado: mesma name na bandeira do hero da
+                      página de detalhe — o browser anima posição/tamanho. */}
+                  <ViewTransition name={`team-flag-${team.id}`} share="morph">
+                    <TeamFlag name={team.name} flagEmoji={team.flag} size={40} style={{ borderRadius: 4 }} />
+                  </ViewTransition>
                   <span className="badge badge-group">Grupo {team.group}</span>
                 </div>
                 <h4 style={{ fontSize: '1rem', marginBottom: 4 }}>{team.name}</h4>

@@ -14,6 +14,10 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: '10mb',
     },
+    // <ViewTransition> do React (morph de elementos compartilhados entre
+    // páginas + crossfade de navegação). Sem suporte do browser, degrada
+    // para navegação normal sem animação. Docs: guia view-transitions.
+    viewTransition: true,
   },
   images: {
     remotePatterns: [
