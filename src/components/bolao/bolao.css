@@ -64,6 +64,10 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: var(--space-md);
+  /* Sem isto, expandir um card estica a altura da linha inteira do grid e o
+     card vizinho fechado ganha espaço em branco embaixo (mesmo fix do
+     .grid-2 em /jogos). */
+  align-items: start;
 }
 
 .bolao-card {
