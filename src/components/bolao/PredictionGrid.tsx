@@ -25,6 +25,7 @@ type TabKey =
   | 'round-of-16'
   | 'quarter-final'
   | 'semi-final'
+  | 'third-place'
   | 'final';
 
 const stageTabs: { key: TabKey; label: string }[] = [
@@ -35,6 +36,7 @@ const stageTabs: { key: TabKey; label: string }[] = [
   { key: 'round-of-16', label: 'Oitavas' },
   { key: 'quarter-final', label: 'Quartas' },
   { key: 'semi-final', label: 'Semifinais' },
+  { key: 'third-place', label: '3º Lugar' },
   { key: 'final', label: 'Final' },
 ];
 
