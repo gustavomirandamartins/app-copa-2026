@@ -19,7 +19,7 @@ const stageTabs: { key: MatchStage; label: string }[] = [
   { key: 'final', label: 'Final' },
 ];
 
-const MULTIPLIER_OPTIONS = [1, 2, 3, 4, 5];
+const MULTIPLIER_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
 function teamName(teamId: string | null, placeholder?: string): string {
   if (teamId) return getTeamById(teamId)?.name ?? 'A definir';
