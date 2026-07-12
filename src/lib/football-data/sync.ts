@@ -45,6 +45,11 @@ export async function runFootballSync(): Promise<SyncResult> {
   // (os times ainda não eram conhecidos). Como não existe external_id nem
   // par de times para casar, usamos match_time_utc como fallback para o
   // primeiro sync de cada jogo de mata-mata.
+  // Status atual de cada linha, usado abaixo para blindar contra regressão
+  // (ver comentário no bloco do UPDATE). Uma única query em vez de N+1.
+  const { data: currentRows } = await admin.from('matches').select('id, status');
+  const currentStatusById = new Map((currentRows ?? []).map((r) => [r.id, r.status as string]));
+
   let matchesUpdated = 0;
   for (const m of matches) {
     const homeId = resolveTeamId(m.homeTeam);
@@ -124,6 +129,15 @@ export async function runFootballSync(): Promise<SyncResult> {
     }
 
     if (targetId) {
+      // Blindagem: um resultado já 'finished' no banco nunca regride para
+      // outro status. decide()/applyScoring tratam 'finished' como decisão
+      // definitiva (propagam vencedor, pontuam palpites); uma leitura
+      // inconsistente da API (glitch pontual — já observado num sync
+      // anterior) não pode desfazer isso. Placar/times ainda são
+      // atualizados normalmente, só o status fica protegido.
+      if (currentStatusById.get(targetId) === 'finished' && fields.status !== 'finished') {
+        delete fields.status;
+      }
       const { error: matchErr } = await admin.from('matches').update(fields).eq('id', targetId);
       if (matchErr) throw new Error(`update match ${m.id}: ${matchErr.message}`);
       matchesUpdated++;
@@ -238,7 +252,11 @@ async function resolveTargetRow(admin: Admin, m: FdMatch, homeId: string | null,
 
 function buildLiveFields(m: FdMatch, current: CurrentRow, homeId: string | null, awayId: string | null) {
   const sc = extractScore(m.score);
-  const status = mapStatus(m.status);
+  // Blindagem: nunca regride um status 'finished' já gravado — mesmo motivo
+  // do guard em runFootballSync (ver comentário lá). O poll ao vivo roda a
+  // cada 1-5min sem supervisão, então é o caminho mais exposto a uma leitura
+  // inconsistente da API desfazer um resultado decidido.
+  const status = current.status === 'finished' ? 'finished' : mapStatus(m.status);
 
   const fields: Record<string, unknown> = {
     external_id: m.id,
