@@ -76,6 +76,37 @@ function ScorePair({
   );
 }
 
+/** Palpite avulso de um número só (cartões: cada campo vale pontos sozinho). */
+function SingleField({
+  label,
+  field,
+  value,
+  locked,
+  onChange,
+}: {
+  label: string;
+  field: NumericField;
+  value: ExtraValue;
+  locked: boolean;
+  onChange: (field: NumericField, raw: string) => void;
+}) {
+  return (
+    <div className="extra-bet-row">
+      <span className="extra-bet-label">{label}</span>
+      <div className="extra-bet-inputs">
+        <input
+          type="number" min={0} max={20} inputMode="numeric"
+          className="bolao-score-input"
+          aria-label={label}
+          disabled={locked}
+          value={value[field] ?? ''}
+          onChange={(e) => onChange(field, e.target.value)}
+        />
+      </div>
+    </div>
+  );
+}
+
 /**
  * Painel de palpites extras — só nos jogos habilitados (semis = teste sem
  * pontos; 3º lugar e final = valendo). Toggle próprio, independente do
@@ -147,8 +178,12 @@ export function ExtraBetsPanel({
           <ScorePair label="Placar do 2º tempo" hint="só os gols do 2º tempo" homeField="h2_home" awayField="h2_away" value={value} locked={locked} onChange={setNumeric} />
           <ScorePair label="Prorrogação" hint="caso ocorra — gols só da prorrogação" homeField="et_home" awayField="et_away" value={value} locked={locked} onChange={setNumeric} />
           <ScorePair label="Pênaltis" hint="caso ocorra — placar da disputa" homeField="pen_home" awayField="pen_away" value={value} locked={locked} onChange={setNumeric} />
-          <ScorePair label="Cartões amarelos" hint={`${home.name} × ${away.name}`} homeField="yellow_home" awayField="yellow_away" value={value} locked={locked} onChange={setNumeric} />
-          <ScorePair label="Cartões vermelhos" hint={`${home.name} × ${away.name}`} homeField="red_home" awayField="red_away" value={value} locked={locked} onChange={setNumeric} />
+          {/* Cartões: 4 palpites INDEPENDENTES (3 pts cada), um campo por
+              seleção — não é um "placar" casado como os pares acima. */}
+          <SingleField label={`Cartões amarelos — ${home.name}`} field="yellow_home" value={value} locked={locked} onChange={setNumeric} />
+          <SingleField label={`Cartões amarelos — ${away.name}`} field="yellow_away" value={value} locked={locked} onChange={setNumeric} />
+          <SingleField label={`Cartões vermelhos — ${home.name}`} field="red_home" value={value} locked={locked} onChange={setNumeric} />
+          <SingleField label={`Cartões vermelhos — ${away.name}`} field="red_away" value={value} locked={locked} onChange={setNumeric} />
 
           <div className="extra-bet-row">
             <span className="extra-bet-label">Quem faz o 1º gol?</span>
