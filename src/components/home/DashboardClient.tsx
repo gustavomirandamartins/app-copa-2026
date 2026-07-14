@@ -5,7 +5,10 @@ import { Beer, Save, Loader2, Lock, CalendarClock, Sparkles } from 'lucide-react
 import { matches as allMatches } from '@/data/matches';
 import { getTeamById } from '@/data/teams';
 import { getStadiumById } from '@/data/stadiums';
-import { savePredictions } from '@/app/bolao/actions';
+import { savePredictions, saveExtraPredictions } from '@/app/bolao/actions';
+import { EXTRA_BET_MATCH_IDS, type ExtraPredictionInput } from '@/lib/bolao/extra-bets';
+import { ExtraBetsPanel, EMPTY_EXTRA_VALUE, hasAnyExtraValue, type ExtraValue } from '@/components/bolao/ExtraBetsPanel';
+import type { ExistingExtraPrediction } from '@/components/bolao/BolaoClient';
 import { formatKickoffDate, formatKickoffTime } from '@/lib/datetime';
 import { formatPct } from '@/lib/format';
 import { winDrawWin, toPercentParts } from '@/lib/bolao/winProbability';
@@ -29,6 +32,7 @@ type Value = { home: number | null; away: number | null; penaltyWinnerId: string
 interface Props {
   profile: Profile;
   existingPredictions: PredictionInput[];
+  existingExtraPredictions?: ExistingExtraPrediction[];
   multipliers: Record<string, number>;
   results: Record<string, MatchResult>;
   /** Probabilidades por seleção (tabela + fallback estático). */
@@ -76,6 +80,7 @@ function useCountdown(targetUTC: string): string | null {
 export function DashboardClient({
   profile,
   existingPredictions,
+  existingExtraPredictions = [],
   multipliers,
   results,
   probabilities,
@@ -83,6 +88,15 @@ export function DashboardClient({
   upcomingCount = 6,
 }: Props) {
   const [values, setValues] = useState<Map<string, Value>>(() => seed(existingPredictions));
+  const [extraValues, setExtraValues] = useState<Map<string, ExtraValue>>(() => {
+    const map = new Map<string, ExtraValue>();
+    for (const e of existingExtraPredictions) {
+      const { match_id, points_earned, ...guess } = e;
+      void points_earned;
+      map.set(match_id, { ...EMPTY_EXTRA_VALUE, ...guess });
+    }
+    return map;
+  });
   const [agreed, setAgreed] = useState(profile.agreed_to_ranking ?? false);
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState<string | null>(null);
@@ -144,6 +158,27 @@ export function DashboardClient({
     return out;
   }, [values]);
 
+  function setExtra(matchId: string, next: ExtraValue) {
+    setExtraValues((prev) => {
+      const map = new Map(prev);
+      map.set(matchId, next);
+      return map;
+    });
+  }
+
+  // Extras preenchidos de jogos ainda abertos (o lock real é do servidor).
+  const extraPayload = useMemo<ExtraPredictionInput[]>(() => {
+    const out: ExtraPredictionInput[] = [];
+    for (const [matchId, v] of extraValues) {
+      if (!EXTRA_BET_MATCH_IDS.includes(matchId)) continue;
+      if (!hasAnyExtraValue(v)) continue;
+      const mt = allMatches.find((m) => m.id === matchId);
+      if (!mt || new Date(mt.dateUTC).getTime() <= Date.now()) continue;
+      out.push({ match_id: matchId, ...v });
+    }
+    return out;
+  }, [extraValues]);
+
   function handleSave() {
     setMessage(null);
     for (const [matchId, v] of values) {
@@ -155,8 +190,20 @@ export function DashboardClient({
       }
     }
     startTransition(async () => {
-      const res = await savePredictions(payload);
-      setMessage(res.ok ? 'Palpites salvos! 🍺' : res.error ?? 'Erro ao salvar.');
+      // Cada action é independente (mesma lógica do BolaoClient).
+      const res = payload.length > 0 ? await savePredictions(payload) : { ok: true as const };
+      let extraError: string | null = null;
+      if (extraPayload.length > 0) {
+        const extraRes = await saveExtraPredictions(extraPayload);
+        if (!extraRes.ok) extraError = extraRes.error ?? 'Erro ao salvar palpites extras.';
+      }
+      if (!res.ok) {
+        setMessage(('error' in res ? res.error : null) ?? 'Erro ao salvar.');
+      } else if (extraError) {
+        setMessage(`Palpites salvos, mas os extras falharam: ${extraError}`);
+      } else {
+        setMessage('Palpites salvos! 🍺');
+      }
     });
   }
 
@@ -250,6 +297,21 @@ export function DashboardClient({
           </div>
         )}
 
+        {/* Palpites extras — logo abaixo dos campos de placar. */}
+        {EXTRA_BET_MATCH_IDS.includes(featured.id) && (
+          <ExtraBetsPanel
+            matchId={featured.id}
+            homeTeamId={featured.homeTeamId}
+            awayTeamId={featured.awayTeamId}
+            multiplier={fMult}
+            locked={!canEdit}
+            finished={false}
+            value={extraValues.get(featured.id) ?? EMPTY_EXTRA_VALUE}
+            pointsEarned={null}
+            onChange={setExtra}
+          />
+        )}
+
         <p className="nx-match-meta">
           {mounted ? formatKickoffDate(featured.dateUTC) : ''} · {mounted ? formatKickoffTime(featured.dateUTC) : '--:--'}
           {fStadium && <> · {fStadium.name}, {fStadium.city}</>}
@@ -300,6 +362,8 @@ export function DashboardClient({
                 multiplier={multipliers[mt.id] ?? 1}
                 onScore={setScore}
                 mounted={mounted}
+                extraValue={extraValues.get(mt.id) ?? EMPTY_EXTRA_VALUE}
+                onExtraChange={setExtra}
               />
             ))}
           </div>
@@ -309,7 +373,7 @@ export function DashboardClient({
       {/* Barra de salvar — fixa ao fluxo */}
       <div className="nx-savebar">
         {message && <span className="nx-save-msg">{message}</span>}
-        <button className="btn btn-gold nx-save-btn" onClick={handleSave} disabled={pending || payload.length === 0}>
+        <button className="btn btn-gold nx-save-btn" onClick={handleSave} disabled={pending || (payload.length === 0 && extraPayload.length === 0)}>
           {pending ? <Loader2 size={16} className="nx-spin" /> : <Save size={16} />}
           {pending ? 'Salvando…' : 'Salvar palpites'}
           {payload.length > 0 && <span className="nx-save-count">{payload.length}</span>}
@@ -320,7 +384,7 @@ export function DashboardClient({
 }
 
 function UpcomingRow({
-  match, value, canEdit, multiplier, onScore, mounted,
+  match, value, canEdit, multiplier, onScore, mounted, extraValue, onExtraChange,
 }: {
   match: Match;
   value: Value | undefined;
@@ -328,6 +392,8 @@ function UpcomingRow({
   multiplier: number;
   onScore: (id: string, side: 'home' | 'away' | 'pen', v: string) => void;
   mounted: boolean;
+  extraValue: ExtraValue;
+  onExtraChange: (matchId: string, next: ExtraValue) => void;
 }) {
   const home = getTeamById(match.homeTeamId!);
   const away = getTeamById(match.awayTeamId!);
@@ -379,6 +445,21 @@ function UpcomingRow({
             {away && <option value={away.id}>{away.name}</option>}
           </select>
         </div>
+      )}
+
+      {/* Palpites extras — logo abaixo dos campos de placar. */}
+      {EXTRA_BET_MATCH_IDS.includes(match.id) && (
+        <ExtraBetsPanel
+          matchId={match.id}
+          homeTeamId={match.homeTeamId}
+          awayTeamId={match.awayTeamId}
+          multiplier={multiplier}
+          locked={!canEdit}
+          finished={false}
+          value={extraValue}
+          pointsEarned={null}
+          onChange={onExtraChange}
+        />
       )}
     </div>
   );

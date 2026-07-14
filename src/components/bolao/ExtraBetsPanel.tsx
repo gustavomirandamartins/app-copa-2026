@@ -3,6 +3,10 @@
 import { useState } from 'react';
 import { Sparkles, ChevronDown } from 'lucide-react';
 import { getTeamById } from '@/data/teams';
+// Estilos próprios (.extra-bets*) e base (.bolao-score-input) vivem no
+// bolao.css — importado aqui para o painel funcionar também fora do /bolao
+// (ex.: dashboard da página inicial).
+import './bolao.css';
 import {
   EXTRA_COUNTING_MATCH_IDS,
   EXTRA_POINTS_PER_CATEGORY,

@@ -30,6 +30,7 @@ import { RankingSnapshot } from '@/components/home/RankingSnapshot';
 import { AuthPanel } from '@/components/auth/AuthPanel';
 import { type MatchResult } from '@/components/bolao/BolaoClient';
 import { DashboardClient } from '@/components/home/DashboardClient';
+import type { ExistingExtraPrediction } from '@/components/bolao/BolaoClient';
 import { BracketCard } from '@/components/home/BracketCard';
 import { matches as staticMatches } from '@/data/matches';
 import { loadTeamProbabilities, loadMatchProbabilities } from '@/lib/bolao/probabilities';
@@ -88,6 +89,7 @@ export default async function HomePage() {
   let userId: string | null = null;
   let rankRows: RankRow[] = [];
   let existingPredictions: PredictionInput[] = [];
+  let existingExtraPredictions: ExistingExtraPrediction[] = [];
   const multipliers: Record<string, number> = {};
   const results: Record<string, MatchResult> = {};
   const pointsByMatch: Record<string, number> = {};
@@ -126,13 +128,19 @@ export default async function HomePage() {
     if (user) {
       authenticated = true;
       userId = user.id;
-      const [{ data: prof }, { data: preds }] = await Promise.all([
+      const [{ data: prof }, { data: preds }, { data: extras }] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', user.id).single(),
         supabase
           .from('predictions')
           .select('match_id, home_score_guess, away_score_guess, penalty_winner_id, is_autofilled, points_earned')
           .eq('user_id', user.id),
+        // Palpites extras (semis = teste; 3º/final = valendo). RLS: só os próprios.
+        supabase
+          .from('extra_predictions')
+          .select('match_id, ht_home, ht_away, h2_home, h2_away, et_home, et_away, pen_home, pen_away, yellow_home, yellow_away, red_home, red_away, first_goal, points_earned')
+          .eq('user_id', user.id),
       ]);
+      existingExtraPredictions = (extras as ExistingExtraPrediction[]) ?? [];
       profile = (prof as Profile) ?? null;
       existingPredictions = (preds as PredictionInput[]) ?? [];
       for (const p of (preds as Array<PredictionInput & { points_earned: number | null }>) ?? []) {
@@ -243,6 +251,7 @@ export default async function HomePage() {
 
         {/* ── Card principal + seleções + próximos jogos ─────── */}
         <DashboardClient
+          existingExtraPredictions={existingExtraPredictions}
           profile={profile}
           existingPredictions={existingPredictions}
           multipliers={multipliers}
