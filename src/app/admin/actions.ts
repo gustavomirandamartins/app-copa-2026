@@ -4,6 +4,8 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { runFootballSync } from '@/lib/football-data/sync';
+import { applyScoring } from '@/lib/bolao/scoring-sync';
+import { EXTRA_BET_MATCH_IDS } from '@/lib/bolao/extra-bets';
 import { creditReferralOnPremium } from '@/lib/bolao/referral';
 import { validateDrawOrder } from '@/lib/bolao/tiebreak';
 import type { TieGroup } from '@/lib/bolao/tiebreak';
@@ -358,6 +360,70 @@ export async function setMatchMultiplier(
 }
 
 /**
+ * Registra os resultados manuais dos palpites extras (cartões por time e
+ * quem fez o 1º gol) — a football-data grátis não fornece eventos, então
+ * esses dois entram à mão depois do jogo. Só toca as colunas manuais de
+ * match_extra_results (as de placar são do sync) e roda applyScoring na
+ * sequência: após o apito final o live poll silencia, então sem isso os
+ * pontos digitados aqui nunca seriam apurados.
+ */
+export async function setMatchExtraActuals(
+  matchId: string,
+  actuals: {
+    yellowHome: number | null;
+    yellowAway: number | null;
+    redHome: number | null;
+    redAway: number | null;
+    firstGoal: 'home' | 'away' | 'none' | null;
+  },
+): Promise<AdminActionResult> {
+  const auth = await requireAdmin();
+  if ('error' in auth) return { ok: false, error: auth.error };
+
+  if (!EXTRA_BET_MATCH_IDS.includes(matchId)) {
+    return { ok: false, error: 'Jogo sem palpites extras habilitados.' };
+  }
+  for (const v of [actuals.yellowHome, actuals.yellowAway, actuals.redHome, actuals.redAway]) {
+    if (v != null && (!Number.isInteger(v) || v < 0 || v > 30)) {
+      return { ok: false, error: 'Cartões devem ser inteiros entre 0 e 30.' };
+    }
+  }
+  if (actuals.firstGoal != null && !['home', 'away', 'none'].includes(actuals.firstGoal)) {
+    return { ok: false, error: 'Valor inválido para o 1º gol.' };
+  }
+
+  const admin = createAdminClient();
+  const { error } = await admin.from('match_extra_results').upsert(
+    {
+      match_id: matchId,
+      yellow_home: actuals.yellowHome,
+      yellow_away: actuals.yellowAway,
+      red_home: actuals.redHome,
+      red_away: actuals.redAway,
+      first_goal: actuals.firstGoal,
+    },
+    { onConflict: 'match_id' },
+  );
+
+  if (error) {
+    console.error('[admin] falha ao salvar resultados extras:', error);
+    return { ok: false, error: 'Não foi possível salvar os resultados extras.' };
+  }
+
+  try {
+    await applyScoring(admin);
+  } catch (err) {
+    console.error('[admin] applyScoring após resultados extras falhou:', err);
+    return { ok: false, error: 'Resultados salvos, mas a apuração falhou — rode o sync manual.' };
+  }
+
+  revalidatePath('/admin/jogos');
+  revalidatePath('/bolao');
+  revalidatePath('/ranking');
+  return { ok: true };
+}
+
+/**
  * Habilita ou desabilita manualmente o acesso Premium de um usuário,
  * independentemente de pagamento. Usado para liberar quem o organizador
  * quiser (cortesias, convidados, etc.).
@@ -484,6 +550,7 @@ const BACKUP_TABLES = [
   'teams',
   'profiles',
   'matches',
+  'match_extra_results',
   'standings',
   'match_settings',
   'round_scores',
@@ -493,6 +560,7 @@ const BACKUP_TABLES = [
   'payment_requests',
   'referrals',
   'predictions',
+  'extra_predictions',
 ] as const;
 
 type BackupTable = (typeof BACKUP_TABLES)[number];
@@ -502,6 +570,7 @@ const BACKUP_CONFLICT_KEYS: Record<BackupTable, string> = {
   teams: 'id',
   profiles: 'id',
   matches: 'id',
+  match_extra_results: 'match_id',
   standings: 'group_letter,team_id',
   match_settings: 'match_id',
   round_scores: 'round_key,user_id',
@@ -511,6 +580,7 @@ const BACKUP_CONFLICT_KEYS: Record<BackupTable, string> = {
   payment_requests: 'id',
   referrals: 'referred_user_id',
   predictions: 'user_id,match_id',
+  extra_predictions: 'user_id,match_id',
 };
 
 export interface BackupData {

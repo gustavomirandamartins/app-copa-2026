@@ -6,6 +6,8 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
 import type { Profile, MatchSetting } from '@/lib/bolao/types';
 import { AdminMatchList } from '@/components/admin/AdminMatchList';
+import { AdminExtraResults, type InitialExtraActuals } from '@/components/admin/AdminExtraResults';
+import { EXTRA_BET_MATCH_IDS, type FirstGoal } from '@/lib/bolao/extra-bets';
 
 /**
  * Página (admin-only) para configurar os multiplicadores de pontos por jogo
@@ -39,6 +41,22 @@ export default async function AdminJogosPage() {
     initialMultipliers[s.match_id] = s.score_multiplier ?? 1;
   }
 
+  // Valores manuais já digitados dos resultados extras (cartões / 1º gol).
+  const { data: extraRows } = await admin
+    .from('match_extra_results')
+    .select('match_id, yellow_home, yellow_away, red_home, red_away, first_goal')
+    .in('match_id', [...EXTRA_BET_MATCH_IDS]);
+  const initialExtraActuals: InitialExtraActuals = {};
+  for (const r of extraRows ?? []) {
+    initialExtraActuals[r.match_id as string] = {
+      yellowHome: r.yellow_home as number | null,
+      yellowAway: r.yellow_away as number | null,
+      redHome: r.red_home as number | null,
+      redAway: r.red_away as number | null,
+      firstGoal: r.first_goal as FirstGoal | null,
+    };
+  }
+
   return (
     <div className="container">
       <section style={{ marginBottom: 'var(--space-lg)' }}>
@@ -59,6 +77,8 @@ export default async function AdminJogosPage() {
       </section>
 
       <AdminMatchList initialMultipliers={initialMultipliers} />
+
+      <AdminExtraResults initial={initialExtraActuals} />
     </div>
   );
 }

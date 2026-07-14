@@ -7,7 +7,9 @@ import { Crown, Info, Save, Loader2 } from 'lucide-react';
 import { matches as allMatches } from '@/data/matches';
 import { getTeamById } from '@/data/teams';
 import { simulateScore } from '@/lib/bolao/autofill';
-import { savePredictions } from '@/app/bolao/actions';
+import { savePredictions, saveExtraPredictions } from '@/app/bolao/actions';
+import { EXTRA_BET_MATCH_IDS, type ExtraPredictionInput } from '@/lib/bolao/extra-bets';
+import { EMPTY_EXTRA_VALUE, hasAnyExtraValue, type ExtraValue } from './ExtraBetsPanel';
 import type { MatchStatus, UfmgProbability } from '@/lib/types';
 import type { Profile, PredictionInput } from '@/lib/bolao/types';
 import type { MatchWinProbability } from '@/lib/bolao/probabilities';
@@ -26,11 +28,18 @@ export interface MatchResult {
   awayTeamId?: string | null;
 }
 
+/** Linha de extra_predictions carregada pela página (palpite + pontos). */
+export interface ExistingExtraPrediction extends Omit<ExtraPredictionInput, 'match_id'> {
+  match_id: string;
+  points_earned: number | null;
+}
+
 interface Props {
   configured: boolean;
   authenticated: boolean;
   profile: Profile | null;
   existingPredictions: PredictionInput[];
+  existingExtraPredictions?: ExistingExtraPrediction[];
   multipliers?: Record<string, number>;
   results?: Record<string, MatchResult>;
   pointsByMatch?: Record<string, number>;
@@ -56,6 +65,7 @@ export function BolaoClient({
   authenticated,
   profile,
   existingPredictions,
+  existingExtraPredictions = [],
   multipliers = {},
   results = {},
   pointsByMatch = {},
@@ -67,6 +77,23 @@ export function BolaoClient({
   const [values, setValues] = useState<Map<string, PredictionValue>>(() =>
     seedValues(existingPredictions),
   );
+  const [extraValues, setExtraValues] = useState<Map<string, ExtraValue>>(() => {
+    const map = new Map<string, ExtraValue>();
+    for (const e of existingExtraPredictions) {
+      const { match_id, points_earned, ...guess } = e;
+      void points_earned;
+      map.set(match_id, { ...EMPTY_EXTRA_VALUE, ...guess });
+    }
+    return map;
+  });
+  // Pontos extras apurados por jogo (exibição pós-jogo no painel).
+  const extraPointsByMatch = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const e of existingExtraPredictions) {
+      if (e.points_earned != null) map[e.match_id] = e.points_earned;
+    }
+    return map;
+  }, [existingExtraPredictions]);
   const [agreed, setAgreed] = useState(profile?.agreed_to_ranking ?? false);
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState<string | null>(null);
@@ -156,9 +183,31 @@ export function BolaoClient({
     return out;
   }, [values]);
 
+  function setExtra(matchId: string, next: ExtraValue) {
+    setExtraValues((prev) => {
+      const map = new Map(prev);
+      map.set(matchId, next);
+      return map;
+    });
+  }
+
+  // Palpites extras editáveis com algum campo preenchido (o lock real é do
+  // servidor; aqui só evitamos mandar jogos já travados/vazios).
+  const extraPayload = useMemo<ExtraPredictionInput[]>(() => {
+    const out: ExtraPredictionInput[] = [];
+    for (const [matchId, v] of extraValues) {
+      if (!EXTRA_BET_MATCH_IDS.includes(matchId)) continue;
+      if (!hasAnyExtraValue(v)) continue;
+      const match = allMatches.find((m) => m.id === matchId);
+      if (!match || new Date(match.dateUTC).getTime() <= Date.now()) continue;
+      out.push({ match_id: matchId, ...v });
+    }
+    return out;
+  }, [extraValues]);
+
   function handleSave() {
     setMessage(null);
-    
+
     // Validate penalty winner requirement for knockouts
     for (const [matchId, v] of values) {
       if (v.home === null || v.away === null) continue;
@@ -170,10 +219,21 @@ export function BolaoClient({
     }
 
     startTransition(async () => {
-      const res = await savePredictions(payload);
-      setMessage(
-        res.ok ? 'Palpites salvos com sucesso!' : res.error ?? 'Erro ao salvar.',
-      );
+      // Cada action é independente: principal só quando há placares, extras
+      // só quando algo foi preenchido neles.
+      const res = payload.length > 0 ? await savePredictions(payload) : { ok: true as const };
+      let extraError: string | null = null;
+      if (extraPayload.length > 0) {
+        const extraRes = await saveExtraPredictions(extraPayload);
+        if (!extraRes.ok) extraError = extraRes.error ?? 'Erro ao salvar palpites extras.';
+      }
+      if (!res.ok) {
+        setMessage(('error' in res ? res.error : null) ?? 'Erro ao salvar.');
+      } else if (extraError) {
+        setMessage(`Palpites salvos, mas os extras falharam: ${extraError}`);
+      } else {
+        setMessage('Palpites salvos com sucesso!');
+      }
     });
   }
 
@@ -235,6 +295,9 @@ export function BolaoClient({
         pointsByMatch={pointsByMatch}
         probabilities={probabilities}
         matchProbabilities={matchProbabilities}
+        extraValues={extraValues}
+        extraPointsByMatch={extraPointsByMatch}
+        onExtraChange={setExtra}
       />
 
       <div className="bolao-savebar">
@@ -242,7 +305,7 @@ export function BolaoClient({
         <button
           className="btn btn-gold bolao-save-btn"
           onClick={handleSave}
-          disabled={pending || isDemo || payload.length === 0}
+          disabled={pending || isDemo || (payload.length === 0 && extraPayload.length === 0)}
           title={isDemo ? 'Indisponível no modo demonstração' : undefined}
         >
           {pending ? (

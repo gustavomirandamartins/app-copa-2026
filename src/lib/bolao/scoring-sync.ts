@@ -1,5 +1,11 @@
 import type { createAdminClient } from '@/lib/supabase/admin';
 import { calculateMatchPoints } from './scoring';
+import { calculateExtraPoints } from './extra-scoring';
+import {
+  EXTRA_COUNTING_MATCH_IDS,
+  type ExtraPredictionRow,
+  type ExtraResultRow,
+} from './extra-bets';
 import {
   ROUND_ORDER,
   ROUND_MATCH_IDS,
@@ -60,7 +66,10 @@ interface RoundStat {
  *   2. Classifica cada rodada com critérios de desempate (pontos → placar exato
  *      → saldo) e premia em camadas: 1º +50, 2º +30, 3º +20, 4º +10, 5º +5.
  *      O admin fica fora de competição (sem colocação nem bônus).
- *   3. total_score = palpites + correção manual + bônus de rodada + indicação.
+ *   3. Apura os palpites extras (semis = teste; 3º/final = valendo) em
+ *      extra_predictions.points_earned e profiles.extra_points.
+ *   4. total_score = palpites + correção manual + bônus de rodada + indicação
+ *      + extras (só 3º lugar e final).
  */
 export async function applyScoring(admin: Admin): Promise<{ updatedPredictions: number }> {
   // Todas as partidas (precisamos do status de todas para saber se a rodada
@@ -163,6 +172,48 @@ export async function applyScoring(admin: Admin): Promise<{ updatedPredictions: 
       if (baseWithoutPenalty === 5) cur.exact += points; // placar exato
       if (baseWithoutPenalty === 3) cur.diff += points; // vencedor + saldo
       stats.set(p.user_id, cur);
+    }
+  }
+
+  // ── Palpites extras (semis = teste; 3º lugar e final = valendo) ────────
+  // Recalculados do zero como o resto (idempotente). points_earned é gravado
+  // para TODOS os jogos habilitados (feedback "você teria feito +N" nas
+  // semis), mas só EXTRA_COUNTING_MATCH_IDS entram no total_score — e nunca
+  // em base_points/round_scores (não perturbam os desempates).
+  const extraByUser = new Map<string, number>();
+  {
+    const { data: extraResults } = await admin
+      .from('match_extra_results')
+      .select('*');
+    const extraResultByMatch = new Map(
+      ((extraResults ?? []) as ExtraResultRow[]).map((r) => [r.match_id, r]),
+    );
+
+    const { data: extraPreds } = await admin
+      .from('extra_predictions')
+      .select('*');
+
+    for (const ep of (extraPreds ?? []) as ExtraPredictionRow[]) {
+      affectedUsers.add(ep.user_id);
+      const actual = extraResultByMatch.get(ep.match_id);
+      const isFinished = statusById.get(ep.match_id) === 'finished';
+
+      let total = 0;
+      if (actual && isFinished) {
+        const multiplier = multiplierByMatch.get(ep.match_id) ?? 1;
+        total = calculateExtraPoints(ep, actual).total * multiplier;
+      }
+
+      if ((ep.points_earned ?? 0) !== total) {
+        await admin
+          .from('extra_predictions')
+          .update({ points_earned: total })
+          .eq('id', ep.id);
+      }
+
+      if (EXTRA_COUNTING_MATCH_IDS.includes(ep.match_id)) {
+        extraByUser.set(ep.user_id, (extraByUser.get(ep.user_id) ?? 0) + total);
+      }
     }
   }
 
@@ -275,11 +326,13 @@ export async function applyScoring(admin: Admin): Promise<{ updatedPredictions: 
     const adjustment = adjustmentByUser.get(userId) ?? 0;
     const bonus = roundBonusByUser.get(userId) ?? 0;
     const referral = referralByUser.get(userId) ?? 0;
+    const extra = extraByUser.get(userId) ?? 0;
     await admin
       .from('profiles')
       .update({
         round_bonus: bonus,
-        total_score: earned + adjustment + bonus + referral,
+        extra_points: extra,
+        total_score: earned + adjustment + bonus + referral + extra,
       })
       .eq('id', userId);
   }

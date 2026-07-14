@@ -10,7 +10,7 @@ import { isSupabaseConfigured } from '@/lib/supabase/config';
 import { isProfileComplete } from '@/lib/bolao/profile';
 import type { Profile, PredictionInput } from '@/lib/bolao/types';
 import { loadTeamProbabilities, loadMatchProbabilities } from '@/lib/bolao/probabilities';
-import { BolaoClient, type MatchResult } from '@/components/bolao/BolaoClient';
+import { BolaoClient, type MatchResult, type ExistingExtraPrediction } from '@/components/bolao/BolaoClient';
 
 import { AuthPanel } from '@/components/auth/AuthPanel';
 
@@ -35,6 +35,7 @@ export default async function BolaoPage({
   let profile: Profile | null = null;
   let authenticated = false;
   let existingPredictions: PredictionInput[] = [];
+  let existingExtraPredictions: ExistingExtraPrediction[] = [];
 
   const multipliers: Record<string, number> = {};
   const results: Record<string, MatchResult> = {};
@@ -75,6 +76,14 @@ export default async function BolaoPage({
       for (const p of (preds as Array<PredictionInput & { points_earned: number | null }>) ?? []) {
         if (p.points_earned != null) pointsByMatch[p.match_id] = p.points_earned;
       }
+
+      // Palpites extras (semis = teste; 3º lugar e final = valendo).
+      // RLS: o usuário lê só os próprios.
+      const { data: extras } = await supabase
+        .from('extra_predictions')
+        .select('match_id, ht_home, ht_away, h2_home, h2_away, et_home, et_away, pen_home, pen_away, yellow_home, yellow_away, red_home, red_away, first_goal, points_earned')
+        .eq('user_id', user.id);
+      existingExtraPredictions = (extras as ExistingExtraPrediction[]) ?? [];
     }
 
     // Resultados reais (status + placar) — fonte da verdade para travar/exibir.
@@ -138,6 +147,7 @@ export default async function BolaoPage({
           authenticated={authenticated}
           profile={profile}
           existingPredictions={existingPredictions}
+          existingExtraPredictions={existingExtraPredictions}
           multipliers={multipliers}
           results={results}
           pointsByMatch={pointsByMatch}

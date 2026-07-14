@@ -8,6 +8,8 @@ import { getStadiumById } from '@/data/stadiums';
 import { TeamFlag } from '@/components/ui/TeamFlag';
 import { MatchWinBar } from '@/components/ui/MatchWinBar';
 import { SelecaoCompare } from '@/components/home/SelecaoCompare';
+import { ExtraBetsPanel, EMPTY_EXTRA_VALUE, type ExtraValue } from './ExtraBetsPanel';
+import { EXTRA_BET_MATCH_IDS } from '@/lib/bolao/extra-bets';
 import { formatKickoffTime, formatKickoffDate } from '@/lib/datetime';
 import type { MatchResult } from './BolaoClient';
 import type { Match, MatchStage, MatchStatus, UfmgProbability } from '@/lib/types';
@@ -85,6 +87,9 @@ interface Props {
   pointsByMatch?: Record<string, number>;
   probabilities?: Record<string, UfmgProbability>;
   matchProbabilities?: Record<number, MatchWinProbability>;
+  extraValues?: Map<string, ExtraValue>;
+  extraPointsByMatch?: Record<string, number>;
+  onExtraChange?: (matchId: string, next: ExtraValue) => void;
 }
 
 /** Mensagem contextual de resultado após a partida. */
@@ -204,6 +209,9 @@ export function PredictionGrid({
   pointsByMatch = {},
   probabilities = {},
   matchProbabilities = {},
+  extraValues,
+  extraPointsByMatch = {},
+  onExtraChange,
 }: Props) {
   const [activeTab, setActiveTab] = useState<TabKey>(() => vigenteTab(results));
   const [now, setNow] = useState<number | null>(null);
@@ -427,6 +435,21 @@ export function PredictionGrid({
                           )}
                         </div>
                       </>
+                    )}
+
+                    {/* Palpites extras (semis = teste; 3º/final = valendo). */}
+                    {onExtraChange && EXTRA_BET_MATCH_IDS.includes(match.id) && (
+                      <ExtraBetsPanel
+                        matchId={match.id}
+                        homeTeamId={homeTeamId}
+                        awayTeamId={awayTeamId}
+                        multiplier={multiplier}
+                        locked={locked}
+                        finished={finished}
+                        value={extraValues?.get(match.id) ?? EMPTY_EXTRA_VALUE}
+                        pointsEarned={extraPointsByMatch[match.id] ?? null}
+                        onChange={onExtraChange}
+                      />
                     )}
 
                     {/* Mesmo conteúdo adicional dos cards da página Jogos:

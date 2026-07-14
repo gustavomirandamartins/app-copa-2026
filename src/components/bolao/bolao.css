@@ -842,3 +842,114 @@
 .bolao-expand-toggle.is-open svg {
   transform: rotate(180deg);
 }
+
+/* ── Palpites extras (semis = teste; 3º lugar e final = valendo) ─────── */
+.extra-bets {
+  margin-top: var(--space-sm);
+  border-top: 1px dashed var(--glass-border);
+  padding-top: var(--space-sm);
+}
+
+.extra-bets-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--gold);
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 4px 0;
+  transition: color var(--dur-2) var(--ease);
+}
+.extra-bets-toggle:hover { color: #fff; }
+
+.extra-bets-badge {
+  margin-left: auto;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.extra-bets-badge.trial {
+  background: rgba(255, 255, 255, 0.10);
+  color: var(--text-secondary);
+  border: 1px solid var(--glass-border);
+}
+.extra-bets-badge.counting {
+  background: rgba(224, 124, 0, 0.15);
+  color: var(--gold);
+  border: 1px solid rgba(224, 124, 0, 0.40);
+}
+
+.extra-bets-chevron {
+  flex-shrink: 0;
+  transition: transform var(--dur-3) var(--ease-spring);
+}
+.extra-bets-toggle.is-open .extra-bets-chevron {
+  transform: rotate(180deg);
+}
+
+.extra-bets-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: var(--space-sm);
+  animation: fade-in 0.3s var(--ease) backwards;
+}
+
+.extra-bet-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+.extra-bet-label {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 0;
+}
+.extra-bet-hint {
+  font-style: normal;
+  font-size: 0.66rem;
+  font-weight: 500;
+  color: var(--text-tertiary);
+}
+
+.extra-bet-inputs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.extra-bet-select {
+  width: auto;
+  max-width: 60%;
+  padding: 4px 8px;
+  font-size: 0.78rem;
+}
+
+.extra-bets-result {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.extra-bets-footnote {
+  margin: 2px 0 0;
+  font-size: 0.66rem;
+  color: var(--text-tertiary);
+  line-height: 1.5;
+}

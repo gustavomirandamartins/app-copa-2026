@@ -3,12 +3,41 @@ import {
   getWorldCupStandings,
   isFootballDataConfigured,
 } from './client';
-import { resolveTeamId, mapStatus, extractScore } from './mappers';
+import { resolveTeamId, mapStatus, extractScore, extractExtraScore } from './mappers';
 import type { FdMatch } from './types';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { applyScoring } from '@/lib/bolao/scoring-sync';
 import { applyKnockoutAdvancement } from '@/lib/bolao/advancement';
+import { EXTRA_BET_MATCH_IDS } from '@/lib/bolao/extra-bets';
+
+/**
+ * Persiste as parciais dos palpites extras (1º tempo, regulamentar,
+ * prorrogação, pênaltis, duration) em match_extra_results. SÓ as colunas
+ * vindas da API — cartões e 1º gol são do admin e nunca entram neste
+ * payload, então nunca são sobrescritos. Não-fatal: extras não podem
+ * bloquear o sync de placares/pontuação.
+ */
+async function upsertExtraResults(
+  admin: ReturnType<typeof createAdminClient>,
+  matchDbId: string,
+  m: FdMatch,
+): Promise<void> {
+  if (!EXTRA_BET_MATCH_IDS.includes(matchDbId)) return;
+  const ex = extractExtraScore(m.score);
+  const { error } = await admin.from('match_extra_results').upsert(
+    {
+      match_id: matchDbId,
+      ht_home: ex.htHome, ht_away: ex.htAway,
+      rt_home: ex.rtHome, rt_away: ex.rtAway,
+      et_home: ex.etHome, et_away: ex.etAway,
+      pen_home: ex.penHome, pen_away: ex.penAway,
+      duration: ex.duration,
+    },
+    { onConflict: 'match_id' },
+  );
+  if (error) console.error(`[sync] upsert match_extra_results ${matchDbId}:`, error.message);
+}
 
 export interface SyncResult {
   ok: boolean;
@@ -141,6 +170,7 @@ export async function runFootballSync(): Promise<SyncResult> {
       const { error: matchErr } = await admin.from('matches').update(fields).eq('id', targetId);
       if (matchErr) throw new Error(`update match ${m.id}: ${matchErr.message}`);
       matchesUpdated++;
+      await upsertExtraResults(admin, targetId, m);
     } else {
       console.warn(`[sync] nenhuma linha encontrada para match ${m.id} (sem external_id, par de times ou data correspondente).`);
     }
@@ -340,6 +370,7 @@ export async function runLivePoll(): Promise<SyncResult> {
     if (error) throw new Error(`update match ${m.id}: ${error.message}`);
     matchesUpdated++;
     anyChanged = true;
+    await upsertExtraResults(admin, current.id, m);
   }
 
   let advanced = 0;

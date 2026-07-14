@@ -548,3 +548,32 @@
 }
 .admin-prob-msg-ok { color: var(--copa-green); }
 .admin-prob-msg-err { color: #e35d4f; }
+
+/* ── Resultados extras (cartões / 1º gol) ─────────────────────────────── */
+.admin-extra-fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+  margin-top: 8px;
+}
+.admin-extra-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+.admin-extra-fields input,
+.admin-extra-fields select {
+  width: 120px;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(8, 6, 18, 0.65);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+}
+.admin-extra-fields input { width: 72px; }

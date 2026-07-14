@@ -102,6 +102,68 @@ export function extractScore(score: FdScore | undefined): ExtractedScore {
   return { home, away, homePenalties, awayPenalties };
 }
 
+/** Parciais detalhadas para os palpites extras (match_extra_results). */
+export interface ExtractedExtraScore {
+  htHome: number | null;
+  htAway: number | null;
+  rtHome: number | null;
+  rtAway: number | null;
+  etHome: number | null;
+  etAway: number | null;
+  penHome: number | null;
+  penAway: number | null;
+  duration: 'REGULAR' | 'EXTRA_TIME' | 'PENALTY_SHOOTOUT' | null;
+}
+
+/**
+ * Extrai as parciais do objeto `score` para os palpites extras: 1º tempo,
+ * tempo regulamentar (90min), prorrogação (agregado) e pênaltis. Pênaltis
+ * seguem a MESMA regra do projeto usada em extractScore (`fullTime −
+ * regularTime`; o campo `penalties` da API é pouco confiável). O 2º tempo
+ * NÃO é extraído — é derivado na apuração (rt − ht).
+ */
+export function extractExtraScore(score: FdScore | undefined): ExtractedExtraScore {
+  const empty: ExtractedExtraScore = {
+    htHome: null, htAway: null,
+    rtHome: null, rtAway: null,
+    etHome: null, etAway: null,
+    penHome: null, penAway: null,
+    duration: null,
+  };
+  if (!score) return empty;
+
+  const duration =
+    score.duration === 'REGULAR' || score.duration === 'EXTRA_TIME' || score.duration === 'PENALTY_SHOOTOUT'
+      ? score.duration
+      : null;
+
+  let penHome: number | null = null;
+  let penAway: number | null = null;
+  if (score.duration === 'PENALTY_SHOOTOUT') {
+    const ftHome = score.fullTime?.home;
+    const ftAway = score.fullTime?.away;
+    const rtHome = score.regularTime?.home;
+    const rtAway = score.regularTime?.away;
+    penHome = ftHome != null && rtHome != null ? ftHome - rtHome : null;
+    penAway = ftAway != null && rtAway != null ? ftAway - rtAway : null;
+  }
+
+  return {
+    htHome: score.halfTime?.home ?? null,
+    htAway: score.halfTime?.away ?? null,
+    rtHome: score.regularTime?.home ?? null,
+    rtAway: score.regularTime?.away ?? null,
+    // extraTime só é uma parcial real quando a prorrogação aconteceu; em
+    // jogos decididos no tempo normal a API preenche 0x0, que gravado
+    // confundiria a apuração ("prorrogação 0x0" ≠ "não houve prorrogação").
+    etHome: duration === 'EXTRA_TIME' || duration === 'PENALTY_SHOOTOUT' ? score.extraTime?.home ?? null : null,
+    etAway: duration === 'EXTRA_TIME' || duration === 'PENALTY_SHOOTOUT' ? score.extraTime?.away ?? null : null,
+    penHome,
+    penAway,
+    duration,
+  };
+}
+
 /** Status da football-data → nosso MatchStatus. */
 export function mapStatus(status: FdStatus): MatchStatus {
   switch (status) {
