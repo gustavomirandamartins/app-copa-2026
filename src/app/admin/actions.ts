@@ -418,6 +418,7 @@ export async function setMatchExtraActuals(
   }
 
   revalidatePath('/admin/jogos');
+  revalidatePath('/admin'); // ranking de verificação dos extras
   revalidatePath('/bolao');
   revalidatePath('/ranking');
   return { ok: true };

@@ -7,6 +7,7 @@ import { isSupabaseConfigured } from '@/lib/supabase/config';
 import type { Profile, PaymentRequest } from '@/lib/bolao/types';
 import { AdminPendingPayments, AdminPaymentHistory } from '@/components/admin/AdminPaymentList';
 import { AdminUserList, type AdminUser } from '@/components/admin/AdminUserList';
+import { AdminExtraRanking, type ExtraRankingRow } from '@/components/admin/AdminExtraRanking';
 import {
   AdminPredictionsMatrix,
   type MatrixUser,
@@ -297,6 +298,27 @@ export default async function AdminPage() {
 
   const nameById = new Map(profiles.map(p => [p.id, p.full_name]));
 
+  // Palpites extras: pontos apurados por (usuário, jogo) — inclusive as
+  // semifinais de teste, que não somam no total mas aparecem no ranking de
+  // verificação abaixo.
+  const { data: extraPredsData } = await admin
+    .from('extra_predictions')
+    .select('user_id, match_id, points_earned');
+  const extraRowsByUser = new Map<string, ExtraRankingRow>();
+  for (const ep of (extraPredsData ?? []) as Array<{ user_id: string; match_id: string; points_earned: number }>) {
+    let row = extraRowsByUser.get(ep.user_id);
+    if (!row) {
+      row = {
+        userId: ep.user_id,
+        name: nameById.get(ep.user_id) ?? 'Participante',
+        pointsByMatch: {},
+      };
+      extraRowsByUser.set(ep.user_id, row);
+    }
+    row.pointsByMatch[ep.match_id] = ep.points_earned ?? 0;
+  }
+  const extraRankingRows = Array.from(extraRowsByUser.values());
+
   const tiebreakEntries: TiebreakEntry[] = [
     ...generalTieGroups.map(g => ({
       group: g,
@@ -345,6 +367,10 @@ export default async function AdminPage() {
           columns={matrixColumns}
           cells={cells}
         />
+      </div>
+
+      <div style={{ marginTop: 'var(--space-2xl)' }}>
+        <AdminExtraRanking rows={extraRankingRows} />
       </div>
 
       <div style={{ marginTop: 'var(--space-2xl)' }}>
