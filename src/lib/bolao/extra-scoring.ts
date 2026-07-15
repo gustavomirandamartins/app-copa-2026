@@ -77,6 +77,13 @@ export function calculateExtraPoints(
           : guess.first_goal === actual.first_goal
             ? EXTRA_POINTS_PER_CATEGORY
             : 0,
+
+    shotsHome: exactSingle(guess.shots_home, actual.shots_home),
+    shotsAway: exactSingle(guess.shots_away, actual.shots_away),
+    offsideHome: exactSingle(guess.offside_home, actual.offside_home),
+    offsideAway: exactSingle(guess.offside_away, actual.offside_away),
+    cornerHome: exactSingle(guess.corner_home, actual.corner_home),
+    cornerAway: exactSingle(guess.corner_away, actual.corner_away),
   };
 
   const total = Object.values(byCategory).reduce<number>((sum, v) => sum + (v ?? 0), 0);

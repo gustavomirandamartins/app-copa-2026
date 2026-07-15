@@ -375,6 +375,12 @@ export async function setMatchExtraActuals(
     redHome: number | null;
     redAway: number | null;
     firstGoal: 'home' | 'away' | 'none' | null;
+    shotsHome: number | null;
+    shotsAway: number | null;
+    offsideHome: number | null;
+    offsideAway: number | null;
+    cornerHome: number | null;
+    cornerAway: number | null;
   },
 ): Promise<AdminActionResult> {
   const auth = await requireAdmin();
@@ -383,9 +389,14 @@ export async function setMatchExtraActuals(
   if (!EXTRA_BET_MATCH_IDS.includes(matchId)) {
     return { ok: false, error: 'Jogo sem palpites extras habilitados.' };
   }
-  for (const v of [actuals.yellowHome, actuals.yellowAway, actuals.redHome, actuals.redAway]) {
+  const counters = [
+    actuals.yellowHome, actuals.yellowAway, actuals.redHome, actuals.redAway,
+    actuals.shotsHome, actuals.shotsAway, actuals.offsideHome, actuals.offsideAway,
+    actuals.cornerHome, actuals.cornerAway,
+  ];
+  for (const v of counters) {
     if (v != null && (!Number.isInteger(v) || v < 0 || v > 30)) {
-      return { ok: false, error: 'Cartões devem ser inteiros entre 0 e 30.' };
+      return { ok: false, error: 'Valores devem ser inteiros entre 0 e 30.' };
     }
   }
   if (actuals.firstGoal != null && !['home', 'away', 'none'].includes(actuals.firstGoal)) {
@@ -401,6 +412,12 @@ export async function setMatchExtraActuals(
       red_home: actuals.redHome,
       red_away: actuals.redAway,
       first_goal: actuals.firstGoal,
+      shots_home: actuals.shotsHome,
+      shots_away: actuals.shotsAway,
+      offside_home: actuals.offsideHome,
+      offside_away: actuals.offsideAway,
+      corner_home: actuals.cornerHome,
+      corner_away: actuals.cornerAway,
     },
     { onConflict: 'match_id' },
   );

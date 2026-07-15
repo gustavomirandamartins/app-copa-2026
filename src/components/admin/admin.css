@@ -577,3 +577,48 @@
   font-size: 0.8rem;
 }
 .admin-extra-fields input { width: 72px; }
+
+/* ── Faixa de dados sincronizados da API (só leitura) ─────────────────── */
+.admin-synced-strip {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: rgba(0, 151, 57, 0.08);
+  border: 1px solid rgba(0, 151, 57, 0.22);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.admin-synced-strip.admin-synced-empty {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: var(--text-tertiary);
+  font-size: 0.72rem;
+}
+.admin-synced-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--copa-green);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+.admin-synced-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+}
+.admin-synced-grid strong {
+  color: var(--text-primary);
+}
+.admin-synced-updated {
+  font-size: 0.64rem;
+  color: var(--text-tertiary);
+}

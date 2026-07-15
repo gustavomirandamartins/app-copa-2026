@@ -16,25 +16,33 @@ export const EXTRA_COUNTING_MATCH_IDS: readonly string[] = ['ko-103', 'ko-104'];
 /**
  * Pontos por categoria acertada em cheio (decisão do produto: 3 para todas,
  * multiplicados pelo score_multiplier de jogos turbinados no scoring).
- * 9 categorias × 3 = até 27 pts por jogo antes do multiplicador.
+ * 15 categorias × 3 = até 45 pts por jogo antes do multiplicador.
  */
 export const EXTRA_POINTS_PER_CATEGORY = 3;
 
 export type FirstGoal = 'home' | 'away' | 'none';
 
 export type ExtraCategory =
-  | 'ht'          // placar do 1º tempo
-  | 'h2'          // placar do 2º tempo regulamentar (derivado: rt − ht)
-  | 'et'          // placar da prorrogação (agregado; caso ocorra)
-  | 'pen'         // placar dos pênaltis (caso ocorra)
-  | 'yellowHome'  // cartões amarelos do mandante
-  | 'yellowAway'  // cartões amarelos do visitante
-  | 'redHome'     // cartões vermelhos do mandante
-  | 'redAway'     // cartões vermelhos do visitante
-  | 'firstGoal';  // qual seleção faz o 1º gol (ou nenhum gol)
+  | 'ht'           // placar do 1º tempo
+  | 'h2'           // placar do 2º tempo regulamentar (derivado: rt − ht)
+  | 'et'           // placar da prorrogação (agregado; caso ocorra)
+  | 'pen'          // placar dos pênaltis (caso ocorra)
+  | 'yellowHome'   // cartões amarelos do mandante
+  | 'yellowAway'   // cartões amarelos do visitante
+  | 'redHome'      // cartões vermelhos do mandante
+  | 'redAway'      // cartões vermelhos do visitante
+  | 'firstGoal'    // qual seleção faz o 1º gol (ou nenhum gol)
+  | 'shotsHome'    // chutes a gol do mandante
+  | 'shotsAway'    // chutes a gol do visitante
+  | 'offsideHome'  // impedimentos do mandante
+  | 'offsideAway'  // impedimentos do visitante
+  | 'cornerHome'   // escanteios do mandante
+  | 'cornerAway';  // escanteios do visitante
 
 export const EXTRA_CATEGORIES: readonly ExtraCategory[] = [
-  'ht', 'h2', 'et', 'pen', 'yellowHome', 'yellowAway', 'redHome', 'redAway', 'firstGoal',
+  'ht', 'h2', 'et', 'pen',
+  'yellowHome', 'yellowAway', 'redHome', 'redAway', 'firstGoal',
+  'shotsHome', 'shotsAway', 'offsideHome', 'offsideAway', 'cornerHome', 'cornerAway',
 ];
 
 /** Payload cliente → saveExtraPredictions (colunas de palpite, sem points). */
@@ -53,6 +61,12 @@ export interface ExtraPredictionInput {
   red_home: number | null;
   red_away: number | null;
   first_goal: FirstGoal | null;
+  shots_home: number | null;
+  shots_away: number | null;
+  offside_home: number | null;
+  offside_away: number | null;
+  corner_home: number | null;
+  corner_away: number | null;
 }
 
 /** Linha de extra_predictions lida do banco. */
@@ -79,4 +93,10 @@ export interface ExtraResultRow {
   red_home: number | null;
   red_away: number | null;
   first_goal: FirstGoal | null;
+  shots_home: number | null;
+  shots_away: number | null;
+  offside_home: number | null;
+  offside_away: number | null;
+  corner_home: number | null;
+  corner_away: number | null;
 }

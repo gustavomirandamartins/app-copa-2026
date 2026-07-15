@@ -25,6 +25,9 @@ export const EMPTY_EXTRA_VALUE: ExtraValue = {
   yellow_home: null, yellow_away: null,
   red_home: null, red_away: null,
   first_goal: null,
+  shots_home: null, shots_away: null,
+  offside_home: null, offside_away: null,
+  corner_home: null, corner_away: null,
 };
 
 type NumericField = keyof Omit<ExtraValue, 'first_goal'>;
@@ -145,7 +148,7 @@ export function ExtraBetsPanel({
   const away = awayTeamId ? getTeamById(awayTeamId) : null;
   if (!home || !away) return null;
 
-  const maxPoints = 9 * EXTRA_POINTS_PER_CATEGORY * multiplier;
+  const maxPoints = 15 * EXTRA_POINTS_PER_CATEGORY * multiplier;
 
   function setNumeric(field: NumericField, raw: string) {
     const parsed = raw === '' ? null : Number(raw);
@@ -188,6 +191,12 @@ export function ExtraBetsPanel({
           <SingleField label={`Cartões amarelos — ${away.name}`} field="yellow_away" value={value} locked={locked} onChange={setNumeric} />
           <SingleField label={`Cartões vermelhos — ${home.name}`} field="red_home" value={value} locked={locked} onChange={setNumeric} />
           <SingleField label={`Cartões vermelhos — ${away.name}`} field="red_away" value={value} locked={locked} onChange={setNumeric} />
+          <SingleField label={`Chutes a gol — ${home.name}`} field="shots_home" value={value} locked={locked} onChange={setNumeric} />
+          <SingleField label={`Chutes a gol — ${away.name}`} field="shots_away" value={value} locked={locked} onChange={setNumeric} />
+          <SingleField label={`Impedimentos — ${home.name}`} field="offside_home" value={value} locked={locked} onChange={setNumeric} />
+          <SingleField label={`Impedimentos — ${away.name}`} field="offside_away" value={value} locked={locked} onChange={setNumeric} />
+          <SingleField label={`Escanteios — ${home.name}`} field="corner_home" value={value} locked={locked} onChange={setNumeric} />
+          <SingleField label={`Escanteios — ${away.name}`} field="corner_away" value={value} locked={locked} onChange={setNumeric} />
 
           <div className="extra-bet-row">
             <span className="extra-bet-label">Quem faz o 1º gol?</span>

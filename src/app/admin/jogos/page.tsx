@@ -6,7 +6,11 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
 import type { Profile, MatchSetting } from '@/lib/bolao/types';
 import { AdminMatchList } from '@/components/admin/AdminMatchList';
-import { AdminExtraResults, type InitialExtraActuals } from '@/components/admin/AdminExtraResults';
+import {
+  AdminExtraResults,
+  type InitialExtraActuals,
+  type SyncedExtraDataByMatch,
+} from '@/components/admin/AdminExtraResults';
 import { EXTRA_BET_MATCH_IDS, type FirstGoal } from '@/lib/bolao/extra-bets';
 
 /**
@@ -57,19 +61,41 @@ export default async function AdminJogosPage() {
     };
   }
 
-  // Valores manuais já digitados dos resultados extras (cartões / 1º gol).
+  // Resultados extras: colunas manuais (edição) + colunas de API (só leitura,
+  // pra conferência — ver AdminExtraResults/SyncedDataStrip).
   const { data: extraRows } = await admin
     .from('match_extra_results')
-    .select('match_id, yellow_home, yellow_away, red_home, red_away, first_goal')
+    .select('match_id, yellow_home, yellow_away, red_home, red_away, first_goal, shots_home, shots_away, offside_home, offside_away, corner_home, corner_away, ht_home, ht_away, rt_home, rt_away, et_home, et_away, pen_home, pen_away, duration, updated_at')
     .in('match_id', [...EXTRA_BET_MATCH_IDS]);
+
   const initialExtraActuals: InitialExtraActuals = {};
+  const syncedByMatch: SyncedExtraDataByMatch = {};
   for (const r of extraRows ?? []) {
-    initialExtraActuals[r.match_id as string] = {
+    const id = r.match_id as string;
+    initialExtraActuals[id] = {
       yellowHome: r.yellow_home as number | null,
       yellowAway: r.yellow_away as number | null,
       redHome: r.red_home as number | null,
       redAway: r.red_away as number | null,
       firstGoal: r.first_goal as FirstGoal | null,
+      shotsHome: r.shots_home as number | null,
+      shotsAway: r.shots_away as number | null,
+      offsideHome: r.offside_home as number | null,
+      offsideAway: r.offside_away as number | null,
+      cornerHome: r.corner_home as number | null,
+      cornerAway: r.corner_away as number | null,
+    };
+    syncedByMatch[id] = {
+      ht_home: r.ht_home as number | null,
+      ht_away: r.ht_away as number | null,
+      rt_home: r.rt_home as number | null,
+      rt_away: r.rt_away as number | null,
+      et_home: r.et_home as number | null,
+      et_away: r.et_away as number | null,
+      pen_home: r.pen_home as number | null,
+      pen_away: r.pen_away as number | null,
+      duration: r.duration as SyncedExtraDataByMatch[string]['duration'],
+      updated_at: r.updated_at as string | null,
     };
   }
 
@@ -97,7 +123,11 @@ export default async function AdminJogosPage() {
       {/* scroll-margin-top: o header fixo (64px) não pode cobrir o título
           ao chegar aqui direto pelo link com âncora #resultados-extras. */}
       <div id="resultados-extras" style={{ scrollMarginTop: 'calc(var(--header-height) + var(--space-lg))' }}>
-        <AdminExtraResults initial={initialExtraActuals} liveTeamsByMatch={liveTeamsByMatch} />
+        <AdminExtraResults
+          initial={initialExtraActuals}
+          liveTeamsByMatch={liveTeamsByMatch}
+          syncedByMatch={syncedByMatch}
+        />
       </div>
     </div>
   );
