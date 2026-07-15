@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { ShieldCheck, Zap, BarChart3, DatabaseBackup } from 'lucide-react';
+import { ShieldCheck, Zap, BarChart3, DatabaseBackup, Sparkles } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
@@ -350,9 +350,12 @@ export default async function AdminPage() {
           Confira o comprovante recebido por e-mail e aprove para liberar o
           acesso Premium do participante.
         </p>
-        <div style={{ marginTop: 'var(--space-sm)' }}>
+        <div style={{ marginTop: 'var(--space-sm)', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <Link href="/admin/jogos" className="btn btn-gold btn-sm">
-            <Zap size={16} /> Jogos turbinados (multiplicadores)
+            <Zap size={16} /> Jogos turbinados
+          </Link>
+          <Link href="/admin/jogos#resultados-extras" className="btn btn-secondary btn-sm">
+            <Sparkles size={16} /> Cartões e 1º gol (palpites extras)
           </Link>
         </div>
       </section>

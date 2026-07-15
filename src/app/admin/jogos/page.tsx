@@ -72,13 +72,17 @@ export default async function AdminJogosPage() {
             size={28}
             style={{ color: 'var(--gold)', verticalAlign: 'middle', marginRight: 8 }}
           />
-          Jogos turbinados
+          Jogos turbinados, cartões e 1º gol
         </h1>
       </section>
 
       <AdminMatchList initialMultipliers={initialMultipliers} />
 
-      <AdminExtraResults initial={initialExtraActuals} />
+      {/* scroll-margin-top: o header fixo (64px) não pode cobrir o título
+          ao chegar aqui direto pelo link com âncora #resultados-extras. */}
+      <div id="resultados-extras" style={{ scrollMarginTop: 'calc(var(--header-height) + var(--space-lg))' }}>
+        <AdminExtraResults initial={initialExtraActuals} />
+      </div>
     </div>
   );
 }
