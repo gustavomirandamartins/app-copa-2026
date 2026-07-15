@@ -21,6 +21,8 @@ interface ManualActuals {
   offsideAway: number | null;
   cornerHome: number | null;
   cornerAway: number | null;
+  foulsHome: number | null;
+  foulsAway: number | null;
 }
 
 /** Valores iniciais vindos de match_extra_results (só colunas manuais). */
@@ -188,6 +190,16 @@ function ExtraRow({
               onChange={(e) => setNum('cornerAway', e.target.value)} />
           </label>
           <label>
+            Faltas {homeName}
+            <input type="number" min={0} max={30} value={values.foulsHome ?? ''} disabled={pending}
+              onChange={(e) => setNum('foulsHome', e.target.value)} />
+          </label>
+          <label>
+            Faltas {awayName}
+            <input type="number" min={0} max={30} value={values.foulsAway ?? ''} disabled={pending}
+              onChange={(e) => setNum('foulsAway', e.target.value)} />
+          </label>
+          <label>
             1º gol
             <select value={values.firstGoal ?? ''} disabled={pending}
               onChange={(e) => setValues((v) => ({ ...v, firstGoal: (e.target.value || null) as FirstGoal | null }))}>
@@ -245,7 +257,7 @@ export function AdminExtraResults({
             initial={initial[id] ?? {
               yellowHome: null, yellowAway: null, redHome: null, redAway: null, firstGoal: null,
               shotsHome: null, shotsAway: null, offsideHome: null, offsideAway: null,
-              cornerHome: null, cornerAway: null,
+              cornerHome: null, cornerAway: null, foulsHome: null, foulsAway: null,
             }}
             liveTeams={liveTeamsByMatch?.[id]}
             synced={syncedByMatch?.[id]}

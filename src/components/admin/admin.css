@@ -622,3 +622,82 @@
   font-size: 0.64rem;
   color: var(--text-tertiary);
 }
+
+/* ── Sininho de pendências (ao lado do título da Central de controle) ── */
+.admin-pending-bell-wrap {
+  display: inline-flex;
+  flex-direction: column;
+}
+.admin-pending-bell {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background var(--dur-2) var(--ease), transform var(--dur-3) var(--ease-spring);
+}
+.admin-pending-bell:hover {
+  background: rgba(255, 255, 255, 0.14);
+  transform: scale(1.05);
+}
+.admin-pending-bell[aria-expanded="true"] {
+  background: rgba(224, 124, 0, 0.20);
+  border-color: rgba(224, 124, 0, 0.45);
+  color: var(--gold);
+}
+.admin-pending-bell-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--red);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  box-shadow: 0 0 0 2px rgba(10, 8, 25, 0.9);
+}
+
+/* ── Cards de acesso rápido (Jogos turbinados / Palpites extras) ─────── */
+.admin-quick-link-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-md);
+}
+.admin-quick-link-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: var(--space-lg);
+  text-decoration: none;
+  color: inherit;
+  transition: transform var(--dur-3) var(--ease-spring), border-color var(--dur-2) var(--ease);
+}
+.admin-quick-link-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(224, 124, 0, 0.45);
+}
+.admin-quick-link-card h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1rem;
+  margin: 0;
+}
+.admin-quick-link-card p {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}

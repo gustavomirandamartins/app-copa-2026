@@ -381,6 +381,8 @@ export async function setMatchExtraActuals(
     offsideAway: number | null;
     cornerHome: number | null;
     cornerAway: number | null;
+    foulsHome: number | null;
+    foulsAway: number | null;
   },
 ): Promise<AdminActionResult> {
   const auth = await requireAdmin();
@@ -392,7 +394,7 @@ export async function setMatchExtraActuals(
   const counters = [
     actuals.yellowHome, actuals.yellowAway, actuals.redHome, actuals.redAway,
     actuals.shotsHome, actuals.shotsAway, actuals.offsideHome, actuals.offsideAway,
-    actuals.cornerHome, actuals.cornerAway,
+    actuals.cornerHome, actuals.cornerAway, actuals.foulsHome, actuals.foulsAway,
   ];
   for (const v of counters) {
     if (v != null && (!Number.isInteger(v) || v < 0 || v > 30)) {
@@ -418,6 +420,8 @@ export async function setMatchExtraActuals(
       offside_away: actuals.offsideAway,
       corner_home: actuals.cornerHome,
       corner_away: actuals.cornerAway,
+      fouls_home: actuals.foulsHome,
+      fouls_away: actuals.foulsAway,
     },
     { onConflict: 'match_id' },
   );

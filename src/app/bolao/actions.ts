@@ -130,6 +130,7 @@ const EXTRA_NUMERIC_FIELDS = [
   'ht_home', 'ht_away', 'h2_home', 'h2_away', 'et_home', 'et_away',
   'pen_home', 'pen_away', 'yellow_home', 'yellow_away', 'red_home', 'red_away',
   'shots_home', 'shots_away', 'offside_home', 'offside_away', 'corner_home', 'corner_away',
+  'fouls_home', 'fouls_away',
 ] as const;
 
 const FIRST_GOAL_VALUES: ReadonlySet<string> = new Set(['home', 'away', 'none']);
@@ -205,6 +206,7 @@ export async function saveExtraPredictions(
     shots_home: p.shots_home, shots_away: p.shots_away,
     offside_home: p.offside_home, offside_away: p.offside_away,
     corner_home: p.corner_home, corner_away: p.corner_away,
+    fouls_home: p.fouls_home, fouls_away: p.fouls_away,
   }));
 
   // Admin client pelo mesmo motivo de savePredictions: escrita em

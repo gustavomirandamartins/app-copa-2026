@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition } from 'react';
 import {
   AlertCircle,
   Check,
+  ChevronDown,
   Crown,
   Mail,
   Pencil,
@@ -205,6 +206,7 @@ function UserRow({ u }: { u: AdminUser }) {
 
 export function AdminUserList({ users }: { users: AdminUser[] }) {
   const [query, setQuery] = useState('');
+  const [open, setOpen] = useState(false);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -220,24 +222,44 @@ export function AdminUserList({ users }: { users: AdminUser[] }) {
 
   return (
     <section className="admin-glass-section">
-      <h2 className="admin-section-title">
-        Todos os usuários ({users.length}) · {premiumCount} com acesso
-      </h2>
-
-      <div className="admin-search">
-        <Search size={16} />
-        <input
-          type="search"
-          placeholder="Buscar por nome ou e-mail…"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
+      <button
+        type="button"
+        className="admin-history-toggle"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+      >
+        <h2 className="admin-section-title" style={{ margin: 0 }}>
+          Todos os usuários ({users.length}) · {premiumCount} com acesso
+        </h2>
+        <ChevronDown
+          size={18}
+          style={{
+            transition: 'transform var(--dur-3) var(--ease-spring)',
+            transform: open ? 'rotate(180deg)' : 'none',
+            color: 'var(--text-tertiary)',
+            flexShrink: 0,
+          }}
         />
-      </div>
+      </button>
 
-      {filtered.length === 0 ? (
-        <p className="admin-empty">Nenhum usuário encontrado.</p>
-      ) : (
-        filtered.map((u) => <UserRow key={u.id} u={u} />)
+      {open && (
+        <>
+          <div className="admin-search" style={{ marginTop: 'var(--space-sm)' }}>
+            <Search size={16} />
+            <input
+              type="search"
+              placeholder="Buscar por nome ou e-mail…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </div>
+
+          {filtered.length === 0 ? (
+            <p className="admin-empty">Nenhum usuário encontrado.</p>
+          ) : (
+            filtered.map((u) => <UserRow key={u.id} u={u} />)
+          )}
+        </>
       )}
     </section>
   );

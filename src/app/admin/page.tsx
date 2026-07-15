@@ -5,7 +5,8 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
 import type { Profile, PaymentRequest } from '@/lib/bolao/types';
-import { AdminPendingPayments, AdminPaymentHistory } from '@/components/admin/AdminPaymentList';
+import { AdminPaymentHistory } from '@/components/admin/AdminPaymentList';
+import { AdminPendingBell } from '@/components/admin/AdminPendingBell';
 import { AdminUserList, type AdminUser } from '@/components/admin/AdminUserList';
 import { AdminExtraRanking, type ExtraRankingRow } from '@/components/admin/AdminExtraRanking';
 import {
@@ -336,60 +337,31 @@ export default async function AdminPage() {
     ),
   ];
 
+  const pendingTiebreakCount = tiebreakEntries.filter((e) => !e.draw).length;
+
   return (
     <div className="container">
       <section style={{ marginBottom: 'var(--space-lg)' }}>
-        <h1 style={{ marginBottom: 'var(--space-sm)' }}>
-          <ShieldCheck
-            size={28}
-            style={{ color: 'var(--gold)', verticalAlign: 'middle', marginRight: 8 }}
-          />
-          Central de controle
-        </h1>
-        <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-          Confira o comprovante recebido por e-mail e aprove para liberar o
-          acesso Premium do participante.
-        </p>
-        <div style={{ marginTop: 'var(--space-sm)', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <Link href="/admin/jogos" className="btn btn-gold btn-sm">
-            <Zap size={16} /> Jogos turbinados
-          </Link>
-          <Link href="/admin/jogos#resultados-extras" className="btn btn-secondary btn-sm">
-            <Sparkles size={16} /> Cartões e 1º gol (palpites extras)
-          </Link>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 'var(--space-sm)' }}>
+          <h1 style={{ margin: 0 }}>
+            <ShieldCheck
+              size={28}
+              style={{ color: 'var(--gold)', verticalAlign: 'middle', marginRight: 8 }}
+            />
+            Central de controle
+          </h1>
+          <AdminPendingBell pending={pending} badgeCount={pendingTiebreakCount}>
+            <AdminTiebreakDrawsPending entries={tiebreakEntries} />
+          </AdminPendingBell>
         </div>
+        <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+          O que importa primeiro: backup, probabilidades e configuração dos
+          jogos. Pix pendentes ficam no sininho ao lado do título.
+        </p>
       </section>
 
-      <AdminPendingPayments pending={pending}>
-        <AdminTiebreakDrawsPending entries={tiebreakEntries} />
-      </AdminPendingPayments>
-
-      <div style={{ marginTop: 'var(--space-2xl)' }}>
-        <AdminPredictionsMatrix
-          users={matrixUsers}
-          columns={matrixColumns}
-          cells={cells}
-        />
-      </div>
-
-      <div style={{ marginTop: 'var(--space-2xl)' }}>
-        <AdminExtraRanking rows={extraRankingRows} />
-      </div>
-
-      <div style={{ marginTop: 'var(--space-2xl)' }}>
-        <AdminPaymentHistory
-          reviewed={reviewed}
-          extraCount={tiebreakEntries.filter((e) => e.draw).length}
-        >
-          <AdminTiebreakDrawsResolved entries={tiebreakEntries} />
-        </AdminPaymentHistory>
-      </div>
-
-      <div style={{ marginTop: 'var(--space-2xl)' }}>
-        <AdminUserList users={users} />
-      </div>
-
-      <section className="glass-card-static" style={{ marginTop: 'var(--space-2xl)', padding: 'var(--space-lg)' }}>
+      {/* ── Em primeiro plano ─────────────────────────────────────────── */}
+      <section className="glass-card-static" style={{ padding: 'var(--space-lg)' }}>
         <h2 style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 'var(--space-md)' }}>
           <DatabaseBackup size={20} style={{ color: 'var(--gold)' }} /> Backup do banco
         </h2>
@@ -409,6 +381,44 @@ export default async function AdminPage() {
         </h2>
         <AdminMatchProbabilitiesUpload />
       </section>
+
+      <div className="admin-quick-link-grid" style={{ marginTop: 'var(--space-2xl)' }}>
+        <Link href="/admin/jogos" className="glass-card admin-quick-link-card">
+          <h2><Zap size={18} style={{ color: 'var(--gold)' }} /> Jogos turbinados</h2>
+          <p>Multiplicador de pontos por jogo (x2 a x10).</p>
+        </Link>
+        <Link href="/admin/jogos#resultados-extras" className="glass-card admin-quick-link-card">
+          <h2><Sparkles size={18} style={{ color: 'var(--gold)' }} /> Palpites extras</h2>
+          <p>Cartões, faltas, escanteios, chutes, impedimentos e 1º gol das semis, 3º lugar e final.</p>
+        </Link>
+      </div>
+
+      {/* ── Acompanhamento ─────────────────────────────────────────────── */}
+      <div style={{ marginTop: 'var(--space-2xl)' }}>
+        <AdminPredictionsMatrix
+          users={matrixUsers}
+          columns={matrixColumns}
+          cells={cells}
+        />
+      </div>
+
+      <div style={{ marginTop: 'var(--space-2xl)' }}>
+        <AdminExtraRanking rows={extraRankingRows} />
+      </div>
+
+      {/* ── Histórico e usuários — colapsados, só abrem ao clicar ───────── */}
+      <div style={{ marginTop: 'var(--space-2xl)' }}>
+        <AdminPaymentHistory
+          reviewed={reviewed}
+          extraCount={tiebreakEntries.filter((e) => e.draw).length}
+        >
+          <AdminTiebreakDrawsResolved entries={tiebreakEntries} />
+        </AdminPaymentHistory>
+      </div>
+
+      <div style={{ marginTop: 'var(--space-2xl)' }}>
+        <AdminUserList users={users} />
+      </div>
     </div>
   );
 }

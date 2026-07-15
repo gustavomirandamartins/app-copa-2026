@@ -65,7 +65,7 @@ export default async function AdminJogosPage() {
   // pra conferência — ver AdminExtraResults/SyncedDataStrip).
   const { data: extraRows } = await admin
     .from('match_extra_results')
-    .select('match_id, yellow_home, yellow_away, red_home, red_away, first_goal, shots_home, shots_away, offside_home, offside_away, corner_home, corner_away, ht_home, ht_away, rt_home, rt_away, et_home, et_away, pen_home, pen_away, duration, updated_at')
+    .select('match_id, yellow_home, yellow_away, red_home, red_away, first_goal, shots_home, shots_away, offside_home, offside_away, corner_home, corner_away, fouls_home, fouls_away, ht_home, ht_away, rt_home, rt_away, et_home, et_away, pen_home, pen_away, duration, updated_at')
     .in('match_id', [...EXTRA_BET_MATCH_IDS]);
 
   const initialExtraActuals: InitialExtraActuals = {};
@@ -84,6 +84,8 @@ export default async function AdminJogosPage() {
       offsideAway: r.offside_away as number | null,
       cornerHome: r.corner_home as number | null,
       cornerAway: r.corner_away as number | null,
+      foulsHome: r.fouls_home as number | null,
+      foulsAway: r.fouls_away as number | null,
     };
     syncedByMatch[id] = {
       ht_home: r.ht_home as number | null,

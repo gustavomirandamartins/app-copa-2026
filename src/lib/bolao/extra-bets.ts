@@ -16,7 +16,7 @@ export const EXTRA_COUNTING_MATCH_IDS: readonly string[] = ['ko-103', 'ko-104'];
 /**
  * Pontos por categoria acertada em cheio (decisão do produto: 3 para todas,
  * multiplicados pelo score_multiplier de jogos turbinados no scoring).
- * 15 categorias × 3 = até 45 pts por jogo antes do multiplicador.
+ * 17 categorias × 3 = até 51 pts por jogo antes do multiplicador.
  */
 export const EXTRA_POINTS_PER_CATEGORY = 3;
 
@@ -37,12 +37,15 @@ export type ExtraCategory =
   | 'offsideHome'  // impedimentos do mandante
   | 'offsideAway'  // impedimentos do visitante
   | 'cornerHome'   // escanteios do mandante
-  | 'cornerAway';  // escanteios do visitante
+  | 'cornerAway'   // escanteios do visitante
+  | 'foulsHome'    // faltas do mandante
+  | 'foulsAway';   // faltas do visitante
 
 export const EXTRA_CATEGORIES: readonly ExtraCategory[] = [
   'ht', 'h2', 'et', 'pen',
   'yellowHome', 'yellowAway', 'redHome', 'redAway', 'firstGoal',
   'shotsHome', 'shotsAway', 'offsideHome', 'offsideAway', 'cornerHome', 'cornerAway',
+  'foulsHome', 'foulsAway',
 ];
 
 /** Payload cliente → saveExtraPredictions (colunas de palpite, sem points). */
@@ -67,6 +70,8 @@ export interface ExtraPredictionInput {
   offside_away: number | null;
   corner_home: number | null;
   corner_away: number | null;
+  fouls_home: number | null;
+  fouls_away: number | null;
 }
 
 /** Linha de extra_predictions lida do banco. */
@@ -99,4 +104,6 @@ export interface ExtraResultRow {
   offside_away: number | null;
   corner_home: number | null;
   corner_away: number | null;
+  fouls_home: number | null;
+  fouls_away: number | null;
 }

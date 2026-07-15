@@ -148,11 +148,20 @@ export function extractExtraScore(score: FdScore | undefined): ExtractedExtraSco
     penAway = ftAway != null && rtAway != null ? ftAway - rtAway : null;
   }
 
+  // Tempo regulamentar (90min): quando o jogo termina no tempo normal, a API
+  // OMITE `regularTime` por completo — só devolve `fullTime` (que nesse caso
+  // já É o placar dos 90min). Só quando há prorrogação/pênaltis a API separa
+  // os dois. Sem este fallback, todo jogo decidido no tempo normal fica com
+  // rt null → o 2º tempo (derivado de rt − ht) nunca é apurável. Mesma regra
+  // já usada em extractScore() para o placar principal.
+  const rtHome = score.regularTime?.home ?? (duration === 'REGULAR' ? score.fullTime?.home ?? null : null);
+  const rtAway = score.regularTime?.away ?? (duration === 'REGULAR' ? score.fullTime?.away ?? null : null);
+
   return {
     htHome: score.halfTime?.home ?? null,
     htAway: score.halfTime?.away ?? null,
-    rtHome: score.regularTime?.home ?? null,
-    rtAway: score.regularTime?.away ?? null,
+    rtHome,
+    rtAway,
     // extraTime só é uma parcial real quando a prorrogação aconteceu; em
     // jogos decididos no tempo normal a API preenche 0x0, que gravado
     // confundiria a apuração ("prorrogação 0x0" ≠ "não houve prorrogação").

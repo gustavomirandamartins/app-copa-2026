@@ -28,6 +28,7 @@ export const EMPTY_EXTRA_VALUE: ExtraValue = {
   shots_home: null, shots_away: null,
   offside_home: null, offside_away: null,
   corner_home: null, corner_away: null,
+  fouls_home: null, fouls_away: null,
 };
 
 type NumericField = keyof Omit<ExtraValue, 'first_goal'>;
@@ -148,7 +149,7 @@ export function ExtraBetsPanel({
   const away = awayTeamId ? getTeamById(awayTeamId) : null;
   if (!home || !away) return null;
 
-  const maxPoints = 15 * EXTRA_POINTS_PER_CATEGORY * multiplier;
+  const maxPoints = 17 * EXTRA_POINTS_PER_CATEGORY * multiplier;
 
   function setNumeric(field: NumericField, raw: string) {
     const parsed = raw === '' ? null : Number(raw);
@@ -197,6 +198,8 @@ export function ExtraBetsPanel({
           <SingleField label={`Impedimentos — ${away.name}`} field="offside_away" value={value} locked={locked} onChange={setNumeric} />
           <SingleField label={`Escanteios — ${home.name}`} field="corner_home" value={value} locked={locked} onChange={setNumeric} />
           <SingleField label={`Escanteios — ${away.name}`} field="corner_away" value={value} locked={locked} onChange={setNumeric} />
+          <SingleField label={`Faltas — ${home.name}`} field="fouls_home" value={value} locked={locked} onChange={setNumeric} />
+          <SingleField label={`Faltas — ${away.name}`} field="fouls_away" value={value} locked={locked} onChange={setNumeric} />
 
           <div className="extra-bet-row">
             <span className="extra-bet-label">Quem faz o 1º gol?</span>
