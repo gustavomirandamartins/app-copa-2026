@@ -6,6 +6,7 @@ import { matches as allMatches } from '@/data/matches';
 import { getTeamById } from '@/data/teams';
 import { setMatchExtraActuals } from '@/app/admin/actions';
 import { EXTRA_BET_MATCH_IDS, type FirstGoal } from '@/lib/bolao/extra-bets';
+import type { LiveTeamsByMatch } from './AdminMatchList';
 import './admin.css';
 
 interface ManualActuals {
@@ -22,9 +23,11 @@ export type InitialExtraActuals = Record<string, ManualActuals>;
 function ExtraRow({
   matchId,
   initial,
+  liveTeams,
 }: {
   matchId: string;
   initial: ManualActuals;
+  liveTeams?: { homeTeamId: string | null; awayTeamId: string | null };
 }) {
   const [values, setValues] = useState<ManualActuals>(initial);
   const [pending, startTransition] = useTransition();
@@ -32,8 +35,12 @@ function ExtraRow({
 
   const match = allMatches.find((m) => m.id === matchId);
   if (!match) return null;
-  const home = match.homeTeamId ? getTeamById(match.homeTeamId) : null;
-  const away = match.awayTeamId ? getTeamById(match.awayTeamId) : null;
+  // Times reais do mata-mata vêm do sync (tabela matches) — o calendário
+  // estático só sabe "Vencedor do Jogo N" até o jogo anterior terminar.
+  const homeTeamId = liveTeams?.homeTeamId ?? match.homeTeamId;
+  const awayTeamId = liveTeams?.awayTeamId ?? match.awayTeamId;
+  const home = homeTeamId ? getTeamById(homeTeamId) : null;
+  const away = awayTeamId ? getTeamById(awayTeamId) : null;
   const homeName = home?.name ?? match.homeTeamPlaceholder ?? 'A definir';
   const awayName = away?.name ?? match.awayTeamPlaceholder ?? 'A definir';
 
@@ -103,7 +110,13 @@ function ExtraRow({
  * para os jogos com palpites extras (semis, 3º lugar e final). Salvar
  * dispara a apuração (applyScoring) na hora.
  */
-export function AdminExtraResults({ initial }: { initial: InitialExtraActuals }) {
+export function AdminExtraResults({
+  initial,
+  liveTeamsByMatch,
+}: {
+  initial: InitialExtraActuals;
+  liveTeamsByMatch?: LiveTeamsByMatch;
+}) {
   return (
     <section style={{ marginTop: 'var(--space-2xl)' }}>
       <h2 style={{ fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 'var(--space-xs)' }}>
@@ -116,9 +129,14 @@ export function AdminExtraResults({ initial }: { initial: InitialExtraActuals })
       </p>
       <div className="admin-match-grid">
         {EXTRA_BET_MATCH_IDS.map((id) => (
-          <ExtraRow key={id} matchId={id} initial={initial[id] ?? {
-            yellowHome: null, yellowAway: null, redHome: null, redAway: null, firstGoal: null,
-          }} />
+          <ExtraRow
+            key={id}
+            matchId={id}
+            initial={initial[id] ?? {
+              yellowHome: null, yellowAway: null, redHome: null, redAway: null, firstGoal: null,
+            }}
+            liveTeams={liveTeamsByMatch?.[id]}
+          />
         ))}
       </div>
     </section>

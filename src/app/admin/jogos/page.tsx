@@ -41,6 +41,22 @@ export default async function AdminJogosPage() {
     initialMultipliers[s.match_id] = s.score_multiplier ?? 1;
   }
 
+  // Times reais do mata-mata: o calendário estático (src/data/matches.ts)
+  // sempre tem home/away_team_id nulos para essas fases — só sabe "Vencedor
+  // do Jogo N" — quem resolve os times de verdade é o applyKnockoutAdvancement
+  // do sync, gravado na tabela matches. Sem isso, os nomes das seleções
+  // nunca aparecem aqui mesmo depois de decididos.
+  const { data: liveMatches } = await admin
+    .from('matches')
+    .select('id, home_team_id, away_team_id');
+  const liveTeamsByMatch: Record<string, { homeTeamId: string | null; awayTeamId: string | null }> = {};
+  for (const m of liveMatches ?? []) {
+    liveTeamsByMatch[m.id as string] = {
+      homeTeamId: m.home_team_id as string | null,
+      awayTeamId: m.away_team_id as string | null,
+    };
+  }
+
   // Valores manuais já digitados dos resultados extras (cartões / 1º gol).
   const { data: extraRows } = await admin
     .from('match_extra_results')
@@ -76,12 +92,12 @@ export default async function AdminJogosPage() {
         </h1>
       </section>
 
-      <AdminMatchList initialMultipliers={initialMultipliers} />
+      <AdminMatchList initialMultipliers={initialMultipliers} liveTeamsByMatch={liveTeamsByMatch} />
 
       {/* scroll-margin-top: o header fixo (64px) não pode cobrir o título
           ao chegar aqui direto pelo link com âncora #resultados-extras. */}
       <div id="resultados-extras" style={{ scrollMarginTop: 'calc(var(--header-height) + var(--space-lg))' }}>
-        <AdminExtraResults initial={initialExtraActuals} />
+        <AdminExtraResults initial={initialExtraActuals} liveTeamsByMatch={liveTeamsByMatch} />
       </div>
     </div>
   );

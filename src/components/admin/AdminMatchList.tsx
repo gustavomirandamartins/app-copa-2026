@@ -21,6 +21,10 @@ const stageTabs: { key: MatchStage; label: string }[] = [
 
 const MULTIPLIER_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
+/** Times do mata-mata, resolvidos pelo sync (tabela matches) — o
+ *  calendário estático nunca tem home/away_team_id fora da fase de grupos. */
+export type LiveTeamsByMatch = Record<string, { homeTeamId: string | null; awayTeamId: string | null }>;
+
 function teamName(teamId: string | null, placeholder?: string): string {
   if (teamId) return getTeamById(teamId)?.name ?? 'A definir';
   return placeholder ?? 'A definir';
@@ -29,15 +33,19 @@ function teamName(teamId: string | null, placeholder?: string): string {
 function MatchRow({
   match,
   multiplier,
+  liveTeams,
   onChange,
 }: {
   match: (typeof allMatches)[number];
   multiplier: number;
+  liveTeams?: { homeTeamId: string | null; awayTeamId: string | null };
   onChange: (value: number) => void;
 }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const boosted = multiplier > 1;
+  const homeTeamId = liveTeams?.homeTeamId ?? match.homeTeamId;
+  const awayTeamId = liveTeams?.awayTeamId ?? match.awayTeamId;
 
   function handleSelect(value: number) {
     setError(null);
@@ -60,9 +68,9 @@ function MatchRow({
               <Zap size={12} /> x{multiplier}
             </span>
           )}
-          <strong>{teamName(match.homeTeamId, match.homeTeamPlaceholder)}</strong>
+          <strong>{teamName(homeTeamId, match.homeTeamPlaceholder)}</strong>
           <span className="admin-match-x">×</span>
-          <strong>{teamName(match.awayTeamId, match.awayTeamPlaceholder)}</strong>
+          <strong>{teamName(awayTeamId, match.awayTeamPlaceholder)}</strong>
         </div>
         <span className="admin-match-date">
           {formatKickoffDate(match.dateUTC, { day: 'numeric', month: 'short' })} ·{' '}
@@ -91,8 +99,10 @@ function MatchRow({
 
 export function AdminMatchList({
   initialMultipliers,
+  liveTeamsByMatch,
 }: {
   initialMultipliers: Record<string, number>;
+  liveTeamsByMatch?: LiveTeamsByMatch;
 }) {
   const [activeStage, setActiveStage] = useState<MatchStage>('group');
   const [multipliers, setMultipliers] =
@@ -133,6 +143,7 @@ export function AdminMatchList({
             key={match.id}
             match={match}
             multiplier={multipliers[match.id] ?? 1}
+            liveTeams={liveTeamsByMatch?.[match.id]}
             onChange={(value) =>
               setMultipliers((prev) => ({ ...prev, [match.id]: value }))
             }
