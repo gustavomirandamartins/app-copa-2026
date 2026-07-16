@@ -13,6 +13,12 @@ import {
   roundBonusForPlace,
   type RoundKey,
 } from './rounds';
+import {
+  detectRoundTieGroups,
+  applyDraw,
+  type DrawRecord,
+  type RoundRow as TiebreakRoundRow,
+} from './tiebreak';
 
 type Admin = ReturnType<typeof createAdminClient>;
 
@@ -245,6 +251,22 @@ export async function applyScoring(admin: Admin): Promise<{ updatedPredictions: 
     );
   }
 
+  // Sorteios de desempate já registrados pelo admin (Central de controle).
+  // Necessário para resolver a colocação REAL de rodadas empatadas no top 5
+  // — sem isso, o bônus escalonado abaixo usava um desempate arbitrário por
+  // user_id (nunca refletia o sorteio real).
+  const { data: drawsData } = await admin
+    .from('tiebreak_draws')
+    .select('scope, signature, ordering');
+  const drawsByKey = new Map<string, DrawRecord>();
+  for (const d of (drawsData ?? []) as Array<{ scope: string; signature: string; ordering: string[] }>) {
+    drawsByKey.set(`${d.scope}|${d.signature}`, {
+      scope: d.scope as DrawRecord['scope'],
+      signature: d.signature,
+      ordering: d.ordering,
+    });
+  }
+
   // Monta round_scores: classifica cada rodada (desempate) e premia em camadas.
   const roundBonusByUser = new Map<string, number>();
   const roundScoreRows: Array<{
@@ -284,17 +306,45 @@ export async function applyScoring(admin: Admin): Promise<{ updatedPredictions: 
         return a.user < b.user ? -1 : a.user > b.user ? 1 : 0;
       });
 
-    // place (1-based) e bônus escalonado por usuário não-admin.
+    // place (1-based) — ponto de partida antes do desempate por sorteio.
     const placeByUser = new Map<string, number>();
     contenders.forEach((c, i) => placeByUser.set(c.user, i + 1));
+
+    // Empates absolutos no top 5 exigem sorteio (Central de controle). Um
+    // grupo sem sorteio válido salvo fica "pending" — todos os membros
+    // ficam SEM bônus/coroa até o admin resolver, mesmo com a rodada
+    // encerrada. Com sorteio válido, a colocação real de cada membro vem
+    // da ordem sorteada (não do fallback alfabético por user_id).
+    const tiebreakRows: TiebreakRoundRow[] = contenders.map((c) => ({
+      user_id: c.user,
+      is_admin: false,
+      points: c.points,
+      exact_pts: c.exact,
+      diff_pts: c.diff,
+    }));
+    const tieGroups = detectRoundTieGroups(tiebreakRows, rk);
+    const pendingTieUsers = new Set<string>();
+    for (const group of tieGroups) {
+      const draw = drawsByKey.get(`${group.scope}|${group.signature}`);
+      const result = applyDraw(group, draw);
+      if (result.pending) {
+        group.memberIds.forEach((id) => pendingTieUsers.add(id));
+      } else {
+        result.orderedIds.forEach((id, idx) => placeByUser.set(id, group.topPosition + idx));
+      }
+    }
 
     for (const u of users) {
       const stat = stats.get(u) ?? { points: 0, exact: 0, diff: 0 };
       const isAdmin = !!isAdminByUser.get(u);
       const place = isAdmin ? null : placeByUser.get(u) ?? null;
-      // Bônus só vale quando a rodada encerra; só pontuou na rodada conta (>0).
+      const tiePending = pendingTieUsers.has(u);
+      // Bônus só vale quando a rodada encerra, o usuário pontuou (>0) e não
+      // há empate pendente de sorteio na colocação dele.
       const bonus =
-        complete && place != null && stat.points > 0 ? roundBonusForPlace(place) : 0;
+        complete && place != null && stat.points > 0 && !tiePending
+          ? roundBonusForPlace(place)
+          : 0;
       if (bonus > 0) {
         roundBonusByUser.set(u, (roundBonusByUser.get(u) ?? 0) + bonus);
       }
@@ -307,7 +357,7 @@ export async function applyScoring(admin: Admin): Promise<{ updatedPredictions: 
         place,
         bonus,
         complete,
-        is_winner: complete && place === 1 && stat.points > 0,
+        is_winner: complete && place === 1 && stat.points > 0 && !tiePending,
       });
     }
   }
