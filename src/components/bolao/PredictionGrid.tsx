@@ -10,6 +10,7 @@ import { MatchWinBar } from '@/components/ui/MatchWinBar';
 import { SelecaoCompare } from '@/components/home/SelecaoCompare';
 import { ExtraBetsPanel, EMPTY_EXTRA_VALUE, type ExtraValue } from './ExtraBetsPanel';
 import { EXTRA_BET_MATCH_IDS } from '@/lib/bolao/extra-bets';
+import { useStageBackground, type StageBgKey } from '@/hooks/useStageBackground';
 import { formatKickoffTime, formatKickoffDate } from '@/lib/datetime';
 import type { MatchResult } from './BolaoClient';
 import type { Match, MatchStage, MatchStatus, UfmgProbability } from '@/lib/types';
@@ -217,6 +218,12 @@ export function PredictionGrid({
   const [now, setNow] = useState<number | null>(null);
   const [mounted, setMounted] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  // Fundo temático nas abas 3º Lugar/Final; demais abas usam o padrão
+  // das Eliminatórias (globals.css).
+  const stageBgKey: StageBgKey =
+    activeTab === 'third-place' ? 'bronze' : activeTab === 'final' ? 'final' : null;
+  useStageBackground(stageBgKey);
 
   useEffect(() => {
     const tick = () => setNow(Date.now());

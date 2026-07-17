@@ -32,6 +32,7 @@ import { type MatchResult } from '@/components/bolao/BolaoClient';
 import { DashboardClient } from '@/components/home/DashboardClient';
 import type { ExistingExtraPrediction } from '@/components/bolao/BolaoClient';
 import { BracketCard } from '@/components/home/BracketCard';
+import { StageBackgroundEffect } from '@/components/layout/StageBackgroundEffect';
 import { matches as staticMatches } from '@/data/matches';
 import { loadTeamProbabilities, loadMatchProbabilities } from '@/lib/bolao/probabilities';
 import type { Match } from '@/lib/types';
@@ -150,6 +151,9 @@ export default async function HomePage() {
   }
 
   const isPremium = !!profile?.is_premium;
+  // Fundo da Início: bronze (3º lugar) até a disputa terminar, daí dourado
+  // (final) — mesmo tema usado nas páginas Bolão/Jogos quando naquela aba.
+  const thirdPlaceFinished = results['ko-103']?.status === 'finished';
 
   // ════════════════════════════════════════════════════════════════
   // PARTICIPANTE (premium) — dashboard com classificação + palpites
@@ -242,6 +246,7 @@ export default async function HomePage() {
 
     return (
       <div className="container home nx-dash">
+        <StageBackgroundEffect stage={thirdPlaceFinished ? 'final' : 'bronze'} />
         {/* ── Olá, usuário ───────────────────────────────────── */}
         <section className="nx-hello">
           <h1 className="nx-hello-title">
@@ -291,6 +296,7 @@ export default async function HomePage() {
 
   return (
     <div className="container home">
+      <StageBackgroundEffect stage={thirdPlaceFinished ? 'final' : 'bronze'} />
       {/* ── HERO ───────────────────────────────────────────── */}
       <section className="home-hero">
         <div className="home-hero-glow" aria-hidden="true" />

@@ -8,6 +8,7 @@ import { getStadiumById } from '@/data/stadiums';
 import { TeamFlag } from '@/components/ui/TeamFlag';
 import { MatchWinBar } from '@/components/ui/MatchWinBar';
 import { SelecaoCompare } from '@/components/home/SelecaoCompare';
+import { useStageBackground, type StageBgKey } from '@/hooks/useStageBackground';
 import type { Match, MatchStage, UfmgProbability } from '@/lib/types';
 import type { MatchWinProbability } from '@/lib/bolao/probabilities';
 import { formatKickoffTime, formatKickoffDate } from '@/lib/datetime';
@@ -54,6 +55,12 @@ export function JogosClient({
   const [activeStage, setActiveStage] = useState<MatchStage | 'all'>(() => currentStage(matches));
   const [hasHandledHash, setHasHandledHash] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  // Fundo temático nas abas 3º Lugar/Final; demais abas usam o padrão
+  // das Eliminatórias (globals.css).
+  const stageBgKey: StageBgKey =
+    activeStage === 'third-place' ? 'bronze' : activeStage === 'final' ? 'final' : null;
+  useStageBackground(stageBgKey);
 
   const filteredMatches = useMemo(() => {
     const list = activeStage === 'all' ? matches : matches.filter((m) => m.stage === activeStage);

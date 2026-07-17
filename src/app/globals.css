@@ -134,7 +134,13 @@ html {
      Chrome. background-attachment: fixed keeps it viewport-pinned (parallax).
      JS in ParallaxBackground.tsx pans backgroundPositionY on scroll. */
   background-color: var(--bg-light);
-  background-image: url('https://sdyilmgixyynnmczsnhc.supabase.co/storage/v1/object/public/backgrounds/bg-bolao-elim-16x9.avif');
+  /* --stage-bg-* são sobrescritas via JS (useStageBackground) nas páginas de
+     3º lugar/final (bronze/dourado); o valor default aqui é o das
+     Eliminatórias. Uma troca de var() já move tanto este background quanto
+     o do .app-bg (camada estática do mobile) abaixo, sem duplicar lógica. */
+  --stage-bg-desktop: url('https://sdyilmgixyynnmczsnhc.supabase.co/storage/v1/object/public/backgrounds/bg-bolao-elim-16x9.avif');
+  --stage-bg-mobile: url('https://sdyilmgixyynnmczsnhc.supabase.co/storage/v1/object/public/backgrounds/bg-bolao-elim-9x16.avif');
+  background-image: var(--stage-bg-desktop);
   background-size: cover;
   background-attachment: fixed;
   background-position: center;
@@ -159,7 +165,7 @@ html {
 
 @media (max-width: 767px) {
   html {
-    background-image: url('https://sdyilmgixyynnmczsnhc.supabase.co/storage/v1/object/public/backgrounds/bg-bolao-elim-9x16.avif');
+    background-image: var(--stage-bg-mobile);
     background-size: cover;
     background-attachment: fixed;
     background-position: center center;
@@ -170,7 +176,7 @@ html {
     position: fixed;
     inset: 0;
     z-index: -2;
-    background-image: url('https://sdyilmgixyynnmczsnhc.supabase.co/storage/v1/object/public/backgrounds/bg-bolao-elim-9x16.avif');
+    background-image: var(--stage-bg-mobile);
     background-size: cover;
     background-position: center center;
     background-repeat: no-repeat;
