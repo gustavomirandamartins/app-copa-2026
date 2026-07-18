@@ -978,3 +978,19 @@
     transition: none;
   }
 }
+
+/* ── Grande Final: glow dourado em todos os cards da Início ─────
+   --shadow-glow-gold já existe em globals.css (definida, mas sem uso
+   até aqui). Só na Início — escopado por .home para não vazar pro
+   resto do app. Idle sutil, hover mais forte (troca o glow verde
+   padrão de .glass-card:hover por dourado, coerente com o tema). */
+.home .glass-card,
+.home .glass-card-static,
+.home .nx-card,
+.home .nx-up-card {
+  box-shadow: var(--shadow-lg), var(--shadow-glow-gold);
+}
+
+.home .glass-card:hover {
+  box-shadow: var(--shadow-lg), 0 0 32px rgba(254, 221, 0, 0.5);
+}

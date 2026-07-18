@@ -191,15 +191,17 @@ export function BolaoClient({
     });
   }
 
-  // Palpites extras editáveis com algum campo preenchido (o lock real é do
-  // servidor; aqui só evitamos mandar jogos já travados/vazios).
+  // Palpites extras editáveis com algum campo preenchido. Não filtramos por
+  // horário aqui: um useMemo só recalcula quando extraValues muda, então se
+  // o usuário deixasse a aba aberta e o apito batesse antes de clicar em
+  // Salvar, esse filtro ficava desatualizado e o jogo entrava no payload
+  // mesmo travado — o servidor (saveExtraPredictions) é quem decide, por
+  // jogo, o que ainda pode ser salvo, e devolve o que foi ignorado.
   const extraPayload = useMemo<ExtraPredictionInput[]>(() => {
     const out: ExtraPredictionInput[] = [];
     for (const [matchId, v] of extraValues) {
       if (!EXTRA_BET_MATCH_IDS.includes(matchId)) continue;
       if (!hasAnyExtraValue(v)) continue;
-      const match = allMatches.find((m) => m.id === matchId);
-      if (!match || new Date(match.dateUTC).getTime() <= Date.now()) continue;
       out.push({ match_id: matchId, ...v });
     }
     return out;
@@ -223,14 +225,22 @@ export function BolaoClient({
       // só quando algo foi preenchido neles.
       const res = payload.length > 0 ? await savePredictions(payload) : { ok: true as const };
       let extraError: string | null = null;
+      let extraSkipped: string[] | undefined;
       if (extraPayload.length > 0) {
         const extraRes = await saveExtraPredictions(extraPayload);
         if (!extraRes.ok) extraError = extraRes.error ?? 'Erro ao salvar palpites extras.';
+        else extraSkipped = extraRes.skippedMatchIds;
       }
       if (!res.ok) {
         setMessage(('error' in res ? res.error : null) ?? 'Erro ao salvar.');
       } else if (extraError) {
         setMessage(`Palpites salvos, mas os extras falharam: ${extraError}`);
+      } else if (extraSkipped && extraSkipped.length > 0) {
+        const labels = extraSkipped.map((id) => {
+          const m = allMatches.find((x) => x.id === id);
+          return m ? `Jogo #${m.matchNumber}` : id;
+        });
+        setMessage(`Palpites salvos! Extras não salvos porque a partida já começou: ${labels.join(', ')}.`);
       } else {
         setMessage('Palpites salvos com sucesso!');
       }

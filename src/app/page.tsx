@@ -250,7 +250,11 @@ export default async function HomePage() {
         {/* ── Olá, usuário ───────────────────────────────────── */}
         <section className="nx-hello">
           <h1 className="nx-hello-title">
-            Olá, <span className="home-title-accent">{firstName}</span>!
+            {thirdPlaceFinished ? (
+              <>Agora é a grande final, <span className="home-title-accent">{firstName}</span>!</>
+            ) : (
+              <>Olá, <span className="home-title-accent">{firstName}</span>!</>
+            )}
           </h1>
         </section>
 

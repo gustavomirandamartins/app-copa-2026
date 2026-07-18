@@ -14,6 +14,15 @@ export const EXTRA_BET_MATCH_IDS: readonly string[] = ['ko-101', 'ko-102', 'ko-1
 export const EXTRA_COUNTING_MATCH_IDS: readonly string[] = ['ko-103', 'ko-104'];
 
 /**
+ * Faltas só contam pontos na Final. Um bug de sincronização impediu vários
+ * usuários de salvar o palpite de faltas na disputa do 3º lugar antes do
+ * apito (ver commit que corrigiu saveExtraPredictions) — como nem todos
+ * tiveram a chance real de registrar o palpite, a categoria fica anulada
+ * (não pontua pra ninguém) nesse jogo, para manter condições iguais.
+ */
+export const FOULS_COUNTING_MATCH_IDS: readonly string[] = ['ko-104'];
+
+/**
  * Pontos por categoria acertada em cheio (decisão do produto: 3 para todas,
  * multiplicados pelo score_multiplier de jogos turbinados no scoring).
  * 17 categorias × 3 = até 51 pts por jogo antes do multiplicador.
@@ -47,6 +56,28 @@ export const EXTRA_CATEGORIES: readonly ExtraCategory[] = [
   'shotsHome', 'shotsAway', 'offsideHome', 'offsideAway', 'cornerHome', 'cornerAway',
   'foulsHome', 'foulsAway',
 ];
+
+/** Rótulos genéricos (sem nome de seleção — usados no ranking público, que
+ *  soma a categoria entre 3º lugar e Final, dois confrontos diferentes). */
+export const EXTRA_CATEGORY_LABELS: Record<ExtraCategory, string> = {
+  ht: 'Placar do 1º tempo',
+  h2: 'Placar do 2º tempo',
+  et: 'Prorrogação',
+  pen: 'Pênaltis',
+  yellowHome: 'Cartões amarelos (mandante)',
+  yellowAway: 'Cartões amarelos (visitante)',
+  redHome: 'Cartões vermelhos (mandante)',
+  redAway: 'Cartões vermelhos (visitante)',
+  firstGoal: '1º gol da partida',
+  shotsHome: 'Chutes a gol (mandante)',
+  shotsAway: 'Chutes a gol (visitante)',
+  offsideHome: 'Impedimentos (mandante)',
+  offsideAway: 'Impedimentos (visitante)',
+  cornerHome: 'Escanteios (mandante)',
+  cornerAway: 'Escanteios (visitante)',
+  foulsHome: 'Faltas (mandante)',
+  foulsAway: 'Faltas (visitante)',
+};
 
 /** Payload cliente → saveExtraPredictions (colunas de palpite, sem points). */
 export interface ExtraPredictionInput {

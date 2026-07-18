@@ -8,8 +8,10 @@ import { getTeamById } from '@/data/teams';
 // (ex.: dashboard da página inicial).
 import './bolao.css';
 import {
+  EXTRA_CATEGORIES,
   EXTRA_COUNTING_MATCH_IDS,
   EXTRA_POINTS_PER_CATEGORY,
+  FOULS_COUNTING_MATCH_IDS,
   type ExtraPredictionInput,
   type FirstGoal,
 } from '@/lib/bolao/extra-bets';
@@ -87,12 +89,14 @@ function ScorePair({
 /** Palpite avulso de um número só (cartões: cada campo vale pontos sozinho). */
 function SingleField({
   label,
+  hint,
   field,
   value,
   locked,
   onChange,
 }: {
   label: string;
+  hint?: string;
   field: NumericField;
   value: ExtraValue;
   locked: boolean;
@@ -100,7 +104,10 @@ function SingleField({
 }) {
   return (
     <div className="extra-bet-row">
-      <span className="extra-bet-label">{label}</span>
+      <span className="extra-bet-label">
+        {label}
+        {hint && <em className="extra-bet-hint">{hint}</em>}
+      </span>
       <div className="extra-bet-inputs">
         <input
           type="number" min={0} max={20} inputMode="numeric"
@@ -142,14 +149,21 @@ export function ExtraBetsPanel({
   pointsEarned: number | null;
   onChange: (matchId: string, next: ExtraValue) => void;
 }) {
-  const [open, setOpen] = useState(false);
+  // Grande Final: o painel já abre expandido na Final, pra convidar quem
+  // ainda não palpitou nas estatísticas extras a preencher sem precisar
+  // procurar o botão. Nos demais jogos continua fechado por padrão.
+  const [open, setOpen] = useState(matchId === 'ko-104');
 
   const counting = EXTRA_COUNTING_MATCH_IDS.includes(matchId);
   const home = homeTeamId ? getTeamById(homeTeamId) : null;
   const away = awayTeamId ? getTeamById(awayTeamId) : null;
   if (!home || !away) return null;
 
-  const maxPoints = 17 * EXTRA_POINTS_PER_CATEGORY * multiplier;
+  // Faltas só valem ponto na Final — condições desiguais na disputa do 3º
+  // lugar (ver FOULS_COUNTING_MATCH_IDS) fizeram a categoria ser anulada lá.
+  const foulsCounts = FOULS_COUNTING_MATCH_IDS.includes(matchId);
+  const categoryCount = foulsCounts ? EXTRA_CATEGORIES.length : EXTRA_CATEGORIES.length - 2;
+  const maxPoints = categoryCount * EXTRA_POINTS_PER_CATEGORY * multiplier;
 
   function setNumeric(field: NumericField, raw: string) {
     const parsed = raw === '' ? null : Number(raw);
@@ -198,8 +212,16 @@ export function ExtraBetsPanel({
           <SingleField label={`Impedimentos — ${away.name}`} field="offside_away" value={value} locked={locked} onChange={setNumeric} />
           <SingleField label={`Escanteios — ${home.name}`} field="corner_home" value={value} locked={locked} onChange={setNumeric} />
           <SingleField label={`Escanteios — ${away.name}`} field="corner_away" value={value} locked={locked} onChange={setNumeric} />
-          <SingleField label={`Faltas — ${home.name}`} field="fouls_home" value={value} locked={locked} onChange={setNumeric} />
-          <SingleField label={`Faltas — ${away.name}`} field="fouls_away" value={value} locked={locked} onChange={setNumeric} />
+          <SingleField
+            label={`Faltas — ${home.name}`}
+            hint={foulsCounts ? undefined : 'não vale ponto nesta partida'}
+            field="fouls_home" value={value} locked={locked} onChange={setNumeric}
+          />
+          <SingleField
+            label={`Faltas — ${away.name}`}
+            hint={foulsCounts ? undefined : 'não vale ponto nesta partida'}
+            field="fouls_away" value={value} locked={locked} onChange={setNumeric}
+          />
 
           <div className="extra-bet-row">
             <span className="extra-bet-label">Quem faz o 1º gol?</span>

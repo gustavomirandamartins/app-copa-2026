@@ -10,6 +10,7 @@ export function EliminatoriasClient({ matches }: { matches: Match[] }) {
     <Bracket
       matches={matches}
       onMatchClick={(match) => router.push(`/jogos#match-${match.id}`)}
+      defaultFocus="stage-final"
     />
   );
 }

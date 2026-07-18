@@ -166,14 +166,16 @@ export function DashboardClient({
     });
   }
 
-  // Extras preenchidos de jogos ainda abertos (o lock real é do servidor).
+  // Extras preenchidos, de qualquer jogo habilitado. Sem filtro de horário
+  // aqui: esse useMemo só recalcula quando extraValues muda, então se a aba
+  // ficar aberta e o apito bater antes do clique em Salvar, esse filtro
+  // ficaria desatualizado. Quem decide, por jogo, o que ainda pode ser
+  // salvo é o servidor (saveExtraPredictions), que devolve o que ignorou.
   const extraPayload = useMemo<ExtraPredictionInput[]>(() => {
     const out: ExtraPredictionInput[] = [];
     for (const [matchId, v] of extraValues) {
       if (!EXTRA_BET_MATCH_IDS.includes(matchId)) continue;
       if (!hasAnyExtraValue(v)) continue;
-      const mt = allMatches.find((m) => m.id === matchId);
-      if (!mt || new Date(mt.dateUTC).getTime() <= Date.now()) continue;
       out.push({ match_id: matchId, ...v });
     }
     return out;
@@ -193,14 +195,22 @@ export function DashboardClient({
       // Cada action é independente (mesma lógica do BolaoClient).
       const res = payload.length > 0 ? await savePredictions(payload) : { ok: true as const };
       let extraError: string | null = null;
+      let extraSkipped: string[] | undefined;
       if (extraPayload.length > 0) {
         const extraRes = await saveExtraPredictions(extraPayload);
         if (!extraRes.ok) extraError = extraRes.error ?? 'Erro ao salvar palpites extras.';
+        else extraSkipped = extraRes.skippedMatchIds;
       }
       if (!res.ok) {
         setMessage(('error' in res ? res.error : null) ?? 'Erro ao salvar.');
       } else if (extraError) {
         setMessage(`Palpites salvos, mas os extras falharam: ${extraError}`);
+      } else if (extraSkipped && extraSkipped.length > 0) {
+        const labels = extraSkipped.map((id) => {
+          const mt = allMatches.find((x) => x.id === id);
+          return mt ? `Jogo #${mt.matchNumber}` : id;
+        });
+        setMessage(`Palpites salvos! Extras não salvos porque a partida já começou: ${labels.join(', ')}.`);
       } else {
         setMessage('Palpites salvos! 🍺');
       }

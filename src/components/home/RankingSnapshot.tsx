@@ -35,10 +35,10 @@ export function RankingSnapshot({
   currentRoundLabel,
   meRoundPoints = 0,
 }: Props) {
-  // Mostra a aba da rodada sempre que houver uma rodada vigente (mesmo sem
-  // pontos ainda — ex.: rodada recém-iniciada), com estado vazio amigável.
+  // Toggle rodada/geral continua disponível, mas na reta final da Copa o
+  // que importa é a geral — abre nela por padrão (era a rodada vigente).
   const hasRound = !!currentRoundLabel;
-  const [tab, setTab] = useState<'round' | 'general'>(hasRound ? 'round' : 'general');
+  const [tab, setTab] = useState<'round' | 'general'>('general');
 
   // ── Classificação geral ──────────────────────────────────────
   let place = 0;

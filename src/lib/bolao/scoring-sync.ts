@@ -207,7 +207,7 @@ export async function applyScoring(admin: Admin): Promise<{ updatedPredictions: 
       let total = 0;
       if (actual && isFinished) {
         const multiplier = multiplierByMatch.get(ep.match_id) ?? 1;
-        total = calculateExtraPoints(ep, actual).total * multiplier;
+        total = calculateExtraPoints(ep.match_id, ep, actual).total * multiplier;
       }
 
       if ((ep.points_earned ?? 0) !== total) {

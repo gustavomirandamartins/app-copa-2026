@@ -171,11 +171,14 @@ function BracketCard({
 export function Bracket({
   matches,
   onMatchClick,
+  defaultFocus = null,
 }: {
   matches: Match[];
   onMatchClick?: (match: Match) => void;
+  /** Foco inicial (ex.: "stage-final") — null mostra a árvore inteira. */
+  defaultFocus?: string | null;
 }) {
-  const [focus, setFocus] = useState<string | null>(null);
+  const [focus, setFocus] = useState<string | null>(defaultFocus);
   const [camera, setCamera] = useState({ x: 0, y: 0, scale: 1 });
   const cameraRef = useRef(camera);
 

@@ -1,5 +1,6 @@
 import {
   EXTRA_POINTS_PER_CATEGORY,
+  FOULS_COUNTING_MATCH_IDS,
   type ExtraCategory,
   type ExtraPredictionInput,
   type ExtraResultRow,
@@ -9,8 +10,9 @@ import {
  * Pontuação dos palpites extras — puro, espelho do estilo de scoring.ts.
  *
  * Cada categoria vale EXTRA_POINTS_PER_CATEGORY no acerto EXATO; 0 no erro;
- * `null` quando a categoria está anulada (fase não ocorreu — "caso ocorra")
- * ou o dado real ainda não existe (ex.: admin não digitou os cartões).
+ * `null` quando a categoria está anulada (fase não ocorreu — "caso ocorra",
+ * o dado real ainda não existe, ex.: admin não digitou os cartões, ou a
+ * categoria está desabilitada para esse jogo — ver FOULS_COUNTING_MATCH_IDS).
  * Categoria anulada não pontua para ninguém e não penaliza ninguém.
  */
 export interface ExtraPointsBreakdown {
@@ -35,9 +37,11 @@ function exactSingle(guess: number | null, actual: number | null): number | null
 }
 
 export function calculateExtraPoints(
+  matchId: string,
   guess: ExtraPredictionInput,
   actual: ExtraResultRow,
 ): ExtraPointsBreakdown {
+  const foulsCounts = FOULS_COUNTING_MATCH_IDS.includes(matchId);
   const byCategory: Record<ExtraCategory, number | null> = {
     ht: exactPair(guess.ht_home, guess.ht_away, actual.ht_home, actual.ht_away),
 
@@ -85,8 +89,8 @@ export function calculateExtraPoints(
     cornerHome: exactSingle(guess.corner_home, actual.corner_home),
     cornerAway: exactSingle(guess.corner_away, actual.corner_away),
 
-    foulsHome: exactSingle(guess.fouls_home, actual.fouls_home),
-    foulsAway: exactSingle(guess.fouls_away, actual.fouls_away),
+    foulsHome: foulsCounts ? exactSingle(guess.fouls_home, actual.fouls_home) : null,
+    foulsAway: foulsCounts ? exactSingle(guess.fouls_away, actual.fouls_away) : null,
   };
 
   const total = Object.values(byCategory).reduce<number>((sum, v) => sum + (v ?? 0), 0);

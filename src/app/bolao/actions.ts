@@ -9,6 +9,10 @@ import { EXTRA_BET_MATCH_IDS, type ExtraPredictionInput, type FirstGoal } from '
 import type { PredictionInput } from '@/lib/bolao/types';
 
 type ActionResult = { ok: boolean; error?: string };
+/** Resultado de saveExtraPredictions: além de ok/error, sinaliza partidas
+ *  que já haviam começado no momento do save e por isso não foram gravadas
+ *  (usuário deixou a aba aberta além do apito — ver comentário na action). */
+type SaveExtraResult = ActionResult & { skippedMatchIds?: string[] };
 
 /**
  * Aceita o termo de exibição no ranking público (Task 2).
@@ -142,10 +146,19 @@ const FIRST_GOAL_VALUES: ReadonlySet<string> = new Set(['home', 'away', 'none'])
  *  - só aceita os jogos habilitados (EXTRA_BET_MATCH_IDS);
  *  - trava no SERVIDOR pelo horário estático do jogo — primeiro lock
  *    server-side do app; barato aqui porque os 4 dateUTC são fixos no seed.
+ *
+ * O payload chega em lote (todos os jogos com algo preenchido, não só o
+ * jogo que o usuário acabou de editar) e o `extraPayload` do cliente é um
+ * useMemo que só recalcula quando os valores mudam — se o usuário deixa a
+ * aba aberta e o apito bate ANTES de clicar em Salvar, o lote ainda inclui
+ * a partida já iniciada. Por isso aqui filtramos (não rejeitamos) partidas
+ * já travadas: assim um jogo vencido pelo tempo nunca derruba o save de
+ * outro jogo ainda aberto no mesmo clique (era exatamente esse o bug: uma
+ * rejeição em bloco fazia NADA do lote ser salvo, inclusive dados válidos).
  */
 export async function saveExtraPredictions(
   inputs: ExtraPredictionInput[],
-): Promise<ActionResult> {
+): Promise<SaveExtraResult> {
   if (!isSupabaseConfigured()) {
     return { ok: false, error: 'Supabase não configurado.' };
   }
@@ -154,13 +167,16 @@ export async function saveExtraPredictions(
   }
 
   const now = Date.now();
+  const skippedMatchIds: string[] = [];
+  const openInputs: ExtraPredictionInput[] = [];
   for (const p of inputs) {
     if (!EXTRA_BET_MATCH_IDS.includes(p.match_id)) {
       return { ok: false, error: `Palpites extras não estão habilitados para ${p.match_id}.` };
     }
     const match = staticMatches.find((m) => m.id === p.match_id);
     if (!match || new Date(match.dateUTC).getTime() <= now) {
-      return { ok: false, error: 'Esta partida já começou — palpites extras travados.' };
+      skippedMatchIds.push(p.match_id);
+      continue;
     }
     for (const field of EXTRA_NUMERIC_FIELDS) {
       const v = p[field];
@@ -172,6 +188,11 @@ export async function saveExtraPredictions(
     if (p.first_goal != null && !FIRST_GOAL_VALUES.has(p.first_goal)) {
       return { ok: false, error: 'Valor inválido para o palpite de primeiro gol.' };
     }
+    openInputs.push(p);
+  }
+
+  if (openInputs.length === 0) {
+    return { ok: false, error: 'Esta partida já começou — palpites extras travados.', skippedMatchIds };
   }
 
   const supabase = await createClient();
@@ -193,7 +214,7 @@ export async function saveExtraPredictions(
     return { ok: false, error: 'É preciso aceitar o termo do ranking.' };
   }
 
-  const rows = inputs.map((p) => ({
+  const rows = openInputs.map((p) => ({
     user_id: user.id,
     match_id: p.match_id,
     ht_home: p.ht_home, ht_away: p.ht_away,
@@ -222,5 +243,5 @@ export async function saveExtraPredictions(
   }
 
   revalidatePath('/bolao');
-  return { ok: true };
+  return { ok: true, skippedMatchIds: skippedMatchIds.length > 0 ? skippedMatchIds : undefined };
 }

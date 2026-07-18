@@ -5,6 +5,15 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { ROUND_ORDER, ROUND_LABELS, ROUND_BONUS_POINTS, ROUND_END_DATES, roundKeyForMatch, type RoundKey } from '@/lib/bolao/rounds';
 import { RankingList, type RankedUserRow } from '@/components/ranking/RankingList';
 import { RoundClassification, type RoundOption } from '@/components/ranking/RoundClassification';
+import { ExtraPointsRanking, type ExtraPointsRow } from '@/components/ranking/ExtraPointsRanking';
+import {
+  EXTRA_CATEGORIES,
+  EXTRA_CATEGORY_LABELS,
+  EXTRA_COUNTING_MATCH_IDS,
+  type ExtraPredictionRow,
+  type ExtraResultRow,
+} from '@/lib/bolao/extra-bets';
+import { calculateExtraPoints } from '@/lib/bolao/extra-scoring';
 import {
   detectGeneralTieGroups,
   detectRoundTieGroups,
@@ -187,6 +196,7 @@ export default async function RankingPage() {
   let roundRows: RoundRow[] = [];
   let roundBonusMap = new Map<string, Array<{ roundKey: string; label: string; pts: number }>>();
   let roundBreakdownMap = new Map<string, RoundBreakdown>();
+  let extraPointsRows: ExtraPointsRow[] = [];
 
   if (configured) {
     const admin = createAdminClient();
@@ -292,6 +302,55 @@ export default async function RankingPage() {
         full_name: nameMap.get(r.user_id) ?? null,
         is_admin: isAdminMap.get(r.user_id) ?? false,
       }));
+
+    // ── Pontos extras (só 3º lugar + Final valem — ver EXTRA_COUNTING_MATCH_IDS) ──
+    // Recalcula o breakdown por estatística a partir do palpite bruto + resultado
+    // real (mesma função pura do scoring), em vez de expor só o total já gravado
+    // em extra_predictions.points_earned — assim dá pra mostrar quais estatísticas
+    // cada um acertou, não só quantos pontos.
+    const [{ data: extraPredsData }, { data: extraResultsData }, { data: extraMultData }] =
+      await Promise.all([
+        admin.from('extra_predictions').select('*').in('match_id', [...EXTRA_COUNTING_MATCH_IDS]),
+        admin.from('match_extra_results').select('*').in('match_id', [...EXTRA_COUNTING_MATCH_IDS]),
+        admin.from('match_settings').select('match_id, score_multiplier').in('match_id', [...EXTRA_COUNTING_MATCH_IDS]),
+      ]);
+    const extraResultByMatch = new Map(
+      ((extraResultsData ?? []) as ExtraResultRow[]).map((r) => [r.match_id, r]),
+    );
+    const extraMultByMatch = new Map<string, number>(
+      ((extraMultData ?? []) as { match_id: string; score_multiplier: number | null }[]).map(
+        (m) => [m.match_id, m.score_multiplier ?? 1],
+      ),
+    );
+    const extraByUser = new Map<string, ExtraPointsRow>();
+    for (const ep of (extraPredsData ?? []) as ExtraPredictionRow[]) {
+      const actual = extraResultByMatch.get(ep.match_id);
+      if (!actual) continue;
+      const multiplier = extraMultByMatch.get(ep.match_id) ?? 1;
+      const { byCategory } = calculateExtraPoints(ep.match_id, ep, actual);
+
+      let row = extraByUser.get(ep.user_id);
+      if (!row) {
+        row = {
+          userId: ep.user_id,
+          fullName: nameMap.get(ep.user_id) ?? null,
+          isAdmin: isAdminMap.get(ep.user_id) ?? false,
+          total: 0,
+          categories: [],
+        };
+        extraByUser.set(ep.user_id, row);
+      }
+      const catPtsByLabel = new Map(row.categories.map((c) => [c.label, c.pts]));
+      for (const cat of EXTRA_CATEGORIES) {
+        const rawPts = byCategory[cat];
+        if (!rawPts) continue; // null (anulada) ou 0 (errou) não entra no breakdown
+        const label = EXTRA_CATEGORY_LABELS[cat];
+        catPtsByLabel.set(label, (catPtsByLabel.get(label) ?? 0) + rawPts * multiplier);
+      }
+      row.categories = Array.from(catPtsByLabel.entries()).map(([label, pts]) => ({ label, pts }));
+      row.total = row.categories.reduce((sum, c) => sum + c.pts, 0);
+    }
+    extraPointsRows = Array.from(extraByUser.values());
   } else {
     ranking = DEMO_RANKING;
   }
@@ -628,10 +687,22 @@ export default async function RankingPage() {
         </div>
       )}
 
-      {/* Classificação por rodada — em evidência a rodada vigente */}
-      {roundOptions.length > 0 && (
-        <RoundClassification rounds={roundOptions} defaultKey={vigenteKey} />
+      {/* Classificação geral — em evidência: é a que vale a premiação final */}
+      <h3 style={{ marginBottom: 'var(--space-md)' }}>Classificação geral</h3>
+      {generalRows.length === 0 ? (
+        <div className="glass-card-static" style={{ padding: 'var(--space-lg)', marginBottom: 'var(--space-xl)' }}>
+          <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
+            Ainda não há participantes na classificação.
+          </p>
+        </div>
+      ) : (
+        <div style={{ marginBottom: 'var(--space-xl)' }}>
+          <RankingList users={generalRows} />
+        </div>
       )}
+
+      {/* Pontos extras — 3º lugar e Final */}
+      <ExtraPointsRanking rows={extraPointsRows} />
 
       {/* Campeões de rodada */}
       {champions.length > 0 && (
@@ -692,16 +763,9 @@ export default async function RankingPage() {
         </section>
       )}
 
-      {/* Classificação geral */}
-      <h3 style={{ marginBottom: 'var(--space-md)' }}>Classificação geral</h3>
-      {generalRows.length === 0 ? (
-        <div className="glass-card-static" style={{ padding: 'var(--space-lg)' }}>
-          <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
-            Ainda não há participantes na classificação.
-          </p>
-        </div>
-      ) : (
-        <RankingList users={generalRows} />
+      {/* Classificação por rodada — histórico, rodada a rodada */}
+      {roundOptions.length > 0 && (
+        <RoundClassification rounds={roundOptions} defaultKey={vigenteKey} />
       )}
     </div>
   );
