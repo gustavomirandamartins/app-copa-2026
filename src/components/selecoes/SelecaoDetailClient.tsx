@@ -19,6 +19,8 @@ interface LiveResult {
   status: MatchStatus;
   homeScore: number | null;
   awayScore: number | null;
+  homeTeamId: string | null;
+  awayTeamId: string | null;
 }
 
 const STORAGE_URL = 'https://sdyilmgixyynnmczsnhc.supabase.co/storage/v1/object/public/backgrounds';
@@ -50,7 +52,7 @@ export function SelecaoDetailClient({ teamId, prob }: Props) {
     const load = async () => {
       const { data } = await supabase
         .from('matches')
-        .select('id, status, home_score, away_score');
+        .select('id, status, home_score, away_score, home_team_id, away_team_id');
       if (!active || !data) return;
       const map: Record<string, LiveResult> = {};
       for (const m of data) {
@@ -58,6 +60,8 @@ export function SelecaoDetailClient({ teamId, prob }: Props) {
           status: m.status as MatchStatus,
           homeScore: m.home_score as number | null,
           awayScore: m.away_score as number | null,
+          homeTeamId: m.home_team_id as string | null,
+          awayTeamId: m.away_team_id as string | null,
         };
       }
       setLiveResults(map);
@@ -138,7 +142,22 @@ export function SelecaoDetailClient({ teamId, prob }: Props) {
     );
   }
 
-  const teamMatches = matches.filter(m => m.homeTeamId === teamId || m.awayTeamId === teamId);
+  // O calendário estático (src/data/matches.ts) tem home/awayTeamId nulos
+  // pra todo jogo de mata-mata até o próximo deploy — quem resolve isso em
+  // tempo real é o applyKnockoutAdvancement() do sync, gravado direto na
+  // tabela `matches` do Supabase (liveResults aqui). Sem mesclar, os jogos
+  // de mata-mata de um time sumiam da lista (só os da fase de grupos, que
+  // já nascem com os times certos, apareciam).
+  const teamMatches = matches
+    .map((m) => {
+      const live = liveResults[m.id];
+      return {
+        ...m,
+        homeTeamId: live?.homeTeamId ?? m.homeTeamId,
+        awayTeamId: live?.awayTeamId ?? m.awayTeamId,
+      };
+    })
+    .filter((m) => m.homeTeamId === teamId || m.awayTeamId === teamId);
   const groupTeams = teams.filter(t => t.group === team.group);
   const keyPlayer = getKeyPlayer(teamId);
 
