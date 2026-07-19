@@ -86,6 +86,12 @@ export function BolaoClient({
     }
     return map;
   });
+  // Jogos com extras EDITADOS nesta sessão. Sem isso, o payload de extras
+  // reenviava sempre todo mundo que já tinha algum palpite salvo (seed do
+  // useState acima) — inclusive jogos antigos já travados, que o servidor
+  // rejeitava com "partida já começou", alarmando o usuário mesmo quando
+  // só o jogo atual (ex.: a Final) foi de fato editado e salvo com sucesso.
+  const [dirtyExtraIds, setDirtyExtraIds] = useState<Set<string>>(new Set());
   // Pontos extras apurados por jogo (exibição pós-jogo no painel).
   const extraPointsByMatch = useMemo(() => {
     const map: Record<string, number> = {};
@@ -189,23 +195,28 @@ export function BolaoClient({
       map.set(matchId, next);
       return map;
     });
+    setDirtyExtraIds((prev) => (prev.has(matchId) ? prev : new Set(prev).add(matchId)));
   }
 
-  // Palpites extras editáveis com algum campo preenchido. Não filtramos por
-  // horário aqui: um useMemo só recalcula quando extraValues muda, então se
-  // o usuário deixasse a aba aberta e o apito batesse antes de clicar em
-  // Salvar, esse filtro ficava desatualizado e o jogo entrava no payload
-  // mesmo travado — o servidor (saveExtraPredictions) é quem decide, por
+  // Só os jogos EDITADOS nesta sessão entram no payload — jogos com palpite
+  // salvo em sessões anteriores (seed do useState de extraValues) não
+  // precisam ser reenviados, e reenviá-los é o que fazia jogos antigos já
+  // travados (ex.: semis) aparecerem como "não salvos" mesmo sem terem sido
+  // tocados. Ainda assim não filtramos por horário aqui: um useMemo só
+  // recalcula quando os valores mudam, então se a aba ficasse aberta e o
+  // apito batesse antes do clique em Salvar, esse filtro ficaria
+  // desatualizado — o servidor (saveExtraPredictions) é quem decide, por
   // jogo, o que ainda pode ser salvo, e devolve o que foi ignorado.
   const extraPayload = useMemo<ExtraPredictionInput[]>(() => {
     const out: ExtraPredictionInput[] = [];
     for (const [matchId, v] of extraValues) {
       if (!EXTRA_BET_MATCH_IDS.includes(matchId)) continue;
+      if (!dirtyExtraIds.has(matchId)) continue;
       if (!hasAnyExtraValue(v)) continue;
       out.push({ match_id: matchId, ...v });
     }
     return out;
-  }, [extraValues]);
+  }, [extraValues, dirtyExtraIds]);
 
   function handleSave() {
     setMessage(null);

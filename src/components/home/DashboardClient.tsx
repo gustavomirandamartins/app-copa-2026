@@ -97,6 +97,10 @@ export function DashboardClient({
     }
     return map;
   });
+  // Jogos com extras EDITADOS nesta sessão — ver comentário equivalente em
+  // BolaoClient.tsx (mesmo bug: reenviar jogos antigos intocados fazia o
+  // servidor "recusar" (skip) jogos já travados e alarmar o usuário à toa).
+  const [dirtyExtraIds, setDirtyExtraIds] = useState<Set<string>>(new Set());
   const [agreed, setAgreed] = useState(profile.agreed_to_ranking ?? false);
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState<string | null>(null);
@@ -164,17 +168,20 @@ export function DashboardClient({
       map.set(matchId, next);
       return map;
     });
+    setDirtyExtraIds((prev) => (prev.has(matchId) ? prev : new Set(prev).add(matchId)));
   }
 
-  // Extras preenchidos, de qualquer jogo habilitado. Sem filtro de horário
-  // aqui: esse useMemo só recalcula quando extraValues muda, então se a aba
-  // ficar aberta e o apito bater antes do clique em Salvar, esse filtro
-  // ficaria desatualizado. Quem decide, por jogo, o que ainda pode ser
-  // salvo é o servidor (saveExtraPredictions), que devolve o que ignorou.
+  // Só os jogos EDITADOS nesta sessão entram no payload (ver BolaoClient.tsx).
+  // Sem filtro de horário aqui: esse useMemo só recalcula quando os valores
+  // mudam, então se a aba ficar aberta e o apito bater antes do clique em
+  // Salvar, esse filtro ficaria desatualizado. Quem decide, por jogo, o que
+  // ainda pode ser salvo é o servidor (saveExtraPredictions), que devolve o
+  // que ignorou.
   const extraPayload = useMemo<ExtraPredictionInput[]>(() => {
     const out: ExtraPredictionInput[] = [];
     for (const [matchId, v] of extraValues) {
       if (!EXTRA_BET_MATCH_IDS.includes(matchId)) continue;
+      if (!dirtyExtraIds.has(matchId)) continue;
       if (!hasAnyExtraValue(v)) continue;
       out.push({ match_id: matchId, ...v });
     }
