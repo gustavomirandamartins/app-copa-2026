@@ -138,7 +138,7 @@ export default async function HomePage() {
         // Palpites extras (semis = teste; 3º/final = valendo). RLS: só os próprios.
         supabase
           .from('extra_predictions')
-          .select('match_id, ht_home, ht_away, h2_home, h2_away, et_home, et_away, pen_home, pen_away, yellow_home, yellow_away, red_home, red_away, first_goal, shots_home, shots_away, offside_home, offside_away, corner_home, corner_away, points_earned')
+          .select('match_id, ht_home, ht_away, h2_home, h2_away, et_home, et_away, pen_home, pen_away, yellow_home, yellow_away, red_home, red_away, first_goal, shots_home, shots_away, offside_home, offside_away, corner_home, corner_away, fouls_home, fouls_away, points_earned')
           .eq('user_id', user.id),
       ]);
       existingExtraPredictions = (extras as ExistingExtraPrediction[]) ?? [];
