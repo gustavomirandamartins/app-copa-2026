@@ -94,6 +94,7 @@ function SingleField({
   value,
   locked,
   onChange,
+  max = 20,
 }: {
   label: string;
   hint?: string;
@@ -101,6 +102,8 @@ function SingleField({
   value: ExtraValue;
   locked: boolean;
   onChange: (field: NumericField, raw: string) => void;
+  /** Teto do input — faltas passa de 20 rotineiramente num jogo de 120 min. */
+  max?: number;
 }) {
   return (
     <div className="extra-bet-row">
@@ -110,7 +113,7 @@ function SingleField({
       </span>
       <div className="extra-bet-inputs">
         <input
-          type="number" min={0} max={20} inputMode="numeric"
+          type="number" min={0} max={max} inputMode="numeric"
           className="bolao-score-input"
           aria-label={label}
           disabled={locked}
@@ -215,12 +218,12 @@ export function ExtraBetsPanel({
           <SingleField
             label={`Faltas — ${home.name}`}
             hint={foulsCounts ? undefined : 'não vale ponto nesta partida'}
-            field="fouls_home" value={value} locked={locked} onChange={setNumeric}
+            field="fouls_home" value={value} locked={locked} onChange={setNumeric} max={40}
           />
           <SingleField
             label={`Faltas — ${away.name}`}
             hint={foulsCounts ? undefined : 'não vale ponto nesta partida'}
-            field="fouls_away" value={value} locked={locked} onChange={setNumeric}
+            field="fouls_away" value={value} locked={locked} onChange={setNumeric} max={40}
           />
 
           <div className="extra-bet-row">

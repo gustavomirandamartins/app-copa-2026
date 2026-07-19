@@ -129,13 +129,27 @@ export async function savePredictions(
   return { ok: true };
 }
 
-/** Campos numéricos de palpite extra (todos opcionais, 0–20 quando presentes). */
+/** Campos numéricos de palpite extra (todos opcionais, 0–EXTRA_NUMERIC_MAX[campo] quando presentes). */
 const EXTRA_NUMERIC_FIELDS = [
   'ht_home', 'ht_away', 'h2_home', 'h2_away', 'et_home', 'et_away',
   'pen_home', 'pen_away', 'yellow_home', 'yellow_away', 'red_home', 'red_away',
   'shots_home', 'shots_away', 'offside_home', 'offside_away', 'corner_home', 'corner_away',
   'fouls_home', 'fouls_away',
 ] as const;
+
+/**
+ * Teto por campo — placares ficam com teto baixo (20 já é generosíssimo pra
+ * gol), mas faltas de um jogo de 120 min (com prorrogação) rotineiramente
+ * passa de 20: o teto único travava o palpite inteiro nesse caso, com um
+ * erro fácil de confundir com sucesso ("Palpites salvos, mas os extras
+ * falharam: ...").
+ */
+const EXTRA_NUMERIC_MAX: Record<(typeof EXTRA_NUMERIC_FIELDS)[number], number> = {
+  ht_home: 20, ht_away: 20, h2_home: 20, h2_away: 20, et_home: 20, et_away: 20,
+  pen_home: 20, pen_away: 20, yellow_home: 20, yellow_away: 20, red_home: 20, red_away: 20,
+  shots_home: 20, shots_away: 20, offside_home: 20, offside_away: 20, corner_home: 20, corner_away: 20,
+  fouls_home: 40, fouls_away: 40,
+};
 
 const FIRST_GOAL_VALUES: ReadonlySet<string> = new Set(['home', 'away', 'none']);
 
@@ -181,8 +195,9 @@ export async function saveExtraPredictions(
     for (const field of EXTRA_NUMERIC_FIELDS) {
       const v = p[field];
       if (v == null) continue;
-      if (!Number.isInteger(v) || v < 0 || v > 20) {
-        return { ok: false, error: 'Valores devem ser inteiros entre 0 e 20.' };
+      const max = EXTRA_NUMERIC_MAX[field];
+      if (!Number.isInteger(v) || v < 0 || v > max) {
+        return { ok: false, error: `Valor de "${field}" deve ser um inteiro entre 0 e ${max}.` };
       }
     }
     if (p.first_goal != null && !FIRST_GOAL_VALUES.has(p.first_goal)) {
