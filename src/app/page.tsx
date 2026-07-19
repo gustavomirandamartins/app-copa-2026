@@ -19,7 +19,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
 import { isProfileComplete } from '@/lib/bolao/profile';
-import { computeGeneralRanking } from '@/lib/bolao/generalRanking';
+import { computeGeneralRanking, placementIndex } from '@/lib/bolao/generalRanking';
 import { computeThermometer, verdictFor } from '@/lib/bolao/thermometer';
 import { ROUND_BONUS_POINTS, ROUND_ORDER, ROUND_LABELS, type RoundKey } from '@/lib/bolao/rounds';
 import { REFERRAL_BONUS_POINTS } from '@/lib/bolao/referral';
@@ -32,6 +32,7 @@ import { type MatchResult } from '@/components/bolao/BolaoClient';
 import { DashboardClient } from '@/components/home/DashboardClient';
 import type { ExistingExtraPrediction } from '@/components/bolao/BolaoClient';
 import { BracketCard } from '@/components/home/BracketCard';
+import { Podium, type PodiumUser } from '@/components/ranking/Podium';
 import { StageBackgroundEffect } from '@/components/layout/StageBackgroundEffect';
 import { matches as staticMatches } from '@/data/matches';
 import { loadTeamProbabilities, loadMatchProbabilities } from '@/lib/bolao/probabilities';
@@ -89,6 +90,8 @@ export default async function HomePage() {
   let profile: Profile | null = null;
   let userId: string | null = null;
   let rankRows: RankRow[] = [];
+  let top5: PodiumUser[] = [];
+  let myPlace: number | null = null;
   let existingPredictions: PredictionInput[] = [];
   let existingExtraPredictions: ExistingExtraPrediction[] = [];
   const multipliers: Record<string, number> = {};
@@ -113,6 +116,13 @@ export default async function HomePage() {
     rankRows = generalRanking.map((u) => ({ full_name: u.full_name, total_score: u.total_score }));
     leaderPoints = rankRows[0]?.total_score ?? 0;
 
+    // Pódio (1º-5º) + colocação de cada um — usado quando a Final terminar.
+    const placements = placementIndex(generalRanking);
+    top5 = generalRanking
+      .filter((u) => !u.is_admin)
+      .slice(0, 5)
+      .map((u) => ({ id: u.id, fullName: u.full_name, place: placements.get(u.id)!, score: u.total_score }));
+
     for (const s of settings ?? []) multipliers[s.match_id] = s.score_multiplier as number;
     for (const m of live ?? []) {
       results[m.id] = {
@@ -129,6 +139,7 @@ export default async function HomePage() {
     if (user) {
       authenticated = true;
       userId = user.id;
+      myPlace = placements.get(user.id) ?? null;
       const [{ data: prof }, { data: preds }, { data: extras }] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', user.id).single(),
         supabase
@@ -154,6 +165,8 @@ export default async function HomePage() {
   // Fundo da Início: bronze (3º lugar) até a disputa terminar, daí dourado
   // (final) — mesmo tema usado nas páginas Bolão/Jogos quando naquela aba.
   const thirdPlaceFinished = results['ko-103']?.status === 'finished';
+  // Última partida da Copa encerrada: liga o pódio + saudação personalizada.
+  const finalFinished = results['ko-104']?.status === 'finished';
 
   // ════════════════════════════════════════════════════════════════
   // PARTICIPANTE (premium) — dashboard com classificação + palpites
@@ -250,13 +263,22 @@ export default async function HomePage() {
         {/* ── Olá, usuário ───────────────────────────────────── */}
         <section className="nx-hello">
           <h1 className="nx-hello-title">
-            {thirdPlaceFinished ? (
+            {finalFinished ? (
+              myPlace != null && myPlace <= 5 ? (
+                <>Parabéns <span className="home-title-accent">{firstName}</span>! Você ficou em {myPlace}º lugar!</>
+              ) : (
+                <>Obrigado por participar, <span className="home-title-accent">{firstName}</span>! Nos vemos em breve!</>
+              )
+            ) : thirdPlaceFinished ? (
               <>Agora é a grande final, <span className="home-title-accent">{firstName}</span>!</>
             ) : (
               <>Olá, <span className="home-title-accent">{firstName}</span>!</>
             )}
           </h1>
         </section>
+
+        {/* ── Pódio dos 5 primeiros — só ao fim da última partida ────── */}
+        {finalFinished && top5.length > 0 && <Podium users={top5} />}
 
         {/* ── Card principal + seleções + próximos jogos ─────── */}
         <DashboardClient
@@ -336,6 +358,13 @@ export default async function HomePage() {
           })}
         </ul>
       </section>
+
+      {/* Pódio dos 5 primeiros — só ao fim da última partida da Copa */}
+      {finalFinished && top5.length > 0 && (
+        <ScrollReveal>
+          <Podium users={top5} />
+        </ScrollReveal>
+      )}
 
       {/* Logado sem Premium → falta concluir cadastro/pagamento */}
       {authenticated && !isPremium && (

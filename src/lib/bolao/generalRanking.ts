@@ -174,3 +174,21 @@ export async function computeGeneralRanking(admin: Admin): Promise<GeneralRanked
   const profiles = (profilesData ?? []) as ProfileRow[];
   return buildGeneralRanking(profiles, preds);
 }
+
+/**
+ * Colocação numérica (1º, 2º, 3º…) pulando o admin — mesma regra usada em
+ * RankingList/RankingSnapshot para exibir a posição de cada um. `users` já
+ * precisa estar ordenado (buildGeneralRanking/computeGeneralRanking já
+ * devolvem ordenado). Usado pelo pódio dos 5 primeiros e pela saudação
+ * personalizada da home ao fim da Copa.
+ */
+export function placementIndex(users: GeneralRankedUser[]): Map<string, number> {
+  const map = new Map<string, number>();
+  let place = 0;
+  for (const u of users) {
+    if (u.is_admin) continue;
+    place += 1;
+    map.set(u.id, place);
+  }
+  return map;
+}

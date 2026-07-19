@@ -6,6 +6,8 @@ import { ROUND_ORDER, ROUND_LABELS, ROUND_BONUS_POINTS, ROUND_END_DATES, roundKe
 import { RankingList, type RankedUserRow } from '@/components/ranking/RankingList';
 import { RoundClassification, type RoundOption } from '@/components/ranking/RoundClassification';
 import { ExtraPointsRanking, type ExtraPointsRow } from '@/components/ranking/ExtraPointsRanking';
+import { Podium, type PodiumUser } from '@/components/ranking/Podium';
+import { StageBackgroundEffect } from '@/components/layout/StageBackgroundEffect';
 import {
   EXTRA_CATEGORIES,
   EXTRA_CATEGORY_LABELS,
@@ -23,6 +25,7 @@ import {
 } from '@/lib/bolao/tiebreak';
 import {
   buildGeneralRanking,
+  placementIndex,
   type GeneralRankedUser,
   type GeneralTiebreak,
   type GeneralBreakdown,
@@ -120,7 +123,11 @@ const DEMO_RANKING: RankedUser[] = [
   { id: '6', full_name: 'Felipe Rocha', total_score: 48, is_admin: false, referral_bonus: 0,  score_adjustment: 0, tb: { ...EMPTY_TB, prediction_pts: 48, exact_pts: 0,  diff_pts: 18 }, breakdown: { ...EMPTY_BD, winner_pts: 30 } },
 ];
 
-function toGeneralRow(user: RankedUser, roundBonuses: Array<{ roundKey: string; label: string; pts: number }>): RankedUserRow {
+function toGeneralRow(
+  user: RankedUser,
+  roundBonuses: Array<{ roundKey: string; label: string; pts: number }>,
+  extras?: { categories: Array<{ label: string; pts: number }>; total: number },
+): RankedUserRow {
   return {
     id: user.id,
     full_name: user.full_name,
@@ -140,6 +147,8 @@ function toGeneralRow(user: RankedUser, roundBonuses: Array<{ roundKey: string; 
       round_bonuses: roundBonuses,
       referral_bonus: user.referral_bonus,
       score_adjustment: user.score_adjustment,
+      extra_categories: extras?.categories,
+      extra_total: extras?.total,
     },
   };
 }
@@ -197,6 +206,8 @@ export default async function RankingPage() {
   let roundBonusMap = new Map<string, Array<{ roundKey: string; label: string; pts: number }>>();
   let roundBreakdownMap = new Map<string, RoundBreakdown>();
   let extraPointsRows: ExtraPointsRow[] = [];
+  let finalFinished = false;
+  let top5: PodiumUser[] = [];
 
   if (configured) {
     const admin = createAdminClient();
@@ -247,6 +258,17 @@ export default async function RankingPage() {
 
     // ── Classificação geral (mesmos critérios de desempate da home) ──────
     ranking = buildGeneralRanking(profiles, preds);
+
+    // ── Pódio dos 5 primeiros — só depois que a Final (última partida) acabar.
+    const { data: finalMatch } = await admin.from('matches').select('status').eq('id', 'ko-104').single();
+    finalFinished = finalMatch?.status === 'finished';
+    if (finalFinished) {
+      const placements = placementIndex(ranking);
+      top5 = ranking
+        .filter((u) => !u.is_admin)
+        .slice(0, 5)
+        .map((u) => ({ id: u.id, fullName: u.full_name, place: placements.get(u.id)!, score: u.total_score }));
+    }
 
     // ── Bônus de rodada por usuário (escalonado: lê o bônus já gravado) ──
     for (const r of rScores) {
@@ -452,8 +474,14 @@ export default async function RankingPage() {
   };
 
   // ── Converte para o formato do componente cliente ───────────────────
+  const extraPointsByUser = new Map(extraPointsRows.map((r) => [r.userId, r]));
   const generalRows: RankedUserRow[] = ranking.map((u) => {
-    const row = toGeneralRow(u, roundBonusMap.get(u.id) ?? []);
+    const extra = extraPointsByUser.get(u.id);
+    const row = toGeneralRow(
+      u,
+      roundBonusMap.get(u.id) ?? [],
+      extra ? { categories: extra.categories, total: extra.total } : undefined,
+    );
     if (!u.is_admin) {
       row.pendingDraw   = generalPendingIds.has(u.id);
       row.decidedByDraw = generalDecidedIds.has(u.id);
@@ -505,6 +533,7 @@ export default async function RankingPage() {
 
   return (
     <div className="container">
+      <StageBackgroundEffect stage="final" />
       <section style={{ marginBottom: 'var(--space-lg)' }}>
         <h1 className="animate-fade-in" style={{ marginBottom: 'var(--space-sm)' }}>
           <Trophy
@@ -514,6 +543,9 @@ export default async function RankingPage() {
           Classificação por Rodada e Final
         </h1>
       </section>
+
+      {/* Pódio dos 5 primeiros — só aparece ao fim da última partida da Copa */}
+      {finalFinished && top5.length > 0 && <Podium users={top5} />}
 
       {/* Prêmios (dropdown) */}
       <details className="prizes-dropdown animate-slide-up">

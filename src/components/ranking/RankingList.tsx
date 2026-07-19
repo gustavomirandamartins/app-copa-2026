@@ -17,6 +17,9 @@ export interface UserBreakdown {
   round_bonuses: Array<{ roundKey: string; label: string; pts: number }>;
   referral_bonus: number;
   score_adjustment: number;
+  /** Palpites extras (3º lugar + Final) que acertou — já soma no total. */
+  extra_categories?: Array<{ label: string; pts: number }>;
+  extra_total?: number;
 }
 
 export interface RankedUserRow {
@@ -49,6 +52,7 @@ function BreakdownPanel({ bd, score, isRound }: { bd: UserBreakdown; score: numb
   const winnerCount = bd.winner_count;
 
   const hasBonus = !isRound && (bd.round_bonuses.length > 0 || bd.referral_bonus > 0 || bd.score_adjustment !== 0);
+  const hasExtras = !isRound && (bd.extra_categories?.length ?? 0) > 0;
 
   /** Label inline quando há acertos turbinados na categoria. */
   const turboTag = (n: number) =>
@@ -129,6 +133,24 @@ function BreakdownPanel({ bd, score, isRound }: { bd: UserBreakdown; score: numb
                 </span>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {hasExtras && (
+        <div className="breakdown-section">
+          <div className="breakdown-title">Pontos extras (3º lugar e Final)</div>
+          <div className="breakdown-rows">
+            {bd.extra_categories!.map((c) => (
+              <div key={c.label} className="breakdown-row breakdown-bonus">
+                <span className="breakdown-cat">{c.label}</span>
+                <span className="breakdown-pts">+{c.pts} pts</span>
+              </div>
+            ))}
+          </div>
+          <div className="breakdown-subtotal">
+            <span>Subtotal extras</span>
+            <span>{bd.extra_total ?? 0} pts</span>
           </div>
         </div>
       )}

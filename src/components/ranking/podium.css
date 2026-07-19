@@ -1,0 +1,132 @@
+/* ── Pódio dos 5 primeiros (fim da Copa) ─────────────────────── */
+.podium-section {
+  margin-bottom: var(--space-xl);
+}
+
+.podium-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.3rem;
+  margin-bottom: var(--space-lg);
+  color: var(--gold);
+}
+
+.podium-stage {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
+}
+
+.podium-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  max-width: 180px;
+}
+
+.podium-icon {
+  margin-bottom: 8px;
+}
+
+.podium-name {
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 4px;
+  font-size: 0.95rem;
+  color: var(--text-primary, #fff);
+  overflow-wrap: anywhere;
+}
+
+.podium-score {
+  font-size: 0.85rem;
+  color: var(--text-secondary, rgba(255, 255, 255, 0.75));
+  margin-bottom: 8px;
+}
+
+.podium-bar {
+  width: 100%;
+  border-radius: 12px 12px 0 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 10px;
+  font-weight: 800;
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+}
+
+.podium-place-1 .podium-bar {
+  height: 110px;
+  background: var(--gradient-gold);
+  color: #2a1d00;
+  box-shadow: 0 0 24px rgba(254, 221, 0, 0.35);
+}
+.podium-place-1 .podium-icon { color: var(--gold); }
+.podium-place-1 .podium-name { font-size: 1.05rem; }
+
+.podium-place-2 .podium-bar {
+  height: 82px;
+  background: linear-gradient(135deg, #d7dae2, #9096a3);
+  color: #1c1c22;
+}
+.podium-place-2 .podium-icon { color: #c9ccd6; }
+
+.podium-place-3 .podium-bar {
+  height: 60px;
+  background: linear-gradient(135deg, #e0a868, #a8642c);
+  color: #2a1a08;
+}
+.podium-place-3 .podium-icon { color: #e0a868; }
+
+.podium-rest {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.podium-rest-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  font-size: 0.9rem;
+}
+
+.podium-rest-pos {
+  font-weight: 700;
+  color: var(--gold);
+  width: 28px;
+  flex-shrink: 0;
+}
+
+.podium-rest-name {
+  flex: 1;
+  font-weight: 600;
+  color: var(--text-primary, #fff);
+}
+
+.podium-rest-score {
+  color: var(--text-secondary, rgba(255, 255, 255, 0.75));
+  font-weight: 700;
+}
+
+@media (max-width: 480px) {
+  .podium-stage {
+    gap: 6px;
+  }
+  .podium-name {
+    font-size: 0.78rem;
+  }
+  .podium-score {
+    font-size: 0.72rem;
+  }
+  .podium-place-1 .podium-bar { height: 90px; }
+  .podium-place-2 .podium-bar { height: 68px; }
+  .podium-place-3 .podium-bar { height: 50px; }
+}
