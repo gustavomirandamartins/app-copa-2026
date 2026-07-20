@@ -168,6 +168,25 @@ export default async function HomePage() {
   // Última partida da Copa encerrada: liga o pódio + saudação personalizada.
   const finalFinished = results['ko-104']?.status === 'finished';
 
+  // Bracket precisa dos times já classificados (mesma fonte da página Jogos)
+  // — usado tanto no dashboard premium quanto na Início pós-Copa (sem login).
+  // `results` já tem tudo (mesma query usada pra montar o mapa acima), então
+  // não precisa de uma segunda busca ao Supabase como antes.
+  const enrichedMatches: Match[] = staticMatches.map((m) => {
+    const live = results[m.id];
+    if (!live) return m;
+    return {
+      ...m,
+      status: live.status,
+      homeGoals: live.homeScore,
+      awayGoals: live.awayScore,
+      homePenalties: live.homePenalties,
+      awayPenalties: live.awayPenalties,
+      homeTeamId: live.homeTeamId ?? m.homeTeamId,
+      awayTeamId: live.awayTeamId ?? m.awayTeamId,
+    };
+  });
+
   // ════════════════════════════════════════════════════════════════
   // PARTICIPANTE (premium) — dashboard com classificação + palpites
   // ════════════════════════════════════════════════════════════════
@@ -228,43 +247,33 @@ export default async function HomePage() {
     // Probabilidades V-E-D por jogo (tabela match_probabilities, sem fallback).
     const matchProbabilities = await loadMatchProbabilities();
 
-    // Bracket precisa dos times já classificados (mesma fonte da página Jogos).
-    const enrichedMatches: Match[] = [...staticMatches];
-    if (configured) {
-      const adminM = createAdminClient();
-      const { data: mData } = await adminM
-        .from('matches')
-        .select('id, status, home_score, away_score, home_penalties, away_penalties, home_team_id, away_team_id');
-      if (mData && mData.length > 0) {
-        const byId = new Map(
-          mData.map((r) => {
-            const live: any = {
-              status: r.status as MatchResult['status'],
-              homeGoals: r.home_score as number | null,
-              awayGoals: r.away_score as number | null,
-              homePenalties: r.home_penalties as number | null,
-              awayPenalties: r.away_penalties as number | null,
-            };
-            if (r.home_team_id) live.homeTeamId = r.home_team_id;
-            if (r.away_team_id) live.awayTeamId = r.away_team_id;
-            return [r.id, live] as const;
-          }),
-        );
-        for (let i = 0; i < enrichedMatches.length; i++) {
-          const live = byId.get(enrichedMatches[i].id);
-          if (live) enrichedMatches[i] = { ...enrichedMatches[i], ...live };
-        }
-      }
-    }
+    // Fora do top 5: mensagem de agradecimento, alinhada à esquerda (pedido
+    // do produto) em vez de centralizada como as demais variantes.
+    const isTopFive = myPlace != null && myPlace <= 5;
+    const thanksOnly = finalFinished && !isTopFive;
+
+    const classificacaoCard = (
+      <section className="nx-section">
+        <h2 className="nx-h2"><Crown size={18} /> Classificação geral</h2>
+        <RankingSnapshot
+          rows={rankRows}
+          meName={profile.full_name}
+          mePoints={profile.total_score ?? 0}
+          roundRows={roundSnapshotRows}
+          currentRoundLabel={currentRoundLabel}
+          meRoundPoints={meRoundPoints}
+        />
+      </section>
+    );
 
     return (
       <div className="container home nx-dash">
         <StageBackgroundEffect stage={thirdPlaceFinished ? 'final' : 'bronze'} />
         {/* ── Olá, usuário ───────────────────────────────────── */}
-        <section className="nx-hello">
+        <section className={`nx-hello${thanksOnly ? ' nx-hello-left' : ''}`}>
           <h1 className="nx-hello-title">
             {finalFinished ? (
-              myPlace != null && myPlace <= 5 ? (
+              isTopFive ? (
                 <>Parabéns <span className="home-title-accent">{firstName}</span>! Você ficou em {myPlace}º lugar!</>
               ) : (
                 <>Obrigado por participar, <span className="home-title-accent">{firstName}</span>! Nos vemos em breve!</>
@@ -280,16 +289,19 @@ export default async function HomePage() {
         {/* ── Pódio dos 5 primeiros — só ao fim da última partida ────── */}
         {finalFinished && top5.length > 0 && <Podium users={top5} />}
 
-        {/* ── Card principal + seleções + próximos jogos ─────── */}
-        <DashboardClient
-          existingExtraPredictions={existingExtraPredictions}
-          profile={profile}
-          existingPredictions={existingPredictions}
-          multipliers={multipliers}
-          results={results}
-          probabilities={probabilities}
-          matchProbabilities={matchProbabilities}
-        />
+        {/* ── Card principal: enquanto há jogo aberto, palpites; depois
+            da Final, não há mais o que palpitar — vira a classificação. ── */}
+        {finalFinished ? classificacaoCard : (
+          <DashboardClient
+            existingExtraPredictions={existingExtraPredictions}
+            profile={profile}
+            existingPredictions={existingPredictions}
+            multipliers={multipliers}
+            results={results}
+            probabilities={probabilities}
+            matchProbabilities={matchProbabilities}
+          />
+        )}
 
         {/* ── Chaveamento das eliminatórias ──────────────────── */}
         <section className="nx-section">
@@ -297,17 +309,42 @@ export default async function HomePage() {
           <BracketCard matches={enrichedMatches} />
         </section>
 
-        {/* ── Classificação ──────────────────────────────────── */}
+        {/* Classificação já foi mostrada acima no lugar do card de palpites
+            quando a Copa termina — não repete aqui. */}
+        {!finalFinished && classificacaoCard}
+      </div>
+    );
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  // COPA ENCERRADA, sem Premium (ou deslogado) — mesma vitrine de
+  // resultados do dashboard premium (pódio + classificação + chaveamento),
+  // já que não há mais nada para apostar. Só o título muda, e o acesso à
+  // conta vai para o final da página em vez do meio do funil de venda.
+  // ════════════════════════════════════════════════════════════════
+  if (finalFinished) {
+    return (
+      <div className="container home nx-dash">
+        <StageBackgroundEffect stage="final" />
+        <section className="nx-hello">
+          <h1 className="nx-hello-title">Confira os vencedores do Bolão da Mindu na Copa 2026!</h1>
+        </section>
+
+        {top5.length > 0 && <Podium users={top5} />}
+
         <section className="nx-section">
-          <h2 className="nx-h2"><Crown size={18} /> Classificação</h2>
-          <RankingSnapshot
-            rows={rankRows}
-            meName={profile.full_name}
-            mePoints={profile.total_score ?? 0}
-            roundRows={roundSnapshotRows}
-            currentRoundLabel={currentRoundLabel}
-            meRoundPoints={meRoundPoints}
-          />
+          <h2 className="nx-h2"><Crown size={18} /> Classificação geral</h2>
+          <RankingSnapshot rows={rankRows} meName={null} mePoints={0} />
+        </section>
+
+        <section className="nx-section">
+          <h2 className="nx-h2"><Trophy size={18} /> Chaveamento das Eliminatórias</h2>
+          <BracketCard matches={enrichedMatches} />
+        </section>
+
+        <section id="entrar" className="nx-section">
+          <h2 className="nx-h2"><Trophy size={18} /> Entrar ou criar conta</h2>
+          <AuthPanel />
         </section>
       </div>
     );

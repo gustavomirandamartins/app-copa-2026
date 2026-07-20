@@ -29,7 +29,7 @@ export function Podium({
   const rest = [fourth, fifth].filter((u): u is PodiumUser => Boolean(u));
 
   return (
-    <section className="podium-section">
+    <section className="glass-card-static podium-section">
       <h2 className="podium-title">
         <Trophy size={22} />
         {title}
@@ -53,7 +53,7 @@ export function Podium({
       {rest.length > 0 && (
         <div className="podium-rest">
           {rest.map((u) => (
-            <div key={u.id} className="glass-card-static podium-rest-row">
+            <div key={u.id} className="podium-rest-row">
               <span className="podium-rest-pos">{u.place}º</span>
               <span className="podium-rest-name">{u.fullName ?? 'Participante'}</span>
               <span className="podium-rest-score">{u.score} pts</span>

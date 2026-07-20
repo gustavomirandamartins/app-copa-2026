@@ -1,5 +1,8 @@
 /* ── Pódio dos 5 primeiros (fim da Copa) ─────────────────────── */
+/* .glass-card-static (aplicada junto no JSX) cuida do fundo/borda/blur —
+   aqui só o padding e o layout interno, no mesmo estilo dos demais cards. */
 .podium-section {
+  padding: var(--space-lg);
   margin-bottom: var(--space-xl);
 }
 
@@ -9,8 +12,9 @@
   gap: 8px;
   font-size: 1.3rem;
   margin-bottom: var(--space-lg);
-  color: var(--gold);
+  color: #fff;
 }
+.podium-title svg { color: var(--gold); }
 
 .podium-stage {
   display: flex;
@@ -96,6 +100,9 @@
   gap: 10px;
   padding: 10px 16px;
   font-size: 0.9rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
 }
 
 .podium-rest-pos {

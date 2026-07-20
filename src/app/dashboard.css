@@ -20,6 +20,12 @@
   align-items: center;
   text-align: center;
 }
+/* Mensagem de agradecimento (quem não ficou no top 5) pede alinhamento à
+   esquerda em vez do centralizado padrão das demais variantes. */
+.nx-hello-left {
+  align-items: flex-start;
+  text-align: left;
+}
 .nx-hello-title {
   font-size: clamp(2rem, 6vw, 3.25rem);
   font-weight: 800;
