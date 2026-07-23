@@ -7,11 +7,13 @@ import { Trophy, Crown, ArrowRight, Zap } from 'lucide-react';
 interface RankRow {
   full_name: string | null;
   total_score: number;
+  is_admin?: boolean;
 }
 
 interface RoundRow {
   full_name: string | null;
   points: number;
+  is_admin?: boolean;
 }
 
 interface Props {
@@ -25,7 +27,12 @@ interface Props {
 
 const ADMIN_NAME = 'gustavo martins';
 const norm = (s: string | null) => (s ?? '').trim().toLowerCase();
-const isAdminRow = (s: string | null) => norm(s) === ADMIN_NAME;
+const isAdminName = (s: string | null) => norm(s) === ADMIN_NAME;
+// Prioriza o flag is_admin — o nome vem mascarado ("Faça login para ver")
+// pra visitante anônimo (LGPD), então o fallback por nome só serve quando
+// o campo não veio preenchido (compatibilidade com chamadores antigos).
+const isAdminRow = (r: { full_name: string | null; is_admin?: boolean }) =>
+  r.is_admin === true || isAdminName(r.full_name);
 
 export function RankingSnapshot({
   rows,
@@ -43,7 +50,7 @@ export function RankingSnapshot({
   // ── Classificação geral ──────────────────────────────────────
   let place = 0;
   const ranked = rows.map((r) => {
-    const admin = isAdminRow(r.full_name);
+    const admin = isAdminRow(r);
     const pos = admin ? null : ++place;
     return { ...r, pos, admin };
   });
@@ -54,7 +61,7 @@ export function RankingSnapshot({
   // ── Classificação da rodada ──────────────────────────────────
   let roundPlace = 0;
   const rankedRound = (roundRows ?? []).map((r) => {
-    const admin = isAdminRow(r.full_name);
+    const admin = isAdminRow(r);
     const pos = admin ? null : ++roundPlace;
     return { ...r, pos, admin };
   });
@@ -65,7 +72,7 @@ export function RankingSnapshot({
   const meRoundPos = meRound?.pos ?? null;
   const meRoundInTop = meRoundPos !== null && meRoundPos <= 7;
 
-  const meIsAdmin = isAdminRow(meName);
+  const meIsAdmin = isAdminName(meName);
   const activePoints = tab === 'round' ? meRoundPoints : mePoints;
   const activePosLabel = meIsAdmin
     ? 'Fora da competição'

@@ -1,7 +1,9 @@
 import Link from 'next/link';
 import { Trophy, Medal, Award, Info, ChevronDown, Crown, Zap, BookOpen } from 'lucide-react';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
+import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { LOGIN_TO_VIEW_NAME } from '@/lib/bolao/privacy';
 import { ROUND_ORDER, ROUND_LABELS, ROUND_BONUS_POINTS, ROUND_END_DATES, roundKeyForMatch, type RoundKey } from '@/lib/bolao/rounds';
 import { RankingList, type RankedUserRow } from '@/components/ranking/RankingList';
 import { RoundClassification, type RoundOption } from '@/components/ranking/RoundClassification';
@@ -212,6 +214,13 @@ export default async function RankingPage() {
   if (configured) {
     const admin = createAdminClient();
 
+    // LGPD: nome real só pra quem está logado — o consentimento
+    // "aparecer no ranking" foi dado pensando nos outros participantes,
+    // não em qualquer visitante anônimo. Ver src/lib/bolao/privacy.ts.
+    const supabase = await createClient();
+    const { data: { user: viewer } } = await supabase.auth.getUser();
+    const authenticated = !!viewer;
+
     // Palpites paginados (o PostgREST corta em 1000 linhas; sem paginar,
     // os desempates ficam errados quando há mais de 1000 palpites).
     type PredRow = { user_id: string; match_id: string; points_earned: number; base_points: number | null };
@@ -247,10 +256,13 @@ export default async function RankingPage() {
         .select('user_id, round_key, points, exact_pts, diff_pts, place, bonus, complete, is_winner'),
     ]);
 
-    const profiles = (profilesData ?? []) as {
+    // Mascarado aqui, na origem — todo mundo que deriva o nome de `profiles`
+    // (ranking, nameMap, extras, campeões, classificação por rodada) já
+    // recebe o placeholder de graça quando o visitante não está logado.
+    const profiles = ((profilesData ?? []) as {
       id: string; full_name: string | null; total_score: number; is_admin: boolean;
       referral_bonus: number; score_adjustment: number;
-    }[];
+    }[]).map((p) => (authenticated ? p : { ...p, full_name: LOGIN_TO_VIEW_NAME }));
     const rScores  = (roundScoresData ?? []) as {
       user_id: string; round_key: string; points: number; exact_pts: number; diff_pts: number;
       place: number | null; bonus: number; complete: boolean; is_winner: boolean;

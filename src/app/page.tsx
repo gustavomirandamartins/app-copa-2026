@@ -20,6 +20,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
 import { isProfileComplete } from '@/lib/bolao/profile';
 import { computeGeneralRanking, placementIndex } from '@/lib/bolao/generalRanking';
+import { LOGIN_TO_VIEW_NAME } from '@/lib/bolao/privacy';
 import { computeThermometer, verdictFor } from '@/lib/bolao/thermometer';
 import { ROUND_BONUS_POINTS, ROUND_ORDER, ROUND_LABELS, type RoundKey } from '@/lib/bolao/rounds';
 import { REFERRAL_BONUS_POINTS } from '@/lib/bolao/referral';
@@ -80,6 +81,7 @@ const PERKS = [
 interface RankRow {
   full_name: string | null;
   total_score: number;
+  is_admin: boolean;
 }
 
 export default async function HomePage() {
@@ -113,7 +115,7 @@ export default async function HomePage() {
         supabase.from('matches').select('id, status, home_score, away_score, home_penalties, away_penalties, home_team_id, away_team_id'),
       ]);
 
-    rankRows = generalRanking.map((u) => ({ full_name: u.full_name, total_score: u.total_score }));
+    rankRows = generalRanking.map((u) => ({ full_name: u.full_name, total_score: u.total_score, is_admin: u.is_admin }));
     leaderPoints = rankRows[0]?.total_score ?? 0;
 
     // Pódio (1º-5º) + colocação de cada um — usado quando a Final terminar.
@@ -323,6 +325,14 @@ export default async function HomePage() {
   // conta vai para o final da página em vez do meio do funil de venda.
   // ════════════════════════════════════════════════════════════════
   if (finalFinished) {
+    // LGPD: nome real só pra quem está logado — anônimo vê o placeholder.
+    const publicTop5: PodiumUser[] = authenticated
+      ? top5
+      : top5.map((u) => ({ ...u, fullName: LOGIN_TO_VIEW_NAME }));
+    const publicRankRows: RankRow[] = authenticated
+      ? rankRows
+      : rankRows.map((r) => ({ ...r, full_name: LOGIN_TO_VIEW_NAME }));
+
     return (
       <div className="container home nx-dash">
         <StageBackgroundEffect stage="final" />
@@ -330,11 +340,11 @@ export default async function HomePage() {
           <h1 className="nx-hello-title">Confira os vencedores do Bolão da Mindu na Copa 2026!</h1>
         </section>
 
-        {top5.length > 0 && <Podium users={top5} />}
+        {publicTop5.length > 0 && <Podium users={publicTop5} />}
 
         <section className="nx-section">
           <h2 className="nx-h2"><Crown size={18} /> Classificação geral</h2>
-          <RankingSnapshot rows={rankRows} meName={null} mePoints={0} />
+          <RankingSnapshot rows={publicRankRows} meName={null} mePoints={0} />
         </section>
 
         <section className="nx-section">
@@ -395,13 +405,6 @@ export default async function HomePage() {
           })}
         </ul>
       </section>
-
-      {/* Pódio dos 5 primeiros — só ao fim da última partida da Copa */}
-      {finalFinished && top5.length > 0 && (
-        <ScrollReveal>
-          <Podium users={top5} />
-        </ScrollReveal>
-      )}
 
       {/* Logado sem Premium → falta concluir cadastro/pagamento */}
       {authenticated && !isPremium && (
